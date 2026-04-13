@@ -303,3 +303,5 @@ src/
 └── pages/
     └── Dashboard.tsx          ← Main app layout
 ```
+#   S a l e s - m a n a g e r  
+ 
