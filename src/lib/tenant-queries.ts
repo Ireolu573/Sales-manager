@@ -51,16 +51,19 @@ export async function getProfileWithTenant(userId: string) {
 }
 
 export async function insertSale(saleData: Record<string, unknown>, tenantId: string, userId: string) {
-  const { total_amount, ...rest } = saleData  // strip it out — DB calculates this
+  // total_amount is a generated column in the DB — must not be sent
+  const { total_amount, ...rest } = saleData
   return supabase
     .from('sales')
     .insert({ ...rest, tenant_id: tenantId, user_id: userId } as any)
 }
 
 export async function insertStockRecord(recordData: Record<string, unknown>, tenantId: string, userId: string) {
+  // total_cost is a generated column in the DB — must not be sent
+  const { total_cost, ...rest } = recordData
   return supabase
     .from('stock_records')
-    .insert({ ...recordData, tenant_id: tenantId, user_id: userId } as any)
+    .insert({ ...rest, tenant_id: tenantId, user_id: userId } as any)
 }
 
 export async function getCreditSalesForTenant(tenantId: string) {

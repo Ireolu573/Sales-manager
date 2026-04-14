@@ -77,15 +77,18 @@ export default function Analytics({ userId, tenantId, isAdmin, refreshKey }: Pro
     { name: 'Credit', value: creditRevenue, color: 'hsl(38, 92%, 50%)' },
   ].filter(d => d.value > 0)
 
+  // Top products ranked list
   const byItem: Record<string, { qty: number; revenue: number }> = {}
   monthSales.forEach(s => {
     if (!byItem[s.item_name]) byItem[s.item_name] = { qty: 0, revenue: 0 }
     byItem[s.item_name].qty += Number(s.quantity)
     byItem[s.item_name].revenue += Number(s.total_amount)
   })
-  const chartData = Object.entries(byItem)
+  const topProducts = Object.entries(byItem)
     .map(([name, v]) => ({ name, revenue: v.revenue, qty: v.qty }))
     .sort((a, b) => b.revenue - a.revenue)
+
+  const maxRevenue = topProducts[0]?.revenue || 1
 
   const byDay: Record<number, number> = {}
   monthSales.forEach(s => {
@@ -234,26 +237,53 @@ export default function Analytics({ userId, tenantId, isAdmin, refreshKey }: Pro
         </Card>
       )}
 
-      {/* Charts */}
-      {chartData.length > 0 && (
+      {/* ── TOP PRODUCTS RANKED LIST ── */}
+      {topProducts.length > 0 && (
         <Card className="border-border/50 shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Revenue by Product</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold text-foreground">Top Products by Revenue</CardTitle>
           </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(36, 20%, 90%)" />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `₦${(v/1000).toFixed(0)}k`} />
-                <Tooltip formatter={(v: number) => `₦${v.toLocaleString()}`} />
-                <Bar dataKey="revenue" fill="hsl(32, 95%, 44%)" radius={[4,4,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <CardContent className="px-4 pb-4 space-y-3">
+            {topProducts.map((product, index) => {
+              const barWidth = Math.max((product.revenue / maxRevenue) * 100, 2)
+              return (
+                <div key={product.name}>
+                  <div className="flex items-center gap-3">
+                    {/* Rank number */}
+                    <span className={`text-xs font-bold w-5 text-right shrink-0 ${
+                      index === 0 ? 'text-primary' :
+                      index === 1 ? 'text-muted-foreground' :
+                      index === 2 ? 'text-muted-foreground/70' :
+                      'text-muted-foreground/50'
+                    }`}>
+                      {index + 1}
+                    </span>
+
+                    {/* Name + bar + amount */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1 gap-2">
+                        <span className="text-sm text-foreground truncate">{product.name}</span>
+                        <span className="text-sm font-semibold text-primary shrink-0">
+                          ₦{product.revenue.toLocaleString()}
+                        </span>
+                      </div>
+                      {/* Progress bar */}
+                      <div className="h-1.5 w-full bg-primary/10 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all duration-500"
+                          style={{ width: `${barWidth}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </CardContent>
         </Card>
       )}
 
+      {/* Daily Revenue chart */}
       {dailyData.length > 0 && (
         <Card className="border-border/50 shadow-sm">
           <CardHeader className="pb-2">
@@ -273,6 +303,7 @@ export default function Analytics({ userId, tenantId, isAdmin, refreshKey }: Pro
         </Card>
       )}
 
+      {/* Payment Methods pie */}
       {paymentPieData.length > 0 && (
         <Card className="border-border/50 shadow-sm">
           <CardHeader className="pb-2">
