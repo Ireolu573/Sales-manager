@@ -51,9 +51,10 @@ export async function getProfileWithTenant(userId: string) {
 }
 
 export async function insertSale(saleData: Record<string, unknown>, tenantId: string, userId: string) {
+  const { total_amount, ...rest } = saleData  // strip it out — DB calculates this
   return supabase
     .from('sales')
-    .insert({ ...saleData, tenant_id: tenantId, user_id: userId } as any)
+    .insert({ ...rest, tenant_id: tenantId, user_id: userId } as any)
 }
 
 export async function insertStockRecord(recordData: Record<string, unknown>, tenantId: string, userId: string) {
