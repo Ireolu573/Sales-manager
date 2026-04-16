@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { getProductsForTenant, insertStockRecord, getStockRecordsForUser } from '@/lib/tenant-queries'
+import { supabase } from '@/integrations/supabase/client'
 import type { Product, ProductUnit, StockRecord } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Package, PlusCircle } from 'lucide-react'
+import { Package, PlusCircle, Trash2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
 interface Props {
@@ -26,29 +27,28 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
   const [stockDate, setStockDate] = useState(new Date().toISOString().split('T')[0])
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const totalCost = Number(quantity) * Number(costPrice) || 0
-
   const selectedProduct = products.find(p => p.id === productId)
   const units = selectedProduct?.product_units || []
 
-  useEffect(() => {
-    getProductsForTenant(tenantId).then(({ data }) => {
-      if (data) setProducts(data)
-    })
+  const fetchRecords = () => {
     getStockRecordsForUser(userId, tenantId).then(({ data }) => {
       if (data) setRecords(data as unknown as StockRecord[])
     })
+  }
+
+  useEffect(() => {
+    getProductsForTenant(tenantId).then(({ data }) => { if (data) setProducts(data) })
+    fetchRecords()
   }, [userId, tenantId])
 
-  // When product changes, auto-select the first unit
   const handleProductChange = (id: string) => {
     setProductId(id)
     setSelectedUnit(null)
     const product = products.find(p => p.id === id)
-    if (product?.product_units?.length) {
-      setSelectedUnit(product.product_units[0])
-    }
+    if (product?.product_units?.length) setSelectedUnit(product.product_units[0])
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,7 +56,7 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
     if (!selectedProduct) return
     setLoading(true)
 
-    const recordData = {
+    const { error } = await insertStockRecord({
       product_id: productId,
       item_name: selectedProduct.name,
       unit_label: selectedUnit?.unit_label || null,
@@ -64,23 +64,29 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
       cost_price: Number(costPrice),
       stock_date: stockDate,
       notes: notes || null,
-    }
+    }, tenantId, userId)
 
-    const { error } = await insertStockRecord(recordData, tenantId, userId)
     setLoading(false)
 
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' })
     } else {
       toast({ title: 'Stock recorded!', description: `${selectedProduct.name} — ₦${totalCost.toLocaleString()}` })
-      setQuantity('')
-      setCostPrice('')
-      setNotes('')
-      setSelectedUnit(null)
-      setProductId('')
-      getStockRecordsForUser(userId, tenantId).then(({ data }) => {
-        if (data) setRecords(data as unknown as StockRecord[])
-      })
+      setQuantity(''); setCostPrice(''); setNotes(''); setSelectedUnit(null); setProductId('')
+      fetchRecords()
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this stock record?')) return
+    setDeletingId(id)
+    const { error } = await supabase.from('stock_records').delete().eq('id', id)
+    setDeletingId(null)
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' })
+    } else {
+      setRecords(prev => prev.filter(r => r.id !== id))
+      toast({ title: 'Stock record deleted' })
     }
   }
 
@@ -100,40 +106,29 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
         <Card className="border-border/50 shadow-sm">
           <CardContent className="p-5">
             <form onSubmit={handleSubmit} className="space-y-4">
-
-              {/* Product */}
               <div className="space-y-2">
                 <Label>Product</Label>
                 <Select value={productId} onValueChange={handleProductChange}>
                   <SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger>
                   <SelectContent>
-                    {products.map(p => (
-                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                    ))}
+                    {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Unit selector — only shown if product has units */}
               {productId && units.length > 0 && (
                 <div className="space-y-2">
                   <Label>Unit</Label>
                   <div className="flex flex-wrap gap-2">
                     {units.map(u => (
-                      <button
-                        key={u.id}
-                        type="button"
-                        onClick={() => setSelectedUnit(u)}
+                      <button key={u.id} type="button" onClick={() => setSelectedUnit(u)}
                         className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
                           selectedUnit?.id === u.id
                             ? 'bg-primary text-primary-foreground border-primary shadow-sm'
                             : 'bg-background text-muted-foreground border-border hover:border-primary/50'
-                        }`}
-                      >
+                        }`}>
                         {u.unit_label}
-                        {u.unit_price ? (
-                          <span className="ml-1.5 opacity-70 text-xs">₦{Number(u.unit_price).toLocaleString()}</span>
-                        ) : null}
+                        {u.unit_price ? <span className="ml-1.5 opacity-70 text-xs">₦{Number(u.unit_price).toLocaleString()}</span> : null}
                       </button>
                     ))}
                   </div>
@@ -143,26 +138,11 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Quantity</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={quantity}
-                    onChange={e => setQuantity(e.target.value)}
-                    placeholder="0"
-                    required
-                  />
+                  <Input type="number" min="1" value={quantity} onChange={e => setQuantity(e.target.value)} placeholder="0" required />
                 </div>
                 <div className="space-y-2">
                   <Label>Cost Price (₦)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={costPrice}
-                    onChange={e => setCostPrice(e.target.value)}
-                    placeholder="0.00"
-                    required
-                  />
+                  <Input type="number" min="0" step="0.01" value={costPrice} onChange={e => setCostPrice(e.target.value)} placeholder="0.00" required />
                 </div>
               </div>
 
@@ -183,11 +163,7 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
                 <Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="e.g. supplier name, batch info" />
               </div>
 
-              <Button
-                type="submit"
-                disabled={loading || !productId || !quantity || !costPrice}
-                className="w-full h-11 gap-2 font-semibold"
-              >
+              <Button type="submit" disabled={loading || !productId || !quantity || !costPrice} className="w-full h-11 gap-2 font-semibold">
                 <PlusCircle className="w-4 h-4" />
                 {loading ? 'Recording...' : 'Add Stock'}
               </Button>
@@ -205,25 +181,30 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
               <CardContent className="p-3.5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-base">
-                      📦
-                    </div>
+                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-base">📦</div>
                     <div className="min-w-0">
                       <div className="font-semibold text-sm text-foreground truncate">{r.item_name}</div>
                       <div className="text-xs text-muted-foreground mt-0.5">
                         {r.quantity}{r.unit_label ? ` ${r.unit_label}` : ' units'} ·{' '}
                         {new Date(r.stock_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </div>
-                      {r.notes && (
-                        <div className="text-xs text-muted-foreground/70 mt-0.5 truncate">{r.notes}</div>
-                      )}
+                      {r.notes && <div className="text-xs text-muted-foreground/70 mt-0.5 truncate">{r.notes}</div>}
                     </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <div className="font-bold text-sm text-foreground">₦{Number(r.total_cost).toLocaleString()}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      ₦{Number(r.cost_price).toLocaleString()}/unit
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <div className="text-right">
+                      <div className="font-bold text-sm text-foreground">₦{Number(r.total_cost).toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">₦{Number(r.cost_price).toLocaleString()}/unit</div>
                     </div>
+                    {isAdmin && (
+                      <button
+                        onClick={() => handleDelete(r.id)}
+                        disabled={deletingId === r.id}
+                        className="text-destructive/60 hover:text-destructive transition-colors p-1 rounded-lg hover:bg-destructive/10 disabled:opacity-50"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -234,9 +215,7 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
 
       {records.length === 0 && !isAdmin && (
         <Card className="border-border/50">
-          <CardContent className="py-12 text-center text-muted-foreground text-sm">
-            No stock records yet
-          </CardContent>
+          <CardContent className="py-12 text-center text-muted-foreground text-sm">No stock records yet</CardContent>
         </Card>
       )}
     </div>
