@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Plus, Trash2, Users, Package, Palette, Copy, Check, X } from 'lucide-react'
+import { Plus, Trash2, Users, Package, Palette, Copy, Check, X, AlertTriangle, RefreshCw } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
 interface Props {
@@ -59,6 +59,12 @@ export default function DomainController({ userId, tenantId, company, onClose, o
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [inviteCode, setInviteCode] = useState('')
   const [copied, setCopied] = useState(false)
+  const [regenerating, setRegenerating] = useState(false)
+
+  // Delete company state
+  const [showDangerZone, setShowDangerZone] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deletingCompany, setDeletingCompany] = useState(false)
 
   const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL
 
@@ -77,6 +83,19 @@ export default function DomainController({ userId, tenantId, company, onClose, o
     setCopied(true)
     toast({ title: 'Invite code copied!' })
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const regenerateInviteCode = async () => {
+    setRegenerating(true)
+    const newCode = Math.random().toString(36).slice(2, 10).toLowerCase()
+    const { error } = await supabase.from('tenants').update({ invite_code: newCode }).eq('id', tenantId)
+    setRegenerating(false)
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' })
+    } else {
+      setInviteCode(newCode)
+      toast({ title: 'Invite code regenerated!', description: 'Old code is now invalid.' })
+    }
   }
 
   const saveBrand = async () => {
@@ -135,7 +154,7 @@ export default function DomainController({ userId, tenantId, company, onClose, o
   }
 
   const deleteUser = async (uid: string, email: string) => {
-    if (!confirm(`Delete ${email} permanently?`)) return
+    if (!confirm(`Remove ${email} from your business permanently?`)) return
     try {
       const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch(`${supabaseUrl}/functions/v1/delete-user`, {
@@ -155,6 +174,33 @@ export default function DomainController({ userId, tenantId, company, onClose, o
       }
     } catch {
       toast({ title: 'Error', description: 'Failed to delete user', variant: 'destructive' })
+    }
+  }
+
+  const deleteCompany = async () => {
+    if (deleteConfirmText !== company.company_name) return
+    setDeletingCompany(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`${supabaseUrl}/functions/v1/delete-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ deleteTenant: true, tenantId }),
+      })
+      const result = await res.json()
+      if (result.error) {
+        toast({ title: 'Error', description: result.error, variant: 'destructive' })
+        setDeletingCompany(false)
+      } else {
+        toast({ title: 'Company deleted', description: 'Signing you out...' })
+        setTimeout(() => supabase.auth.signOut(), 1500)
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Failed to delete company', variant: 'destructive' })
+      setDeletingCompany(false)
     }
   }
 
@@ -211,6 +257,49 @@ export default function DomainController({ userId, tenantId, company, onClose, o
             <Button onClick={saveBrand} disabled={saving} className="w-full">
               {saving ? 'Saving...' : 'Save Changes'}
             </Button>
+
+            {/* DANGER ZONE */}
+            <Separator className="my-2" />
+            <div>
+              <button
+                onClick={() => setShowDangerZone(v => !v)}
+                className="flex items-center gap-2 text-destructive/70 hover:text-destructive text-sm font-medium transition-colors"
+              >
+                <AlertTriangle className="w-4 h-4" />
+                Danger Zone
+              </button>
+
+              {showDangerZone && (
+                <div className="mt-3 border border-destructive/30 bg-destructive/5 rounded-xl p-4 space-y-3">
+                  <div>
+                    <p className="text-sm font-semibold text-destructive">Delete this company</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      This will permanently delete <strong>{company.company_name}</strong> and all its data —
+                      sales, stock, products, and staff. This cannot be undone.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">
+                      Type <strong className="text-foreground">{company.company_name}</strong> to confirm
+                    </Label>
+                    <Input
+                      value={deleteConfirmText}
+                      onChange={e => setDeleteConfirmText(e.target.value)}
+                      placeholder={company.company_name}
+                      className="border-destructive/40 focus-visible:ring-destructive/40"
+                    />
+                  </div>
+                  <Button
+                    variant="destructive"
+                    className="w-full"
+                    disabled={deleteConfirmText !== company.company_name || deletingCompany}
+                    onClick={deleteCompany}
+                  >
+                    {deletingCompany ? 'Deleting everything...' : 'Delete Company Permanently'}
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -223,7 +312,7 @@ export default function DomainController({ userId, tenantId, company, onClose, o
                   <div>
                     <p className="font-medium text-sm">{p.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {p.product_units?.map(u => `${u.unit_label}: N${u.unit_price.toLocaleString()}`).join(' · ')}
+                      {p.product_units?.map(u => `${u.unit_label}: ₦${u.unit_price.toLocaleString()}`).join(' · ')}
                     </p>
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => deleteProduct(p.id)}
@@ -294,7 +383,12 @@ export default function DomainController({ userId, tenantId, company, onClose, o
                   <Button variant="outline" size="icon" onClick={copyInviteCode} className="h-10 w-10 shrink-0">
                     {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                   </Button>
+                  <Button variant="outline" size="icon" onClick={regenerateInviteCode}
+                    disabled={regenerating} className="h-10 w-10 shrink-0" title="Regenerate invite code">
+                    <RefreshCw className={`w-4 h-4 ${regenerating ? 'animate-spin' : ''}`} />
+                  </Button>
                 </div>
+                <p className="text-xs text-muted-foreground mt-2">🔄 Regenerate if the wrong person got this code</p>
               </CardContent>
             </Card>
 
