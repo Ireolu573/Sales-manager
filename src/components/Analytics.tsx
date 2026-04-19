@@ -99,19 +99,59 @@ export default function Analytics({ userId, tenantId, isAdmin, refreshKey }: Pro
     .map(([day, revenue]) => ({ day: `${day}`, revenue }))
     .sort((a, b) => Number(a.day) - Number(b.day))
 
-  const exportCSV = (all = false) => {
-    const dataToExport = all ? sales : monthSales
-    const filename = all ? `sales-all-${selectedYear}.csv` : `sales-${MONTHS[selectedMonth]}-${selectedYear}.csv`
-    const rows = [
-      ['Date','Item','Unit','Quantity','Unit Price','Total','Payment','Customer','Paid At','Notes'],
-      ...dataToExport.map(s => [s.sale_date, s.item_name, s.unit_label, s.quantity, s.unit_price, s.total_amount, s.payment_method, s.customer_name||'', s.paid_at||'', s.notes||''])
-    ]
-    const csv = rows.map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n')
-    const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url; a.download = filename; a.click()
-    URL.revokeObjectURL(url)
+  const exportXLSX = async (all = false) => {
+  const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs' as any)
+  
+  const salesData = all ? sales : monthSales
+  const stockData = all ? stockRecords : monthStock
+  const period = all ? `${selectedYear}` : `${MONTHS[selectedMonth]}-${selectedYear}`
+
+  // Sales sheet
+  const salesRows = [
+    ['Date', 'Time', 'Item', 'Unit', 'Quantity', 'Unit Price (₦)', 'Total (₦)', 'Payment', 'Customer', 'Paid At', 'Paid Via', 'Notes'],
+    ...salesData.map(s => [
+      s.sale_date,
+      s.created_at ? new Date(s.created_at).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit', hour12: true }) : '',
+      s.item_name,
+      s.unit_label || '',
+      Number(s.quantity),
+      Number(s.unit_price),
+      Number(s.total_amount),
+      s.payment_method,
+      s.customer_name || '',
+      s.paid_at ? new Date(s.paid_at).toLocaleDateString('en-GB') : '',
+      s.paid_via || '',
+      s.notes || '',
+    ])
+  ]
+
+  // Stock sheet
+  const stockRows = [
+    ['Date', 'Item', 'Unit', 'Quantity', 'Cost Price (₦)', 'Total Cost (₦)', 'Notes'],
+    ...stockData.map(s => [
+      s.stock_date,
+      s.item_name,
+      s.unit_label || '',
+      Number(s.quantity),
+      Number(s.cost_price),
+      Number(s.total_cost),
+      s.notes || '',
+    ])
+  ]
+
+  const wb = XLSX.utils.book_new()
+  const salesSheet = XLSX.utils.aoa_to_sheet(salesRows)
+  const stockSheet = XLSX.utils.aoa_to_sheet(stockRows)
+
+  // Set column widths
+  salesSheet['!cols'] = [12,10,20,8,10,14,14,12,16,12,10,20].map(w => ({ wch: w }))
+  stockSheet['!cols'] = [12,20,8,10,14,14,20].map(w => ({ wch: w }))
+
+  XLSX.utils.book_append_sheet(wb, salesSheet, 'Sales')
+  XLSX.utils.book_append_sheet(wb, stockSheet, 'Stock Records')
+
+  XLSX.writeFile(wb, `report-${period}.xlsx`)
+}
   }
 
   const years = Array.from(new Set([
@@ -174,12 +214,12 @@ export default function Analytics({ userId, tenantId, isAdmin, refreshKey }: Pro
           )}
 
           <div className="flex gap-2">
-            <Button onClick={() => exportCSV(false)} size="sm" className="gap-1.5">
-              <Download className="w-3.5 h-3.5" /> Export Period
-            </Button>
-            <Button onClick={() => exportCSV(true)} size="sm" variant="secondary" className="gap-1.5">
-              <Download className="w-3.5 h-3.5" /> Full Year
-            </Button>
+            <Button onClick={() => exportXLSX(false)} size="sm" className="gap-1.5">
+  <Download className="w-3.5 h-3.5" /> Export Period (.xlsx)
+</Button>
+<Button onClick={() => exportXLSX(true)} size="sm" variant="secondary" className="gap-1.5">
+  <Download className="w-3.5 h-3.5" /> Full Year (.xlsx)
+</Button>
           </div>
         </CardContent>
       </Card>
