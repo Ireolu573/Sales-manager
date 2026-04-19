@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { PlusCircle, ShoppingCart, MessageCircle } from 'lucide-react'
+import { PlusCircle, ShoppingCart, MessageCircle, Copy, Check, X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
 interface Props {
@@ -25,6 +25,13 @@ const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: string }[] =
   { value: 'credit', label: 'Credit', icon: '📋' },
 ]
 
+const PAYMENT_BADGE: Record<string, { bg: string; color: string }> = {
+  cash:     { bg: '#EAF3DE', color: '#3B6D11' },
+  transfer: { bg: '#E6F1FB', color: '#185FA5' },
+  pos:      { bg: '#EEEDFE', color: '#534AB7' },
+  credit:   { bg: '#FAEEDA', color: '#854F0B' },
+}
+
 export default function SaleForm({ userId, tenantId, refreshKey, onSaleAdded }: Props) {
   const { toast } = useToast()
   const [products, setProducts] = useState<Product[]>([])
@@ -38,8 +45,11 @@ export default function SaleForm({ userId, tenantId, refreshKey, onSaleAdded }: 
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
   const [lastSale, setLastSale] = useState<any>(null)
+  const [copied, setCopied] = useState(false)
+  const [company, setCompany] = useState<{ name: string; emoji: string; color: string }>({
+    name: '', emoji: '🏪', color: '#d97706'
+  })
 
-  // Customer book
   const [savedCustomers, setSavedCustomers] = useState<string[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const customerRef = useRef<HTMLDivElement>(null)
@@ -48,7 +58,6 @@ export default function SaleForm({ userId, tenantId, refreshKey, onSaleAdded }: 
     getProductsForTenant(tenantId).then(({ data }) => {
       if (data) setProducts(data)
     })
-    // Load saved customers from past sales
     supabase
       .from('sales')
       .select('customer_name')
@@ -62,9 +71,20 @@ export default function SaleForm({ userId, tenantId, refreshKey, onSaleAdded }: 
           setSavedCustomers(unique)
         }
       })
+    supabase
+      .from('company_settings')
+      .select('company_name, logo_emoji, brand_color')
+      .eq('tenant_id', tenantId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setCompany({
+          name: data.company_name || '',
+          emoji: data.logo_emoji || '🏪',
+          color: data.brand_color || '#d97706',
+        })
+      })
   }, [tenantId, refreshKey])
 
-  // Close suggestions on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (customerRef.current && !customerRef.current.contains(e.target as Node)) {
@@ -121,44 +141,66 @@ export default function SaleForm({ userId, tenantId, refreshKey, onSaleAdded }: 
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' })
     } else {
-      setLastSale({ ...saleData, total_amount: total })
-
-      // Add to saved customers if new
+      setLastSale({ ...saleData, total_amount: total, recorded_at: new Date() })
       if (customerName && !savedCustomers.includes(customerName)) {
         setSavedCustomers(prev => [customerName, ...prev])
       }
-
-      toast({ title: 'Sale recorded!', description: `N${total.toLocaleString()} — ${selectedProduct.name}` })
       setQuantity('')
       setUnitPrice('')
       setCustomerName('')
       setNotes('')
       setSelectedUnit(null)
+      setProductId('')
       onSaleAdded()
     }
   }
 
-  const sendWhatsApp = () => {
-    if (!lastSale) return
-    const date = new Date(lastSale.sale_date).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
-    const receipt = [
-      `🧾 *Sales Receipt*`,
-      `━━━━━━━━━━━━━━━`,
+  const buildReceiptText = () => {
+    if (!lastSale) return ''
+    const date = new Date(lastSale.sale_date).toLocaleDateString('en-NG', {
+      day: 'numeric', month: 'short', year: 'numeric'
+    })
+    const time = lastSale.recorded_at
+      ? new Date(lastSale.recorded_at).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit', hour12: true })
+      : ''
+    const pm = PAYMENT_METHODS.find(m => m.value === lastSale.payment_method)
+    return [
+      `🧾 *SALES RECEIPT*`,
+      company.name ? `${company.emoji} *${company.name}*` : '',
+      `━━━━━━━━━━━━━━━━━━`,
       `📦 *${lastSale.item_name}*`,
-      `   Unit: ${lastSale.unit_label}`,
-      `   Qty: ${lastSale.quantity} x N${Number(lastSale.unit_price).toLocaleString('en-NG')}`,
-      `━━━━━━━━━━━━━━━`,
-      `💰 *Total: N${Number(lastSale.total_amount).toLocaleString('en-NG')}*`,
-      `💳 Payment: ${lastSale.payment_method.toUpperCase()}`,
+      `   ${lastSale.quantity} ${lastSale.unit_label} × ₦${Number(lastSale.unit_price).toLocaleString()}`,
+      `━━━━━━━━━━━━━━━━━━`,
+      `💰 *Total: ₦${Number(lastSale.total_amount).toLocaleString()}*`,
+      `${pm?.icon || ''} Payment: ${lastSale.payment_method.toUpperCase()}`,
       lastSale.customer_name ? `👤 Customer: ${lastSale.customer_name}` : '',
-      `📅 Date: ${date}`,
+      `📅 ${date}${time ? ' · ' + time : ''}`,
       lastSale.notes ? `📝 ${lastSale.notes}` : '',
-      `━━━━━━━━━━━━━━━`,
+      `━━━━━━━━━━━━━━━━━━`,
       `Thank you for your patronage! 🙏`,
     ].filter(Boolean).join('\n')
-
-    window.open(`https://wa.me/?text=${encodeURIComponent(receipt)}`, '_blank')
   }
+
+  const sendWhatsApp = () => {
+    window.open(`https://wa.me/?text=${encodeURIComponent(buildReceiptText())}`, '_blank')
+  }
+
+  const copyReceipt = async () => {
+    await navigator.clipboard.writeText(buildReceiptText())
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+    toast({ title: 'Receipt copied!' })
+  }
+
+  // Format date/time for receipt display
+  const receiptDate = lastSale
+    ? new Date(lastSale.sale_date).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' })
+    : ''
+  const receiptTime = lastSale?.recorded_at
+    ? new Date(lastSale.recorded_at).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit', hour12: true })
+    : ''
+  const badge = lastSale ? PAYMENT_BADGE[lastSale.payment_method] || PAYMENT_BADGE.cash : null
+  const pm = lastSale ? PAYMENT_METHODS.find(m => m.value === lastSale.payment_method) : null
 
   return (
     <div className="space-y-4">
@@ -172,22 +214,179 @@ export default function SaleForm({ userId, tenantId, refreshKey, onSaleAdded }: 
         </div>
       </div>
 
-      {/* WhatsApp receipt button after sale */}
+      {/* ── RECEIPT CARD ── */}
       {lastSale && (
-        <Card className="border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-800">
-          <CardContent className="p-3 flex items-center justify-between">
-            <span className="text-sm text-green-700 dark:text-green-400 font-medium">✅ Sale recorded!</span>
-            <Button
-              size="sm"
-              onClick={sendWhatsApp}
-              className="gap-1.5 bg-green-500 hover:bg-green-600 text-white h-8"
-            >
-              <MessageCircle className="w-3.5 h-3.5" /> Send Receipt
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="flex justify-center">
+          <div style={{
+            width: '100%',
+            maxWidth: '340px',
+            background: 'var(--color-background-primary)',
+            borderRadius: '16px',
+            border: '0.5px solid var(--color-border-tertiary)',
+            overflow: 'hidden',
+            fontFamily: 'var(--font-sans)',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          }}>
+            {/* Header with brand color */}
+            <div style={{
+              background: company.color,
+              padding: '20px 16px',
+              textAlign: 'center',
+              color: 'white',
+              position: 'relative',
+            }}>
+              <button
+                onClick={() => setLastSale(null)}
+                style={{
+                  position: 'absolute', top: 10, right: 10,
+                  background: 'rgba(255,255,255,0.2)',
+                  border: 'none', borderRadius: '50%',
+                  width: 24, height: 24, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'white', fontSize: 14,
+                }}
+              >
+                ×
+              </button>
+              <div style={{ fontSize: 24, marginBottom: 4 }}>{company.emoji}</div>
+              {company.name && (
+                <div style={{ fontSize: 13, fontWeight: 500, opacity: 0.95, letterSpacing: '0.04em' }}>
+                  {company.name}
+                </div>
+              )}
+              <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2 }}>Sales Receipt</div>
+            </div>
+
+            {/* Dashed divider */}
+            <div style={{ borderBottom: '1px dashed var(--color-border-tertiary)', margin: '0 16px' }} />
+
+            {/* Body */}
+            <div style={{ padding: '16px' }}>
+              {/* Total */}
+              <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                <div style={{ fontSize: 32, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+                  ₦{Number(lastSale.total_amount).toLocaleString()}
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 2 }}>Total Amount</div>
+              </div>
+
+              {/* Item details */}
+              <div style={{
+                background: 'var(--color-background-secondary)',
+                borderRadius: 10,
+                padding: '12px',
+                marginBottom: 10,
+              }}>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)', marginBottom: 8 }}>
+                  {lastSale.item_name}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5 }}>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Quantity</span>
+                  <span style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>
+                    {lastSale.quantity} {lastSale.unit_label}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5 }}>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Unit Price</span>
+                  <span style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>
+                    ₦{Number(lastSale.unit_price).toLocaleString()}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, alignItems: 'center' }}>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Payment</span>
+                  <span style={{
+                    background: badge?.bg, color: badge?.color,
+                    padding: '2px 10px', borderRadius: 20, fontWeight: 500, fontSize: 11,
+                  }}>
+                    {pm?.icon} {lastSale.payment_method.charAt(0).toUpperCase() + lastSale.payment_method.slice(1)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Customer + Date grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+                {lastSale.customer_name && (
+                  <div style={{ background: 'var(--color-background-secondary)', borderRadius: 10, padding: '10px 12px' }}>
+                    <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Customer</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-primary)', marginTop: 2 }}>
+                      {lastSale.customer_name}
+                    </div>
+                  </div>
+                )}
+                <div style={{
+                  background: 'var(--color-background-secondary)', borderRadius: 10, padding: '10px 12px',
+                  gridColumn: lastSale.customer_name ? 'auto' : '1 / -1',
+                }}>
+                  <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Date & Time</div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-primary)', marginTop: 2 }}>
+                    {receiptDate}{receiptTime && <span style={{ fontWeight: 400, color: 'var(--color-text-secondary)' }}> · {receiptTime}</span>}
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes */}
+              {lastSale.notes && (
+                <div style={{
+                  background: 'var(--color-background-secondary)', borderRadius: 10,
+                  padding: '10px 12px', marginBottom: 10,
+                }}>
+                  <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Note</div>
+                  <div style={{ fontSize: 12, color: 'var(--color-text-primary)', marginTop: 2 }}>{lastSale.notes}</div>
+                </div>
+              )}
+
+              {/* Credit warning */}
+              {lastSale.payment_method === 'credit' && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  fontSize: 12, color: '#854F0B', marginBottom: 10, fontWeight: 500,
+                }}>
+                  <div style={{
+                    width: 6, height: 6, borderRadius: '50%', background: '#EF9F27',
+                  }} />
+                  Credit sale — payment pending
+                </div>
+              )}
+
+              {/* Dashed divider + thank you */}
+              <div style={{ borderTop: '1px dashed var(--color-border-tertiary)', paddingTop: 10, marginBottom: 12, textAlign: 'center' }}>
+                <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Thank you for your patronage! 🙏</div>
+              </div>
+
+              {/* Action buttons */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={sendWhatsApp}
+                  style={{
+                    flex: 1, background: '#25D366', color: 'white',
+                    border: 'none', borderRadius: 10, padding: '10px 0',
+                    fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.998 2.002C6.478 2.002 2 6.48 2 12c0 1.85.502 3.58 1.378 5.065L2 22l5.085-1.344A9.955 9.955 0 0011.998 22C17.52 22 22 17.52 22 12s-4.48-9.998-10.002-9.998zm0 18.18a8.18 8.18 0 01-4.17-1.14l-.3-.178-3.017.797.808-2.947-.196-.31A8.19 8.19 0 013.82 12c0-4.508 3.67-8.178 8.178-8.178S20.178 7.492 20.178 12c0 4.508-3.67 8.182-8.18 8.182z"/></svg>
+                  WhatsApp
+                </button>
+                <button
+                  onClick={copyReceipt}
+                  style={{
+                    flex: 1, background: 'var(--color-background-secondary)',
+                    color: 'var(--color-text-primary)',
+                    border: '0.5px solid var(--color-border-tertiary)',
+                    borderRadius: 10, padding: '10px 0',
+                    fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  }}
+                >
+                  {copied ? '✓ Copied!' : '⎘ Copy'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
+      {/* ── SALE FORM ── */}
       <Card className="border-border/50 shadow-sm">
         <CardContent className="p-5">
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -203,7 +402,6 @@ export default function SaleForm({ userId, tenantId, refreshKey, onSaleAdded }: 
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-2">
                 <Label>Unit</Label>
                 <Select value={selectedUnit?.id || ''} onValueChange={handleUnitSelect} disabled={!productId}>
@@ -211,7 +409,7 @@ export default function SaleForm({ userId, tenantId, refreshKey, onSaleAdded }: 
                   <SelectContent>
                     {selectedProduct?.product_units.map(u => (
                       <SelectItem key={u.id} value={u.id}>
-                        {u.unit_label} — N{u.unit_price.toLocaleString()}
+                        {u.unit_label} — ₦{u.unit_price.toLocaleString()}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -225,7 +423,7 @@ export default function SaleForm({ userId, tenantId, refreshKey, onSaleAdded }: 
                 <Input type="number" min="1" value={quantity} onChange={e => setQuantity(e.target.value)} placeholder="0" required />
               </div>
               <div className="space-y-2">
-                <Label>Unit Price (N)</Label>
+                <Label>Unit Price (₦)</Label>
                 <Input type="number" min="0" step="0.01" value={unitPrice} onChange={e => setUnitPrice(e.target.value)} placeholder="0.00" required />
               </div>
             </div>
@@ -233,7 +431,7 @@ export default function SaleForm({ userId, tenantId, refreshKey, onSaleAdded }: 
             {total > 0 && (
               <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 text-center">
                 <span className="text-sm text-muted-foreground">Total: </span>
-                <span className="text-xl font-bold text-primary">N{total.toLocaleString()}</span>
+                <span className="text-xl font-bold text-primary">₦{total.toLocaleString()}</span>
               </div>
             )}
 
@@ -263,7 +461,6 @@ export default function SaleForm({ userId, tenantId, refreshKey, onSaleAdded }: 
               </div>
             </div>
 
-            {/* Customer name with autocomplete */}
             <div className="space-y-2" ref={customerRef}>
               <Label>
                 Customer Name
