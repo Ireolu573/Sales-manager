@@ -1,8 +1,10 @@
 {
-	"appId": "com.salesmanager.app",
+	"appId": "com.stepan.salesmanager",
 	"appName": "Sales Manager",
 	"webDir": "dist",
-	"server": {
-		"androidScheme": "https"
+	"android": {
+		"allowMixedContent": true,
+		"captureInput": true,
+		"webContentsDebuggingEnabled": true
 	}
 }

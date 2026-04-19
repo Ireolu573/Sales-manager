@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '@/integrations/supabase/client'
+import { Capacitor } from '@capacitor/core'
 import type { CompanySettings } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -9,6 +10,16 @@ import { Separator } from '@/components/ui/separator'
 
 interface Props {
   company: CompanySettings
+}
+
+// Returns the correct redirect URL depending on platform
+function getRedirectUrl() {
+  if (Capacitor.isNativePlatform()) {
+    // Android/iOS — redirect back into the app using the deep link scheme
+    return 'com.stepan.salesmanager://login-callback'
+  }
+  // Web — redirect to the current origin (works for both localhost and Vercel)
+  return window.location.origin
 }
 
 export default function AuthPage({ company }: Props) {
@@ -43,9 +54,13 @@ export default function AuthPage({ company }: Props) {
 
   const handleGoogle = async () => {
     setGoogleLoading(true)
+    setError('')
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin }
+      options: {
+        redirectTo: getRedirectUrl(),
+        skipBrowserRedirect: Capacitor.isNativePlatform(), // on Android, handle redirect manually
+      }
     })
     if (error) {
       setError(error.message)
@@ -86,24 +101,16 @@ export default function AuthPage({ company }: Props) {
             </div>
 
             <div className="flex bg-muted rounded-lg p-1">
-              <button
-                onClick={() => setMode('login')}
+              <button onClick={() => setMode('login')}
                 className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
-                  mode === 'login'
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
+                  mode === 'login' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                }`}>
                 Log In
               </button>
-              <button
-                onClick={() => setMode('signup')}
+              <button onClick={() => setMode('signup')}
                 className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
-                  mode === 'signup'
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
+                  mode === 'signup' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                }`}>
                 Sign Up
               </button>
             </div>
@@ -111,28 +118,16 @@ export default function AuthPage({ company }: Props) {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email-input">Email address</Label>
-                <Input
-                  id="email-input"
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                  placeholder="you@example.com"
-                  className="border-border"
-                />
+                <Input id="email-input" type="email" value={email}
+                  onChange={e => setEmail(e.target.value)} required
+                  placeholder="you@example.com" className="border-border" />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="password-input">Password</Label>
-                <Input
-                  id="password-input"
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  className="border-border"
-                />
+                <Input id="password-input" type="password" value={password}
+                  onChange={e => setPassword(e.target.value)} required
+                  placeholder="••••••••" className="border-border" />
               </div>
 
               {error && (

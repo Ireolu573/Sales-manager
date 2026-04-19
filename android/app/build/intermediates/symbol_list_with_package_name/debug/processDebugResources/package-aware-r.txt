@@ -1,4 +1,4 @@
-com.yourname.salesmanager
+com.stepan.salesmanager
 anim abc_fade_in
 anim abc_fade_out
 anim abc_grow_fade_in_from_bottom
@@ -265,7 +265,6 @@ attr spinnerStyle
 attr splashScreenIconSize
 attr splitTrack
 attr srcCompat
-attr start_dir
 attr state_above_anchor
 attr statusBarBackground
 attr subMenuArrow
@@ -912,9 +911,8 @@ layout abc_search_view
 layout abc_select_dialog_material
 layout abc_tooltip
 layout activity_main
-layout bridge_layout_main
+layout capacitor_bridge_layout_main
 layout custom_dialog
-layout fragment_bridge
 layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
 layout no_webview
@@ -1388,6 +1386,5 @@ styleable Toolbar android_gravity android_minHeight buttonGravity collapseConten
 styleable View android_theme android_focusable paddingEnd paddingStart theme
 styleable ViewBackgroundHelper android_background backgroundTint backgroundTintMode
 styleable ViewStubCompat android_id android_layout android_inflatedId
-styleable bridge_fragment start_dir
 xml config
 xml file_paths

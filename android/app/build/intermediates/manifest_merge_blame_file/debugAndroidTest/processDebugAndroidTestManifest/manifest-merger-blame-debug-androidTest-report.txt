@@ -1,26 +1,26 @@
 1<?xml version="1.0" encoding="utf-8"?>
 2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-3    package="com.yourname.salesmanager.test" >
+3    package="com.stepan.salesmanager.test" >
 4
 5    <uses-sdk
-5-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest9746619657414823810.xml:5:5-74
+5-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest10024307185270799022.xml:5:5-74
 6        android:minSdkVersion="24"
-6-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest9746619657414823810.xml:5:15-41
+6-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest10024307185270799022.xml:5:15-41
 7        android:targetSdkVersion="36" />
-7-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest9746619657414823810.xml:5:42-71
+7-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest10024307185270799022.xml:5:42-71
 8
 9    <instrumentation
-9-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest9746619657414823810.xml:11:5-15:75
+9-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest10024307185270799022.xml:11:5-15:73
 10        android:name="androidx.test.runner.AndroidJUnitRunner"
-10-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest9746619657414823810.xml:11:22-76
+10-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest10024307185270799022.xml:11:22-76
 11        android:functionalTest="false"
-11-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest9746619657414823810.xml:14:22-52
+11-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest10024307185270799022.xml:14:22-52
 12        android:handleProfiling="false"
-12-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest9746619657414823810.xml:13:22-53
-13        android:label="Tests for com.yourname.salesmanager"
-13-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest9746619657414823810.xml:15:22-73
-14        android:targetPackage="com.yourname.salesmanager" />
-14-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest9746619657414823810.xml:12:22-71
+12-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest10024307185270799022.xml:13:22-53
+13        android:label="Tests for com.stepan.salesmanager"
+13-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest10024307185270799022.xml:15:22-71
+14        android:targetPackage="com.stepan.salesmanager" />
+14-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest10024307185270799022.xml:12:22-69
 15
 16    <queries>
 16-->[androidx.test:runner:1.7.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\9c5af2fdde1f8fad4729392848167073\transformed\runner-1.7.0\AndroidManifest.xml:24:5-28:15
@@ -40,12 +40,12 @@
 22-->[androidx.test:core:1.7.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\f3c8c5ab594c56ca9009b89515fbb52f\transformed\core-1.7.0\AndroidManifest.xml:24:22-69
 23
 24    <application
-24-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest9746619657414823810.xml:7:5-9:19
+24-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest10024307185270799022.xml:7:5-9:19
 25        android:debuggable="true"
 26        android:extractNativeLibs="false" >
 27        <uses-library android:name="android.test.runner" />
-27-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest9746619657414823810.xml:8:9-60
-27-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest9746619657414823810.xml:8:23-57
+27-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest10024307185270799022.xml:8:9-60
+27-->C:\Users\stepa\Downloads\sales-manager\android\app\build\intermediates\tmp\manifest\androidTest\debug\tempFile1ProcessTestManifest10024307185270799022.xml:8:23-57
 28
 29        <activity
 29-->[androidx.test:core:1.7.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\f3c8c5ab594c56ca9009b89515fbb52f\transformed\core-1.7.0\AndroidManifest.xml:27:9-34:20

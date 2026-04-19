@@ -1,5 +1,7 @@
 import { useState, useEffect, createContext, useContext, type ReactNode } from 'react'
 import { supabase } from '@/integrations/supabase/client'
+import { Capacitor } from '@capacitor/core'
+import { App } from '@capacitor/app'
 import type { User } from '@supabase/supabase-js'
 import { Permissions, CompanySettings, DEFAULT_PERMS, ADMIN_PERMS, DEFAULT_COMPANY } from '@/lib/types'
 
@@ -43,8 +45,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (profileError) {
         if (profileError.code === 'PGRST116') {
-          // Profile doesn't exist yet - the handle_new_user trigger should create it
-          // but in case it hasn't, set up registration flow
           setTenantId(null)
           setIsAdmin(false)
           setPermissions(DEFAULT_PERMS)
@@ -68,7 +68,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      // Fetch company settings filtered by tenant_id
       const { data: companyData } = await supabase
         .from('company_settings')
         .select('*')
@@ -84,18 +83,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
+    // Initial session check
     supabase.auth.getSession().then(({ data }) => {
       const u = data.session?.user ?? null
       setUser(u)
       if (u) fetchProfile(u.id)
       else setLoading(false)
     })
+
+    // Listen for auth state changes (handles web OAuth redirect)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
       const u = session?.user ?? null
       setUser(u)
       if (u) fetchProfile(u.id)
       else { setIsAdmin(false); setLoading(false) }
     })
+
+    // Handle deep link redirect on Android/iOS
+    // When Google OAuth redirects back to com.stepan.salesmanager://login-callback
+    // Capacitor catches it and fires this event with the full URL
+    if (Capacitor.isNativePlatform()) {
+      App.addListener('appUrlOpen', async ({ url }) => {
+        // The URL will look like:
+        // com.stepan.salesmanager://login-callback#access_token=...&refresh_token=...
+        if (url.includes('login-callback')) {
+          // Extract the fragment (everything after #)
+          const fragment = url.split('#')[1]
+          if (fragment) {
+            // Parse the tokens from the URL fragment
+            const params = new URLSearchParams(fragment)
+            const accessToken = params.get('access_token')
+            const refreshToken = params.get('refresh_token')
+
+            if (accessToken && refreshToken) {
+              // Set the session manually using the tokens from the deep link
+              const { data, error } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              })
+              if (!error && data.user) {
+                setUser(data.user)
+                fetchProfile(data.user.id)
+              }
+            }
+          }
+        }
+      })
+    }
+
     return () => subscription.unsubscribe()
   }, [])
 

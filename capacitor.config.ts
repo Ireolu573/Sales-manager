@@ -1,12 +1,14 @@
-import { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.salesmanager.app',
+  appId: 'com.stepan.salesmanager',    // ← change "stepan" to your actual name/brand
   appName: 'Sales Manager',
   webDir: 'dist',
-  server: {
-    androidScheme: 'https'
-  }
+  android: {
+    allowMixedContent: true,
+    captureInput: true,
+    webContentsDebuggingEnabled: true,
+  },
 };
 
 export default config;

@@ -123,9 +123,8 @@ var nativeBridge = (function (exports) {
             };
         }
         else if (body instanceof FormData) {
-            const formData = await convertFormData(body);
             return {
-                data: formData,
+                data: await convertFormData(body),
                 type: 'formData',
             };
         }
@@ -142,9 +141,7 @@ var nativeBridge = (function (exports) {
     const CAPACITOR_HTTP_INTERCEPTOR = '/_capacitor_http_interceptor_';
     const CAPACITOR_HTTP_INTERCEPTOR_URL_PARAM = 'u';
     // TODO: export as Cap function
-    const isRelativeOrProxyUrl = (url) => !url ||
-        !(url.startsWith('http:') || url.startsWith('https:')) ||
-        url.indexOf(CAPACITOR_HTTP_INTERCEPTOR) > -1;
+    const isRelativeOrProxyUrl = (url) => !url || !(url.startsWith('http:') || url.startsWith('https:')) || url.indexOf(CAPACITOR_HTTP_INTERCEPTOR) > -1;
     // TODO: export as Cap function
     const createProxyUrl = (url, win) => {
         var _a, _b;
@@ -174,11 +171,10 @@ var nativeBridge = (function (exports) {
                     return webviewServerUrl + '/_capacitor_file_' + filePath;
                 }
                 else if (filePath.startsWith('file://')) {
-                    return (webviewServerUrl + filePath.replace('file://', '/_capacitor_file_'));
+                    return webviewServerUrl + filePath.replace('file://', '/_capacitor_file_');
                 }
                 else if (filePath.startsWith('content://')) {
-                    return (webviewServerUrl +
-                        filePath.replace('content:/', '/_capacitor_content_'));
+                    return webviewServerUrl + filePath.replace('content:/', '/_capacitor_content_');
                 }
             }
             return filePath;
@@ -289,9 +285,6 @@ var nativeBridge = (function (exports) {
                     return docAddEventListener.apply(doc, args);
                 };
             }
-            // deprecated in v3, remove from v4
-            cap.platform = cap.getPlatform();
-            cap.isNative = cap.isNativePlatform();
             win.Capacitor = cap;
         };
         const initVendor = (win, cap) => {
@@ -321,32 +314,19 @@ var nativeBridge = (function (exports) {
             win.Ionic.WebView = IonicWebView;
         };
         const initLogger = (win, cap) => {
-            const BRIDGED_CONSOLE_METHODS = [
-                'debug',
-                'error',
-                'info',
-                'log',
-                'trace',
-                'warn',
-            ];
+            const BRIDGED_CONSOLE_METHODS = ['debug', 'error', 'info', 'log', 'trace', 'warn'];
             const createLogFromNative = (c) => (result) => {
                 if (isFullConsole(c)) {
                     const success = result.success === true;
                     const tagStyles = success
                         ? 'font-style: italic; font-weight: lighter; color: gray'
                         : 'font-style: italic; font-weight: lighter; color: red';
-                    c.groupCollapsed('%cresult %c' +
-                        result.pluginId +
-                        '.' +
-                        result.methodName +
-                        ' (#' +
-                        result.callbackId +
-                        ')', tagStyles, 'font-style: italic; font-weight: bold; color: #444');
+                    c.groupCollapsed('%cresult %c' + result.pluginId + '.' + result.methodName + ' (#' + result.callbackId + ')', tagStyles, 'font-style: italic; font-weight: bold; color: #444');
                     if (result.success === false) {
                         c.error(result.error);
                     }
                     else {
-                        c.dir(result.data);
+                        c.dir(JSON.stringify(result.data));
                     }
                     c.groupEnd();
                 }
@@ -361,13 +341,7 @@ var nativeBridge = (function (exports) {
             };
             const createLogToNative = (c) => (call) => {
                 if (isFullConsole(c)) {
-                    c.groupCollapsed('%cnative %c' +
-                        call.pluginId +
-                        '.' +
-                        call.methodName +
-                        ' (#' +
-                        call.callbackId +
-                        ')', 'font-weight: lighter; color: gray', 'font-weight: bold; color: #000');
+                    c.groupCollapsed('%cnative %c' + call.pluginId + '.' + call.methodName + ' (#' + call.callbackId + ')', 'font-weight: lighter; color: gray', 'font-weight: bold; color: #000');
                     c.dir(call);
                     c.groupEnd();
                 }
@@ -379,9 +353,7 @@ var nativeBridge = (function (exports) {
                 if (!c) {
                     return false;
                 }
-                return (typeof c.groupCollapsed === 'function' ||
-                    typeof c.groupEnd === 'function' ||
-                    typeof c.dir === 'function');
+                return typeof c.groupCollapsed === 'function' || typeof c.groupEnd === 'function' || typeof c.dir === 'function';
             };
             const serializeConsoleMessage = (msg) => {
                 try {
@@ -395,6 +367,12 @@ var nativeBridge = (function (exports) {
                 }
             };
             const platform = getPlatformId(win);
+            if (platform == 'android' && typeof win.CapacitorSystemBarsAndroidInterface !== 'undefined') {
+                // add DOM ready listener for System Bars
+                document.addEventListener('DOMContentLoaded', function () {
+                    win.CapacitorSystemBarsAndroidInterface.onDOMReady();
+                });
+            }
             if (platform == 'android' || platform == 'ios') {
                 // patch document.cookie on Android/iOS
                 win.CapacitorCookiesDescriptor =
@@ -440,9 +418,7 @@ var nativeBridge = (function (exports) {
                         set: function (val) {
                             const cookiePairs = val.split(';');
                             const domainSection = val.toLowerCase().split('domain=')[1];
-                            const domain = cookiePairs.length > 1 &&
-                                domainSection != null &&
-                                domainSection.length > 0
+                            const domain = cookiePairs.length > 1 && domainSection != null && domainSection.length > 0
                                 ? domainSection.split(';')[0].trim()
                                 : '';
                             if (platform === 'ios') {
@@ -515,8 +491,23 @@ var nativeBridge = (function (exports) {
                             method.toLocaleUpperCase() === 'HEAD' ||
                             method.toLocaleUpperCase() === 'OPTIONS' ||
                             method.toLocaleUpperCase() === 'TRACE') {
+                            // a workaround for following android webview issue:
+                            // https://issues.chromium.org/issues/40450316
+                            // Sets the user-agent header to a custom value so that its not stripped
+                            // on its way to the native layer
+                            if (platform === 'android' && (options === null || options === void 0 ? void 0 : options.headers)) {
+                                const userAgent = headers.get('User-Agent') || headers.get('user-agent');
+                                if (userAgent !== null) {
+                                    headers.set('x-cap-user-agent', userAgent);
+                                    options.headers = headers;
+                                }
+                            }
                             if (typeof resource === 'string') {
                                 return await win.CapacitorWebFetch(createProxyUrl(resource, win), options);
+                            }
+                            else if (resource instanceof URL) {
+                                const modifiedURL = new URL(createProxyUrl(resource.toString(), win));
+                                return await win.CapacitorWebFetch(modifiedURL, options);
                             }
                             else if (resource instanceof Request) {
                                 const modifiedRequest = new Request(createProxyUrl(resource.url, win), resource);
@@ -528,16 +519,24 @@ var nativeBridge = (function (exports) {
                         try {
                             const { body } = request;
                             const optionHeaders = Object.fromEntries(request.headers.entries());
-                            const { data: requestData, type, headers, } = await convertBody((options === null || options === void 0 ? void 0 : options.body) || body || undefined, optionHeaders['Content-Type'] || optionHeaders['content-type']);
+                            const { data: requestData, type, headers: requestHeaders, } = await convertBody((options === null || options === void 0 ? void 0 : options.body) || body || undefined, optionHeaders['Content-Type'] || optionHeaders['content-type']);
+                            const nativeHeaders = Object.assign(Object.assign({}, requestHeaders), optionHeaders);
+                            if (platform === 'android') {
+                                if (headers.has('User-Agent')) {
+                                    nativeHeaders['User-Agent'] = headers.get('User-Agent');
+                                }
+                                if (headers.has('user-agent')) {
+                                    nativeHeaders['user-agent'] = headers.get('user-agent');
+                                }
+                            }
                             const nativeResponse = await cap.nativePromise('CapacitorHttp', 'request', {
                                 url: request.url,
                                 method: method,
                                 data: requestData,
                                 dataType: type,
-                                headers: Object.assign(Object.assign({}, headers), optionHeaders),
+                                headers: nativeHeaders,
                             });
-                            const contentType = nativeResponse.headers['Content-Type'] ||
-                                nativeResponse.headers['content-type'];
+                            const contentType = nativeResponse.headers['Content-Type'] || nativeResponse.headers['content-type'];
                             let data = (contentType === null || contentType === void 0 ? void 0 : contentType.startsWith('application/json'))
                                 ? JSON.stringify(nativeResponse.data)
                                 : nativeResponse.data;
@@ -579,8 +578,7 @@ var nativeBridge = (function (exports) {
                             },
                         });
                         const prototype = win.CapacitorWebXMLHttpRequest.prototype;
-                        const isProgressEventAvailable = () => typeof ProgressEvent !== 'undefined' &&
-                            ProgressEvent.prototype instanceof Event;
+                        const isProgressEventAvailable = () => typeof ProgressEvent !== 'undefined' && ProgressEvent.prototype instanceof Event;
                         // XHR patch abort
                         prototype.abort = function () {
                             if (isRelativeOrProxyUrl(this._url)) {
@@ -628,6 +626,13 @@ var nativeBridge = (function (exports) {
                         };
                         // XHR patch set request header
                         prototype.setRequestHeader = function (header, value) {
+                            // a workaround for the following android web view issue:
+                            // https://issues.chromium.org/issues/40450316
+                            // Sets the user-agent header to a custom value so that its not stripped
+                            // on its way to the native layer
+                            if (platform === 'android' && (header === 'User-Agent' || header === 'user-agent')) {
+                                header = 'x-cap-user-agent';
+                            }
                             if (isRelativeOrProxyUrl(this._url)) {
                                 return win.CapacitorWebXMLHttpRequest.setRequestHeader.call(this, header, value);
                             }
@@ -661,9 +666,12 @@ var nativeBridge = (function (exports) {
                                     },
                                 });
                                 convertBody(body).then(({ data, type, headers }) => {
-                                    const otherHeaders = this._headers != null && Object.keys(this._headers).length > 0
-                                        ? this._headers
-                                        : undefined;
+                                    let otherHeaders = this._headers != null && Object.keys(this._headers).length > 0 ? this._headers : undefined;
+                                    if (body instanceof FormData) {
+                                        if (!this._headers['Content-Type'] && !this._headers['content-type']) {
+                                            otherHeaders = Object.assign(Object.assign({}, otherHeaders), { 'Content-Type': `multipart/form-data; boundary=----WebKitFormBoundary${Math.random().toString(36).substring(2, 15)}` });
+                                        }
+                                    }
                                     // intercept request & pass to the bridge
                                     cap
                                         .nativePromise('CapacitorHttp', 'request', {
@@ -687,8 +695,7 @@ var nativeBridge = (function (exports) {
                                             }
                                             this._headers = nativeResponse.headers;
                                             this.status = nativeResponse.status;
-                                            if (this.responseType === '' ||
-                                                this.responseType === 'text') {
+                                            if (this.responseType === '' || this.responseType === 'text') {
                                                 this.response =
                                                     typeof nativeResponse.data !== 'string'
                                                         ? JSON.stringify(nativeResponse.data)
@@ -697,8 +704,7 @@ var nativeBridge = (function (exports) {
                                             else {
                                                 this.response = nativeResponse.data;
                                             }
-                                            this.responseText = ((_a = (nativeResponse.headers['Content-Type'] ||
-                                                nativeResponse.headers['content-type'])) === null || _a === void 0 ? void 0 : _a.startsWith('application/json'))
+                                            this.responseText = ((_a = (nativeResponse.headers['Content-Type'] || nativeResponse.headers['content-type'])) === null || _a === void 0 ? void 0 : _a.startsWith('application/json'))
                                                 ? JSON.stringify(nativeResponse.data)
                                                 : nativeResponse.data;
                                             this.responseURL = nativeResponse.url;
@@ -814,7 +820,7 @@ var nativeBridge = (function (exports) {
             };
             cap.logToNative = createLogToNative(win.console);
             cap.logFromNative = createLogFromNative(win.console);
-            cap.handleError = err => win.console.error(err);
+            cap.handleError = (err) => win.console.error(err);
             win.Capacitor = cap;
         };
         function initNativeBridge(win) {
@@ -823,7 +829,7 @@ var nativeBridge = (function (exports) {
             const callbacks = new Map();
             const webviewServerUrl = typeof win.WEBVIEW_SERVER_URL === 'string' ? win.WEBVIEW_SERVER_URL : '';
             cap.getServerUrl = () => webviewServerUrl;
-            cap.convertFileSrc = filePath => convertFileSrcServerUrl(webviewServerUrl, filePath);
+            cap.convertFileSrc = (filePath) => convertFileSrcServerUrl(webviewServerUrl, filePath);
             // Counter of callback ids, randomized to avoid
             // any issues during reloads if a call comes back with
             // an existing callback id from an old session
@@ -832,12 +838,12 @@ var nativeBridge = (function (exports) {
             const isNativePlatform = () => true;
             const getPlatform = () => getPlatformId(win);
             cap.getPlatform = getPlatform;
-            cap.isPluginAvailable = name => Object.prototype.hasOwnProperty.call(cap.Plugins, name);
+            cap.isPluginAvailable = (name) => Object.prototype.hasOwnProperty.call(cap.Plugins, name);
             cap.isNativePlatform = isNativePlatform;
             // create the postToNative() fn if needed
             if (getPlatformId(win) === 'android') {
                 // android platform
-                postToNative = data => {
+                postToNative = (data) => {
                     var _a;
                     try {
                         win.androidBridge.postMessage(JSON.stringify(data));
@@ -849,7 +855,7 @@ var nativeBridge = (function (exports) {
             }
             else if (getPlatformId(win) === 'ios') {
                 // ios platform
-                postToNative = data => {
+                postToNative = (data) => {
                     var _a;
                     try {
                         data.type = data.type ? data.type : 'message';
@@ -894,8 +900,7 @@ var nativeBridge = (function (exports) {
                     if (typeof postToNative === 'function') {
                         let callbackId = '-1';
                         if (storedCallback &&
-                            (typeof storedCallback.callback === 'function' ||
-                                typeof storedCallback.resolve === 'function')) {
+                            (typeof storedCallback.callback === 'function' || typeof storedCallback.resolve === 'function')) {
                             // store the call for later lookup
                             callbackId = String(++callbackIdCount);
                             callbacks.set(callbackId, storedCallback);
@@ -930,7 +935,7 @@ var nativeBridge = (function (exports) {
             /**
              * Process a response from the native layer.
              */
-            cap.fromNative = result => {
+            cap.fromNative = (result) => {
                 returnResult(result);
             };
             const returnResult = (result) => {

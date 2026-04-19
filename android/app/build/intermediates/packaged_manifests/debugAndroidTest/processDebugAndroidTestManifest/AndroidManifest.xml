@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.yourname.salesmanager.test" >
+    package="com.stepan.salesmanager.test" >
 
     <uses-sdk
         android:minSdkVersion="24"
@@ -10,8 +10,8 @@
         android:name="androidx.test.runner.AndroidJUnitRunner"
         android:functionalTest="false"
         android:handleProfiling="false"
-        android:label="Tests for com.yourname.salesmanager"
-        android:targetPackage="com.yourname.salesmanager" />
+        android:label="Tests for com.stepan.salesmanager"
+        android:targetPackage="com.stepan.salesmanager" />
 
     <queries>
         <package android:name="androidx.test.orchestrator" />

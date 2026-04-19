@@ -4,7 +4,7 @@
     "type": "PACKAGED_MANIFESTS",
     "kind": "Directory"
   },
-  "applicationId": "com.yourname.salesmanager.test",
+  "applicationId": "com.stepan.salesmanager.test",
   "variantName": "debugAndroidTest",
   "elements": [
     {

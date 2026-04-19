@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.yourname.salesmanager"
+    package="com.stepan.salesmanager"
     android:versionCode="1"
     android:versionName="1.0" >
 
@@ -13,10 +13,10 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <permission
-        android:name="com.yourname.salesmanager.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+        android:name="com.stepan.salesmanager.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
         android:protectionLevel="signature" />
 
-    <uses-permission android:name="com.yourname.salesmanager.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+    <uses-permission android:name="com.stepan.salesmanager.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
 
     <application
         android:allowBackup="true"
@@ -29,7 +29,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.yourname.salesmanager.MainActivity"
+            android:name="com.stepan.salesmanager.MainActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
             android:exported="true"
             android:label="@string/title_activity_main"
@@ -44,7 +44,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.yourname.salesmanager.fileprovider"
+            android:authorities="com.stepan.salesmanager.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true" >
             <meta-data
@@ -53,7 +53,7 @@
         </provider>
         <provider
             android:name="androidx.startup.InitializationProvider"
-            android:authorities="com.yourname.salesmanager.androidx-startup"
+            android:authorities="com.stepan.salesmanager.androidx-startup"
             android:exported="false" >
             <meta-data
                 android:name="androidx.emoji2.text.EmojiCompatInitializer"

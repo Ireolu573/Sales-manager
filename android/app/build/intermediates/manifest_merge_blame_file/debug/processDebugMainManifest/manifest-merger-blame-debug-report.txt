@@ -1,6 +1,6 @@
 1<?xml version="1.0" encoding="utf-8"?>
 2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-3    package="com.yourname.salesmanager"
+3    package="com.stepan.salesmanager"
 4    android:versionCode="1"
 5    android:versionName="1.0" >
 6
@@ -16,12 +16,12 @@
 14
 15    <permission
 15-->[androidx.core:core:1.17.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\11094a199bb7945826b161d8a9c17beb\transformed\core-1.17.0\AndroidManifest.xml:22:5-24:47
-16        android:name="com.yourname.salesmanager.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+16        android:name="com.stepan.salesmanager.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
 16-->[androidx.core:core:1.17.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\11094a199bb7945826b161d8a9c17beb\transformed\core-1.17.0\AndroidManifest.xml:23:9-81
 17        android:protectionLevel="signature" />
 17-->[androidx.core:core:1.17.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\11094a199bb7945826b161d8a9c17beb\transformed\core-1.17.0\AndroidManifest.xml:24:9-44
 18
-19    <uses-permission android:name="com.yourname.salesmanager.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+19    <uses-permission android:name="com.stepan.salesmanager.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
 19-->[androidx.core:core:1.17.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\11094a199bb7945826b161d8a9c17beb\transformed\core-1.17.0\AndroidManifest.xml:26:5-97
 19-->[androidx.core:core:1.17.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\11094a199bb7945826b161d8a9c17beb\transformed\core-1.17.0\AndroidManifest.xml:26:22-94
 20
@@ -45,7 +45,7 @@
 30-->C:\Users\stepa\Downloads\sales-manager\android\app\src\main\AndroidManifest.xml:10:9-40
 31        <activity
 31-->C:\Users\stepa\Downloads\sales-manager\android\app\src\main\AndroidManifest.xml:12:9-25:20
-32            android:name="com.yourname.salesmanager.MainActivity"
+32            android:name="com.stepan.salesmanager.MainActivity"
 32-->C:\Users\stepa\Downloads\sales-manager\android\app\src\main\AndroidManifest.xml:14:13-41
 33            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
 33-->C:\Users\stepa\Downloads\sales-manager\android\app\src\main\AndroidManifest.xml:13:13-148
@@ -72,7 +72,7 @@
 45        <provider
 46            android:name="androidx.core.content.FileProvider"
 46-->C:\Users\stepa\Downloads\sales-manager\android\app\src\main\AndroidManifest.xml:28:13-62
-47            android:authorities="com.yourname.salesmanager.fileprovider"
+47            android:authorities="com.stepan.salesmanager.fileprovider"
 47-->C:\Users\stepa\Downloads\sales-manager\android\app\src\main\AndroidManifest.xml:29:13-64
 48            android:exported="false"
 48-->C:\Users\stepa\Downloads\sales-manager\android\app\src\main\AndroidManifest.xml:30:13-37
@@ -89,7 +89,7 @@
 54-->[androidx.emoji2:emoji2:1.3.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\353d69426d62513a7e19e841051a3a44\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
 55            android:name="androidx.startup.InitializationProvider"
 55-->[androidx.emoji2:emoji2:1.3.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\353d69426d62513a7e19e841051a3a44\transformed\emoji2-1.3.0\AndroidManifest.xml:25:13-67
-56            android:authorities="com.yourname.salesmanager.androidx-startup"
+56            android:authorities="com.stepan.salesmanager.androidx-startup"
 56-->[androidx.emoji2:emoji2:1.3.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\353d69426d62513a7e19e841051a3a44\transformed\emoji2-1.3.0\AndroidManifest.xml:26:13-68
 57            android:exported="false" >
 57-->[androidx.emoji2:emoji2:1.3.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\353d69426d62513a7e19e841051a3a44\transformed\emoji2-1.3.0\AndroidManifest.xml:27:13-37

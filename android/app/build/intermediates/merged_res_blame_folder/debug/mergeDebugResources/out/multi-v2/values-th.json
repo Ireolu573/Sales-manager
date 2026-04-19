@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.yourname.salesmanager.app-mergeDebugResources-26:/values-th/values-th.xml",
+            "outputFile": "com.stepan.salesmanager.app-mergeDebugResources-26:/values-th/values-th.xml",
             "map": [
                 {
                     "source": "C:\\Users\\stepa\\.gradle\\caches\\8.14.3\\transforms\\11094a199bb7945826b161d8a9c17beb\\transformed\\core-1.17.0\\res\\values-th\\values-th.xml",

@@ -15,6 +15,7 @@ ADDED from C:\Users\stepa\Downloads\sales-manager\android\app\src\main\AndroidMa
 INJECTED from C:\Users\stepa\Downloads\sales-manager\android\app\src\main\AndroidManifest.xml:2:1-41:12
 INJECTED from C:\Users\stepa\Downloads\sales-manager\android\app\src\main\AndroidManifest.xml:2:1-41:12
 INJECTED from C:\Users\stepa\Downloads\sales-manager\android\app\src\main\AndroidManifest.xml:2:1-41:12
+MERGED from [:capacitor-app] C:\Users\stepa\Downloads\sales-manager\node_modules\@capacitor\app\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:2:1-7:12
 MERGED from [:capacitor-android] C:\Users\stepa\Downloads\sales-manager\node_modules\@capacitor\android\capacitor\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:2:1-7:12
 MERGED from [:capacitor-cordova-android-plugins] C:\Users\stepa\Downloads\sales-manager\android\capacitor-cordova-android-plugins\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:2:1-11:12
 MERGED from [org.apache.cordova:framework:14.0.1] C:\Users\stepa\.gradle\caches\8.14.3\transforms\e47013dec160bb8e8e78795049f410c2\transformed\framework-14.0.1\AndroidManifest.xml:20:1-27:12
@@ -92,7 +93,7 @@ MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\st
 		ADDED from C:\Users\stepa\Downloads\sales-manager\android\app\src\main\AndroidManifest.xml:5:9-35
 	android:theme
 		ADDED from C:\Users\stepa\Downloads\sales-manager\android\app\src\main\AndroidManifest.xml:10:9-40
-activity#com.yourname.salesmanager.MainActivity
+activity#com.stepan.salesmanager.MainActivity
 ADDED from C:\Users\stepa\Downloads\sales-manager\android\app\src\main\AndroidManifest.xml:12:9-25:20
 	android:label
 		ADDED from C:\Users\stepa\Downloads\sales-manager\android\app\src\main\AndroidManifest.xml:15:13-56
@@ -130,6 +131,8 @@ uses-sdk
 INJECTED from C:\Users\stepa\Downloads\sales-manager\android\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\stepa\Downloads\sales-manager\android\app\src\main\AndroidManifest.xml
 INJECTED from C:\Users\stepa\Downloads\sales-manager\android\app\src\main\AndroidManifest.xml
+MERGED from [:capacitor-app] C:\Users\stepa\Downloads\sales-manager\node_modules\@capacitor\app\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:capacitor-app] C:\Users\stepa\Downloads\sales-manager\node_modules\@capacitor\app\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
 MERGED from [:capacitor-android] C:\Users\stepa\Downloads\sales-manager\node_modules\@capacitor\android\capacitor\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
 MERGED from [:capacitor-android] C:\Users\stepa\Downloads\sales-manager\node_modules\@capacitor\android\capacitor\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
 MERGED from [:capacitor-cordova-android-plugins] C:\Users\stepa\Downloads\sales-manager\android\capacitor-cordova-android-plugins\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:6:5-44
@@ -234,7 +237,7 @@ ADDED from [androidx.core:core:1.17.0] C:\Users\stepa\.gradle\caches\8.14.3\tran
 		ADDED from [androidx.core:core:1.17.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\11094a199bb7945826b161d8a9c17beb\transformed\core-1.17.0\AndroidManifest.xml:24:9-44
 	android:name
 		ADDED from [androidx.core:core:1.17.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\11094a199bb7945826b161d8a9c17beb\transformed\core-1.17.0\AndroidManifest.xml:23:9-81
-permission#com.yourname.salesmanager.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+permission#com.stepan.salesmanager.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.17.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\11094a199bb7945826b161d8a9c17beb\transformed\core-1.17.0\AndroidManifest.xml:22:5-24:47
 	android:protectionLevel
 		ADDED from [androidx.core:core:1.17.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\11094a199bb7945826b161d8a9c17beb\transformed\core-1.17.0\AndroidManifest.xml:24:9-44
@@ -244,7 +247,7 @@ uses-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.17.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\11094a199bb7945826b161d8a9c17beb\transformed\core-1.17.0\AndroidManifest.xml:26:5-97
 	android:name
 		ADDED from [androidx.core:core:1.17.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\11094a199bb7945826b161d8a9c17beb\transformed\core-1.17.0\AndroidManifest.xml:26:22-94
-uses-permission#com.yourname.salesmanager.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+uses-permission#com.stepan.salesmanager.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.17.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\11094a199bb7945826b161d8a9c17beb\transformed\core-1.17.0\AndroidManifest.xml:26:5-97
 	android:name
 		ADDED from [androidx.core:core:1.17.0] C:\Users\stepa\.gradle\caches\8.14.3\transforms\11094a199bb7945826b161d8a9c17beb\transformed\core-1.17.0\AndroidManifest.xml:26:22-94

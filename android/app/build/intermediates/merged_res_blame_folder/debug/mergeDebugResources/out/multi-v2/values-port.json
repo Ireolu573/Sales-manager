@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.yourname.salesmanager.app-mergeDebugResources-26:/values-port/values-port.xml",
+            "outputFile": "com.stepan.salesmanager.app-mergeDebugResources-26:/values-port/values-port.xml",
             "map": [
                 {
                     "source": "C:\\Users\\stepa\\.gradle\\caches\\8.14.3\\transforms\\c3f09e8abd8bb01c9314454bd06bb337\\transformed\\appcompat-1.7.1\\res\\values-port\\values-port.xml",

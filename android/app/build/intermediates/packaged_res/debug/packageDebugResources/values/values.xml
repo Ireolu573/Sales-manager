@@ -2,8 +2,8 @@
 <resources>
     <color name="ic_launcher_background">#FFFFFF</color>
     <string name="app_name">Sales Manager</string>
-    <string name="custom_url_scheme">com.yourname.salesmanager</string>
-    <string name="package_name">com.yourname.salesmanager</string>
+    <string name="custom_url_scheme">com.stepan.salesmanager</string>
+    <string name="package_name">com.stepan.salesmanager</string>
     <string name="title_activity_main">Sales Manager</string>
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         

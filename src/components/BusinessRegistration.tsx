@@ -12,6 +12,16 @@ interface Props {
   onComplete: () => void
 }
 
+// Default permissions for new staff members
+const DEFAULT_STAFF_PERMISSIONS = {
+  can_record_sales: true,
+  can_view_history: true,
+  can_view_stock: false,
+  can_add_stock: false,
+  can_view_analytics: false,
+  can_manage_credit: false,
+}
+
 export default function BusinessRegistration({ userId, email, onComplete }: Props) {
   const [companyName, setCompanyName] = useState('')
   const [appName, setAppName] = useState('Sales Manager')
@@ -39,7 +49,18 @@ export default function BusinessRegistration({ userId, email, onComplete }: Prop
 
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ tenant_id: tenant.id, is_admin: true })
+        .update({
+          tenant_id: tenant.id,
+          is_admin: true,
+          permissions: {
+            can_record_sales: true,
+            can_view_history: true,
+            can_view_stock: true,
+            can_add_stock: true,
+            can_view_analytics: true,
+            can_manage_credit: true,
+          }
+        })
         .eq('id', userId)
 
       if (profileError) throw profileError
@@ -72,17 +93,24 @@ export default function BusinessRegistration({ userId, email, onComplete }: Prop
     setError('')
 
     try {
+      // Use maybeSingle() instead of single() so it returns null instead of throwing
       const { data: tenant, error: tenantError } = await supabase
         .from('tenants')
         .select('id')
         .eq('invite_code', joinCode.trim().toLowerCase())
-        .single()
+        .maybeSingle()
 
-      if (tenantError) throw new Error('Invalid invite code. Please check and try again.')
+      if (tenantError) throw new Error('Something went wrong. Please try again.')
+      if (!tenant) throw new Error('Invalid invite code. Please check and try again.')
 
+      // Link profile to tenant AND set default permissions so tabs are visible
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ tenant_id: tenant.id })
+        .update({
+          tenant_id: tenant.id,
+          is_admin: false,
+          permissions: DEFAULT_STAFF_PERMISSIONS,
+        })
         .eq('id', userId)
 
       if (profileError) throw profileError
@@ -108,7 +136,7 @@ export default function BusinessRegistration({ userId, email, onComplete }: Prop
 
         <div className="flex bg-muted rounded-lg p-1 mb-6">
           <button
-            onClick={() => setStep('create')}
+            onClick={() => { setStep('create'); setError('') }}
             className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
               step === 'create' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground'
             }`}
@@ -116,7 +144,7 @@ export default function BusinessRegistration({ userId, email, onComplete }: Prop
             Create Business
           </button>
           <button
-            onClick={() => setStep('join')}
+            onClick={() => { setStep('join'); setError('') }}
             className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
               step === 'join' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground'
             }`}
@@ -159,7 +187,16 @@ export default function BusinessRegistration({ userId, email, onComplete }: Prop
               <form onSubmit={handleJoin} className="space-y-4">
                 <div className="space-y-2">
                   <Label>Invite Code</Label>
-                  <Input value={joinCode} onChange={e => setJoinCode(e.target.value)} placeholder="Enter invite code from your admin" required className="font-mono tracking-wider text-center text-lg" />
+                  <Input
+                    value={joinCode}
+                    onChange={e => setJoinCode(e.target.value)}
+                    placeholder="Enter invite code from your admin"
+                    required
+                    className="font-mono tracking-wider text-center text-lg"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                  />
                   <p className="text-xs text-muted-foreground">Ask your business admin for the invite code</p>
                 </div>
                 {error && <p className="text-destructive text-sm font-medium">{error}</p>}
