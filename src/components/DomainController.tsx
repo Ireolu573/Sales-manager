@@ -153,33 +153,23 @@ export default function DomainController({ userId, tenantId, company, onClose, o
     setStaff(prev => prev.map(s => s.id === staffId ? { ...s, permissions: newPerms } : s))
   }
 
-  const deleteUser = async (uid: string, email: string) => {
-  if (!confirm(`Remove ${email} from your business permanently?`)) return
+  const deleteCompany = async () => {
+  if (deleteConfirmText !== company.company_name) return
+  setDeletingCompany(true)
   try {
-    // Use getUser() + refreshSession() to ensure we have a valid token
-    const { data: { session }, error: sessionError } = await supabase.auth.refreshSession()
-    if (sessionError || !session?.access_token) {
-      toast({ title: 'Error', description: 'Session expired. Please log in again.', variant: 'destructive' })
-      return
-    }
-    const res = await fetch(`${supabaseUrl}/functions/v1/delete-user`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ userId: uid }),
+    const { data, error } = await supabase.functions.invoke('delete-user', {
+      body: { deleteTenant: true, tenantId },
     })
-    const result = await res.json()
-    if (result.error) {
-      toast({ title: 'Error', description: result.error, variant: 'destructive' })
+    if (error || data?.error) {
+      toast({ title: 'Error', description: error?.message || data?.error, variant: 'destructive' })
+      setDeletingCompany(false)
     } else {
-      setStaff(prev => prev.filter(s => s.id !== uid))
-      toast({ title: 'User deleted successfully' })
+      toast({ title: 'Company deleted', description: 'Signing you out...' })
+      setTimeout(() => supabase.auth.signOut(), 1500)
     }
-  } catch {
-    toast({ title: 'Error', description: 'Failed to delete user', variant: 'destructive' })
+  } catch (err: any) {
+    toast({ title: 'Error', description: err.message || 'Failed to delete company', variant: 'destructive' })
+    setDeletingCompany(false)
   }
 }
   const deleteCompany = async () => {
