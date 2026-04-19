@@ -1,223 +1,514 @@
-import { useState, useEffect } from 'react'
-import { getProductsForTenant, insertStockRecord, getStockRecordsForUser } from '@/lib/tenant-queries'
+import { useState, useEffect, useRef } from 'react'
+import { getProductsForTenant, insertSale } from '@/lib/tenant-queries'
 import { supabase } from '@/integrations/supabase/client'
-import type { Product, ProductUnit, StockRecord } from '@/lib/types'
+import type { Product, ProductUnit, PaymentMethod } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Package, PlusCircle, Trash2 } from 'lucide-react'
+import { Textarea } from '@/components/ui/textarea'
+import { PlusCircle, ShoppingCart, MessageCircle, Copy, Check, X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
 interface Props {
   userId: string
   tenantId: string
-  isAdmin: boolean
+  refreshKey?: number
+  onSaleAdded: () => void
 }
 
-export default function StockForm({ userId, tenantId, isAdmin }: Props) {
+const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: string }[] = [
+  { value: 'cash', label: 'Cash', icon: '💵' },
+  { value: 'transfer', label: 'Transfer', icon: '🏦' },
+  { value: 'pos', label: 'POS', icon: '💳' },
+  { value: 'credit', label: 'Credit', icon: '📋' },
+]
+
+const PAYMENT_BADGE: Record<string, { bg: string; color: string }> = {
+  cash:     { bg: '#EAF3DE', color: '#3B6D11' },
+  transfer: { bg: '#E6F1FB', color: '#185FA5' },
+  pos:      { bg: '#EEEDFE', color: '#534AB7' },
+  credit:   { bg: '#FAEEDA', color: '#854F0B' },
+}
+
+export default function SaleForm({ userId, tenantId, refreshKey, onSaleAdded }: Props) {
   const { toast } = useToast()
   const [products, setProducts] = useState<Product[]>([])
-  const [records, setRecords] = useState<StockRecord[]>([])
   const [productId, setProductId] = useState('')
   const [selectedUnit, setSelectedUnit] = useState<ProductUnit | null>(null)
   const [quantity, setQuantity] = useState('')
-  const [costPrice, setCostPrice] = useState('')
-  const [stockDate, setStockDate] = useState(new Date().toISOString().split('T')[0])
+  const [unitPrice, setUnitPrice] = useState('')
+  const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0])
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
+  const [customerName, setCustomerName] = useState('')
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [lastSale, setLastSale] = useState<any>(null)
+  const [copied, setCopied] = useState(false)
+  const [company, setCompany] = useState<{ name: string; emoji: string; color: string }>({
+    name: '', emoji: '🏪', color: '#d97706'
+  })
 
-  const totalCost = Number(quantity) * Number(costPrice) || 0
-  const selectedProduct = products.find(p => p.id === productId)
-  const units = selectedProduct?.product_units || []
-
-  const fetchRecords = () => {
-    getStockRecordsForUser(userId, tenantId).then(({ data }) => {
-      if (data) setRecords(data as unknown as StockRecord[])
-    })
-  }
+  const [savedCustomers, setSavedCustomers] = useState<string[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const customerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    getProductsForTenant(tenantId).then(({ data }) => { if (data) setProducts(data) })
-    fetchRecords()
-  }, [userId, tenantId])
+    getProductsForTenant(tenantId).then(({ data }) => {
+      if (data) setProducts(data)
+    })
+    supabase
+      .from('sales')
+      .select('customer_name')
+      .eq('tenant_id', tenantId)
+      .not('customer_name', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(200)
+      .then(({ data }) => {
+        if (data) {
+          const unique = [...new Set(data.map((s: any) => s.customer_name).filter(Boolean))] as string[]
+          setSavedCustomers(unique)
+        }
+      })
+    supabase
+      .from('company_settings')
+      .select('company_name, logo_emoji, brand_color')
+      .eq('tenant_id', tenantId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setCompany({
+          name: data.company_name || '',
+          emoji: data.logo_emoji || '🏪',
+          color: data.brand_color || '#d97706',
+        })
+      })
+  }, [tenantId, refreshKey])
 
-  const handleProductChange = (id: string) => {
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (customerRef.current && !customerRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const total = Number(quantity) * Number(unitPrice) || 0
+  const selectedProduct = products.find(p => p.id === productId)
+
+  const filteredCustomers = savedCustomers.filter(c =>
+    customerName
+      ? c.toLowerCase().includes(customerName.toLowerCase()) && c !== customerName
+      : true
+  )
+
+  const handleProductSelect = (id: string) => {
     setProductId(id)
     setSelectedUnit(null)
-    const product = products.find(p => p.id === id)
-    if (product?.product_units?.length) setSelectedUnit(product.product_units[0])
+    setUnitPrice('')
+  }
+
+  const handleUnitSelect = (unitId: string) => {
+    const product = products.find(p => p.id === productId)
+    const unit = product?.product_units.find(u => u.id === unitId) || null
+    setSelectedUnit(unit)
+    setUnitPrice(unit ? String(unit.unit_price) : '')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedProduct) return
+    if (!selectedProduct || !selectedUnit) return
     setLoading(true)
 
-    const { error } = await insertStockRecord({
+    const saleData = {
       product_id: productId,
       item_name: selectedProduct.name,
-      unit_label: selectedUnit?.unit_label || null,
+      unit_label: selectedUnit.unit_label,
       quantity: Number(quantity),
-      cost_price: Number(costPrice),
-      stock_date: stockDate,
+      unit_price: Number(unitPrice),
+      total_amount: total,
+      sale_date: saleDate,
+      payment_method: paymentMethod,
+      customer_name: customerName || null,
       notes: notes || null,
-    }, tenantId, userId)
+    }
 
+    const { error } = await insertSale(saleData, tenantId, userId)
     setLoading(false)
 
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' })
     } else {
-      toast({ title: 'Stock recorded!', description: `${selectedProduct.name} — ₦${totalCost.toLocaleString()}` })
-      setQuantity(''); setCostPrice(''); setNotes(''); setSelectedUnit(null); setProductId('')
-      fetchRecords()
+      setLastSale({ ...saleData, total_amount: total, recorded_at: new Date() })
+      if (customerName && !savedCustomers.includes(customerName)) {
+        setSavedCustomers(prev => [customerName, ...prev])
+      }
+      setQuantity('')
+      setUnitPrice('')
+      setCustomerName('')
+      setNotes('')
+      setSelectedUnit(null)
+      setProductId('')
+      onSaleAdded()
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this stock record?')) return
-    setDeletingId(id)
-    const { error } = await supabase.from('stock_records').delete().eq('id', id)
-    setDeletingId(null)
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' })
-    } else {
-      setRecords(prev => prev.filter(r => r.id !== id))
-      toast({ title: 'Stock record deleted' })
-    }
+  const buildReceiptText = () => {
+    if (!lastSale) return ''
+    const date = new Date(lastSale.sale_date).toLocaleDateString('en-NG', {
+      day: 'numeric', month: 'short', year: 'numeric'
+    })
+    const time = lastSale.recorded_at
+      ? new Date(lastSale.recorded_at).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit', hour12: true })
+      : ''
+    const pm = PAYMENT_METHODS.find(m => m.value === lastSale.payment_method)
+    return [
+      `🧾 *SALES RECEIPT*`,
+      company.name ? `${company.emoji} *${company.name}*` : '',
+      `━━━━━━━━━━━━━━━━━━`,
+      `📦 *${lastSale.item_name}*`,
+      `   ${lastSale.quantity} ${lastSale.unit_label} × ₦${Number(lastSale.unit_price).toLocaleString()}`,
+      `━━━━━━━━━━━━━━━━━━`,
+      `💰 *Total: ₦${Number(lastSale.total_amount).toLocaleString()}*`,
+      `${pm?.icon || ''} Payment: ${lastSale.payment_method.toUpperCase()}`,
+      lastSale.customer_name ? `👤 Customer: ${lastSale.customer_name}` : '',
+      `📅 ${date}${time ? ' · ' + time : ''}`,
+      lastSale.notes ? `📝 ${lastSale.notes}` : '',
+      `━━━━━━━━━━━━━━━━━━`,
+      `Thank you for your patronage! 🙏`,
+    ].filter(Boolean).join('\n')
   }
+
+  const sendWhatsApp = () => {
+    window.open(`https://wa.me/?text=${encodeURIComponent(buildReceiptText())}`, '_blank')
+  }
+
+  const copyReceipt = async () => {
+    await navigator.clipboard.writeText(buildReceiptText())
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+    toast({ title: 'Receipt copied!' })
+  }
+
+  // Format date/time for receipt display
+  const receiptDate = lastSale
+    ? new Date(lastSale.sale_date).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' })
+    : ''
+  const receiptTime = lastSale?.recorded_at
+    ? new Date(lastSale.recorded_at).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit', hour12: true })
+    : ''
+  const badge = lastSale ? PAYMENT_BADGE[lastSale.payment_method] || PAYMENT_BADGE.cash : null
+  const pm = lastSale ? PAYMENT_METHODS.find(m => m.value === lastSale.payment_method) : null
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-          <Package className="w-5 h-5 text-primary" />
+          <ShoppingCart className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h2 className="font-bold text-foreground text-lg">Stock Management</h2>
-          <p className="text-sm text-muted-foreground">Track inventory purchases</p>
+          <h2 className="font-bold text-foreground text-lg">Record Sale</h2>
+          <p className="text-sm text-muted-foreground">Add a new transaction</p>
         </div>
       </div>
 
-      {isAdmin && (
-        <Card className="border-border/50 shadow-sm">
-          <CardContent className="p-5">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Product</Label>
-                <Select value={productId} onValueChange={handleProductChange}>
-                  <SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger>
-                  <SelectContent>
-                    {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+      {/* ── RECEIPT CARD ── */}
+      {lastSale && (
+        <div className="flex justify-center">
+          <div style={{
+            width: '100%',
+            maxWidth: '340px',
+            background: 'var(--color-background-primary)',
+            borderRadius: '16px',
+            border: '0.5px solid var(--color-border-tertiary)',
+            overflow: 'hidden',
+            fontFamily: 'var(--font-sans)',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          }}>
+            {/* Header with brand color */}
+            <div style={{
+              background: company.color,
+              padding: '20px 16px',
+              textAlign: 'center',
+              color: 'white',
+              position: 'relative',
+            }}>
+              <button
+                onClick={() => setLastSale(null)}
+                style={{
+                  position: 'absolute', top: 10, right: 10,
+                  background: 'rgba(255,255,255,0.2)',
+                  border: 'none', borderRadius: '50%',
+                  width: 24, height: 24, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'white', fontSize: 14,
+                }}
+              >
+                ×
+              </button>
+              <div style={{ fontSize: 24, marginBottom: 4 }}>{company.emoji}</div>
+              {company.name && (
+                <div style={{ fontSize: 13, fontWeight: 500, opacity: 0.95, letterSpacing: '0.04em' }}>
+                  {company.name}
+                </div>
+              )}
+              <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2 }}>Sales Receipt</div>
+            </div>
+
+            {/* Dashed divider */}
+            <div style={{ borderBottom: '1px dashed var(--color-border-tertiary)', margin: '0 16px' }} />
+
+            {/* Body */}
+            <div style={{ padding: '16px' }}>
+              {/* Total */}
+              <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                <div style={{ fontSize: 32, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+                  ₦{Number(lastSale.total_amount).toLocaleString()}
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 2 }}>Total Amount</div>
               </div>
 
-              {productId && units.length > 0 && (
-                <div className="space-y-2">
-                  <Label>Unit</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {units.map(u => (
-                      <button key={u.id} type="button" onClick={() => setSelectedUnit(u)}
-                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
-                          selectedUnit?.id === u.id
-                            ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                            : 'bg-background text-muted-foreground border-border hover:border-primary/50'
-                        }`}>
-                        {u.unit_label}
-                        {u.unit_price ? <span className="ml-1.5 opacity-70 text-xs">₦{Number(u.unit_price).toLocaleString()}</span> : null}
-                      </button>
-                    ))}
+              {/* Item details */}
+              <div style={{
+                background: 'var(--color-background-secondary)',
+                borderRadius: 10,
+                padding: '12px',
+                marginBottom: 10,
+              }}>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)', marginBottom: 8 }}>
+                  {lastSale.item_name}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5 }}>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Quantity</span>
+                  <span style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>
+                    {lastSale.quantity} {lastSale.unit_label}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5 }}>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Unit Price</span>
+                  <span style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>
+                    ₦{Number(lastSale.unit_price).toLocaleString()}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, alignItems: 'center' }}>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Payment</span>
+                  <span style={{
+                    background: badge?.bg, color: badge?.color,
+                    padding: '2px 10px', borderRadius: 20, fontWeight: 500, fontSize: 11,
+                  }}>
+                    {pm?.icon} {lastSale.payment_method.charAt(0).toUpperCase() + lastSale.payment_method.slice(1)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Customer + Date grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+                {lastSale.customer_name && (
+                  <div style={{ background: 'var(--color-background-secondary)', borderRadius: 10, padding: '10px 12px' }}>
+                    <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Customer</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-primary)', marginTop: 2 }}>
+                      {lastSale.customer_name}
+                    </div>
                   </div>
+                )}
+                <div style={{
+                  background: 'var(--color-background-secondary)', borderRadius: 10, padding: '10px 12px',
+                  gridColumn: lastSale.customer_name ? 'auto' : '1 / -1',
+                }}>
+                  <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Date & Time</div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-primary)', marginTop: 2 }}>
+                    {receiptDate}{receiptTime && <span style={{ fontWeight: 400, color: 'var(--color-text-secondary)' }}> · {receiptTime}</span>}
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes */}
+              {lastSale.notes && (
+                <div style={{
+                  background: 'var(--color-background-secondary)', borderRadius: 10,
+                  padding: '10px 12px', marginBottom: 10,
+                }}>
+                  <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Note</div>
+                  <div style={{ fontSize: 12, color: 'var(--color-text-primary)', marginTop: 2 }}>{lastSale.notes}</div>
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Quantity</Label>
-                  <Input type="number" min="1" value={quantity} onChange={e => setQuantity(e.target.value)} placeholder="0" required />
-                </div>
-                <div className="space-y-2">
-                  <Label>Cost Price (₦)</Label>
-                  <Input type="number" min="0" step="0.01" value={costPrice} onChange={e => setCostPrice(e.target.value)} placeholder="0.00" required />
-                </div>
-              </div>
-
-              {totalCost > 0 && (
-                <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 text-center">
-                  <span className="text-sm text-muted-foreground">Total Cost: </span>
-                  <span className="text-xl font-bold text-primary">₦{totalCost.toLocaleString()}</span>
+              {/* Credit warning */}
+              {lastSale.payment_method === 'credit' && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  fontSize: 12, color: '#854F0B', marginBottom: 10, fontWeight: 500,
+                }}>
+                  <div style={{
+                    width: 6, height: 6, borderRadius: '50%', background: '#EF9F27',
+                  }} />
+                  Credit sale — payment pending
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label>Date</Label>
-                <Input type="date" value={stockDate} onChange={e => setStockDate(e.target.value)} />
+              {/* Dashed divider + thank you */}
+              <div style={{ borderTop: '1px dashed var(--color-border-tertiary)', paddingTop: 10, marginBottom: 12, textAlign: 'center' }}>
+                <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Thank you for your patronage! 🙏</div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Notes <span className="text-muted-foreground text-xs">(optional)</span></Label>
-                <Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="e.g. supplier name, batch info" />
+              {/* Action buttons */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={sendWhatsApp}
+                  style={{
+                    flex: 1, background: '#25D366', color: 'white',
+                    border: 'none', borderRadius: 10, padding: '10px 0',
+                    fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.998 2.002C6.478 2.002 2 6.48 2 12c0 1.85.502 3.58 1.378 5.065L2 22l5.085-1.344A9.955 9.955 0 0011.998 22C17.52 22 22 17.52 22 12s-4.48-9.998-10.002-9.998zm0 18.18a8.18 8.18 0 01-4.17-1.14l-.3-.178-3.017.797.808-2.947-.196-.31A8.19 8.19 0 013.82 12c0-4.508 3.67-8.178 8.178-8.178S20.178 7.492 20.178 12c0 4.508-3.67 8.182-8.18 8.182z"/></svg>
+                  WhatsApp
+                </button>
+                <button
+                  onClick={copyReceipt}
+                  style={{
+                    flex: 1, background: 'var(--color-background-secondary)',
+                    color: 'var(--color-text-primary)',
+                    border: '0.5px solid var(--color-border-tertiary)',
+                    borderRadius: 10, padding: '10px 0',
+                    fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  }}
+                >
+                  {copied ? '✓ Copied!' : '⎘ Copy'}
+                </button>
               </div>
-
-              <Button type="submit" disabled={loading || !productId || !quantity || !costPrice} className="w-full h-11 gap-2 font-semibold">
-                <PlusCircle className="w-4 h-4" />
-                {loading ? 'Recording...' : 'Add Stock'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Stock records as cards */}
-      {records.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Recent Stock Entries</p>
-          {records.map(r => (
-            <Card key={r.id} className="border-border/50 shadow-sm">
-              <CardContent className="p-3.5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-base">📦</div>
-                    <div className="min-w-0">
-                      <div className="font-semibold text-sm text-foreground truncate">{r.item_name}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        {r.quantity}{r.unit_label ? ` ${r.unit_label}` : ' units'} ·{' '}
-                        {new Date(r.stock_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </div>
-                      {r.notes && <div className="text-xs text-muted-foreground/70 mt-0.5 truncate">{r.notes}</div>}
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-2 shrink-0">
-                    <div className="text-right">
-                      <div className="font-bold text-sm text-foreground">₦{Number(r.total_cost).toLocaleString()}</div>
-                      <div className="text-xs text-muted-foreground">₦{Number(r.cost_price).toLocaleString()}/unit</div>
-                    </div>
-                    {isAdmin && (
-                      <button
-                        onClick={() => handleDelete(r.id)}
-                        disabled={deletingId === r.id}
-                        className="text-destructive/60 hover:text-destructive transition-colors p-1 rounded-lg hover:bg-destructive/10 disabled:opacity-50"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+            </div>
+          </div>
         </div>
       )}
 
-      {records.length === 0 && !isAdmin && (
-        <Card className="border-border/50">
-          <CardContent className="py-12 text-center text-muted-foreground text-sm">No stock records yet</CardContent>
-        </Card>
-      )}
+      {/* ── SALE FORM ── */}
+      <Card className="border-border/50 shadow-sm">
+        <CardContent className="p-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Product</Label>
+                <Select value={productId} onValueChange={handleProductSelect}>
+                  <SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger>
+                  <SelectContent>
+                    {products.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Unit</Label>
+                <Select value={selectedUnit?.id || ''} onValueChange={handleUnitSelect} disabled={!productId}>
+                  <SelectTrigger><SelectValue placeholder="Select unit" /></SelectTrigger>
+                  <SelectContent>
+                    {selectedProduct?.product_units.map(u => (
+                      <SelectItem key={u.id} value={u.id}>
+                        {u.unit_label} — ₦{u.unit_price.toLocaleString()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Quantity</Label>
+                <Input type="number" min="1" value={quantity} onChange={e => setQuantity(e.target.value)} placeholder="0" required />
+              </div>
+              <div className="space-y-2">
+                <Label>Unit Price (₦)</Label>
+                <Input type="number" min="0" step="0.01" value={unitPrice} onChange={e => setUnitPrice(e.target.value)} placeholder="0.00" required />
+              </div>
+            </div>
+
+            {total > 0 && (
+              <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 text-center">
+                <span className="text-sm text-muted-foreground">Total: </span>
+                <span className="text-xl font-bold text-primary">₦{total.toLocaleString()}</span>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label>Date</Label>
+              <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Payment Method</Label>
+              <div className="grid grid-cols-4 gap-2">
+                {PAYMENT_METHODS.map(m => (
+                  <button
+                    key={m.value}
+                    type="button"
+                    onClick={() => setPaymentMethod(m.value)}
+                    className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border text-xs font-medium transition-all ${
+                      paymentMethod === m.value
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-border text-muted-foreground hover:border-primary/30'
+                    }`}
+                  >
+                    <span className="text-lg">{m.icon}</span>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2" ref={customerRef}>
+              <Label>
+                Customer Name
+                {paymentMethod === 'credit'
+                  ? <span className="text-destructive ml-1">*</span>
+                  : <span className="text-muted-foreground text-xs ml-1">(optional)</span>
+                }
+                {savedCustomers.length > 0 && (
+                  <span className="text-xs text-primary ml-2">📖 {savedCustomers.length} saved</span>
+                )}
+              </Label>
+              <div className="relative">
+                <Input
+                  value={customerName}
+                  onChange={e => { setCustomerName(e.target.value); setShowSuggestions(true) }}
+                  onFocus={() => setShowSuggestions(true)}
+                  placeholder="e.g. Mr. Emeka"
+                  required={paymentMethod === 'credit'}
+                />
+                {showSuggestions && filteredCustomers.length > 0 && (
+                  <div className="absolute z-10 w-full bg-card border border-border rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
+                    {filteredCustomers.slice(0, 8).map(c => (
+                      <button
+                        key={c}
+                        type="button"
+                        onMouseDown={() => { setCustomerName(c); setShowSuggestions(false) }}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-muted text-foreground border-b border-border/50 last:border-0"
+                      >
+                        👤 {c}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Notes (optional)</Label>
+              <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Add notes..." rows={2} />
+            </div>
+
+            <Button type="submit" disabled={loading || !selectedUnit || !quantity} className="w-full h-11 gap-2 font-semibold">
+              <PlusCircle className="w-4 h-4" />
+              {loading ? 'Recording...' : 'Record Sale'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   )
 }
