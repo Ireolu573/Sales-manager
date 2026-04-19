@@ -61,12 +61,9 @@ export default function DomainController({ userId, tenantId, company, onClose, o
   const [copied, setCopied] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
 
-  // Delete company state
   const [showDangerZone, setShowDangerZone] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [deletingCompany, setDeletingCompany] = useState(false)
-
-  const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL
 
   useEffect(() => {
     getProductsForTenant(tenantId).then(({ data }) => { if (data) setProducts(data) })
@@ -149,58 +146,47 @@ export default function DomainController({ userId, tenantId, company, onClose, o
     const member = staff.find(s => s.id === staffId)
     if (!member) return
     const newPerms = { ...member.permissions, [perm]: value }
-    await supabase.from('profiles').update({ permissions: newPerms }).eq('id', staffId)
-    setStaff(prev => prev.map(s => s.id === staffId ? { ...s, permissions: newPerms } : s))
+    const { error } = await supabase.from('profiles').update({ permissions: newPerms }).eq('id', staffId)
+    if (error) {
+      toast({ title: 'Error saving permission', description: error.message, variant: 'destructive' })
+    } else {
+      setStaff(prev => prev.map(s => s.id === staffId ? { ...s, permissions: newPerms } : s))
+    }
   }
 
-  const deleteCompany = async () => {
-  if (deleteConfirmText !== company.company_name) return
-  setDeletingCompany(true)
-  try {
-    const { data, error } = await supabase.functions.invoke('delete-user', {
-      body: { deleteTenant: true, tenantId },
-    })
-    if (error || data?.error) {
-      toast({ title: 'Error', description: error?.message || data?.error, variant: 'destructive' })
-      setDeletingCompany(false)
-    } else {
-      toast({ title: 'Company deleted', description: 'Signing you out...' })
-      setTimeout(() => supabase.auth.signOut(), 1500)
+  const deleteUser = async (uid: string, email: string) => {
+    if (!confirm(`Remove ${email} from your business permanently?`)) return
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId: uid },
+      })
+      if (error || data?.error) {
+        toast({ title: 'Error', description: error?.message || data?.error, variant: 'destructive' })
+      } else {
+        setStaff(prev => prev.filter(s => s.id !== uid))
+        toast({ title: 'User deleted successfully' })
+      }
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to delete user', variant: 'destructive' })
     }
-  } catch (err: any) {
-    toast({ title: 'Error', description: err.message || 'Failed to delete company', variant: 'destructive' })
-    setDeletingCompany(false)
   }
-}
+
   const deleteCompany = async () => {
     if (deleteConfirmText !== company.company_name) return
     setDeletingCompany(true)
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.refreshSession()
-if (sessionError || !session?.access_token) {
-  toast({ title: 'Error', description: 'Session expired. Please log in again.', variant: 'destructive' })
-  setDeletingCompany(false)
-  return
-}
-const res = await fetch(`${supabaseUrl}/functions/v1/delete-user`, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-    'Authorization': `Bearer ${session.access_token}`,
-  },
-  body: JSON.stringify({ deleteTenant: true, tenantId }),
-})
-      const result = await res.json()
-      if (result.error) {
-        toast({ title: 'Error', description: result.error, variant: 'destructive' })
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { deleteTenant: true, tenantId },
+      })
+      if (error || data?.error) {
+        toast({ title: 'Error', description: error?.message || data?.error, variant: 'destructive' })
         setDeletingCompany(false)
       } else {
         toast({ title: 'Company deleted', description: 'Signing you out...' })
         setTimeout(() => supabase.auth.signOut(), 1500)
       }
-    } catch {
-      toast({ title: 'Error', description: 'Failed to delete company', variant: 'destructive' })
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to delete company', variant: 'destructive' })
       setDeletingCompany(false)
     }
   }
@@ -259,8 +245,8 @@ const res = await fetch(`${supabaseUrl}/functions/v1/delete-user`, {
               {saving ? 'Saving...' : 'Save Changes'}
             </Button>
 
-            {/* DANGER ZONE */}
             <Separator className="my-2" />
+
             <div>
               <button
                 onClick={() => setShowDangerZone(v => !v)}
@@ -275,8 +261,7 @@ const res = await fetch(`${supabaseUrl}/functions/v1/delete-user`, {
                   <div>
                     <p className="text-sm font-semibold text-destructive">Delete this company</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      This will permanently delete <strong>{company.company_name}</strong> and all its data —
-                      sales, stock, products, and staff. This cannot be undone.
+                      This will permanently delete <strong>{company.company_name}</strong> and all its data. This cannot be undone.
                     </p>
                   </div>
                   <div className="space-y-2">
