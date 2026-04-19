@@ -29,6 +29,7 @@ export default function Analytics({ userId, tenantId, isAdmin, refreshKey }: Pro
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [loading, setLoading] = useState(true)
+  const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -77,7 +78,6 @@ export default function Analytics({ userId, tenantId, isAdmin, refreshKey }: Pro
     { name: 'Credit', value: creditRevenue, color: 'hsl(38, 92%, 50%)' },
   ].filter(d => d.value > 0)
 
-  // Top products ranked list
   const byItem: Record<string, { qty: number; revenue: number }> = {}
   monthSales.forEach(s => {
     if (!byItem[s.item_name]) byItem[s.item_name] = { qty: 0, revenue: 0 }
@@ -100,58 +100,70 @@ export default function Analytics({ userId, tenantId, isAdmin, refreshKey }: Pro
     .sort((a, b) => Number(a.day) - Number(b.day))
 
   const exportXLSX = async (all = false) => {
-  const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs' as any)
-  
-  const salesData = all ? sales : monthSales
-  const stockData = all ? stockRecords : monthStock
-  const period = all ? `${selectedYear}` : `${MONTHS[selectedMonth]}-${selectedYear}`
+    setExporting(true)
+    try {
+      // Dynamically load SheetJS from CDN
+      const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs' as any)
 
-  // Sales sheet
-  const salesRows = [
-    ['Date', 'Time', 'Item', 'Unit', 'Quantity', 'Unit Price (₦)', 'Total (₦)', 'Payment', 'Customer', 'Paid At', 'Paid Via', 'Notes'],
-    ...salesData.map(s => [
-      s.sale_date,
-      s.created_at ? new Date(s.created_at).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit', hour12: true }) : '',
-      s.item_name,
-      s.unit_label || '',
-      Number(s.quantity),
-      Number(s.unit_price),
-      Number(s.total_amount),
-      s.payment_method,
-      s.customer_name || '',
-      s.paid_at ? new Date(s.paid_at).toLocaleDateString('en-GB') : '',
-      s.paid_via || '',
-      s.notes || '',
-    ])
-  ]
+      const salesData = all ? sales : monthSales
+      const stockData = all ? stockRecords : monthStock
+      const period = all
+        ? `${selectedYear}`
+        : filterMode === 'month'
+          ? `${MONTHS[selectedMonth]}-${selectedYear}`
+          : `${dateFrom}-to-${dateTo}`
 
-  // Stock sheet
-  const stockRows = [
-    ['Date', 'Item', 'Unit', 'Quantity', 'Cost Price (₦)', 'Total Cost (₦)', 'Notes'],
-    ...stockData.map(s => [
-      s.stock_date,
-      s.item_name,
-      s.unit_label || '',
-      Number(s.quantity),
-      Number(s.cost_price),
-      Number(s.total_cost),
-      s.notes || '',
-    ])
-  ]
+      // Sales sheet rows
+      const salesRows = [
+        ['Date', 'Time', 'Item', 'Unit', 'Quantity', 'Unit Price (N)', 'Total (N)', 'Payment', 'Customer', 'Paid At', 'Paid Via', 'Notes'],
+        ...salesData.map(s => [
+          s.sale_date,
+          s.created_at ? new Date(s.created_at).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit', hour12: true }) : '',
+          s.item_name,
+          s.unit_label || '',
+          Number(s.quantity),
+          Number(s.unit_price),
+          Number(s.total_amount),
+          s.payment_method,
+          s.customer_name || '',
+          s.paid_at ? new Date(s.paid_at).toLocaleDateString('en-GB') : '',
+          s.paid_via || '',
+          s.notes || '',
+        ])
+      ]
 
-  const wb = XLSX.utils.book_new()
-  const salesSheet = XLSX.utils.aoa_to_sheet(salesRows)
-  const stockSheet = XLSX.utils.aoa_to_sheet(stockRows)
+      // Stock sheet rows
+      const stockRows = [
+        ['Date', 'Item', 'Unit', 'Quantity', 'Cost Price (N)', 'Total Cost (N)', 'Notes'],
+        ...stockData.map(s => [
+          s.stock_date,
+          s.item_name,
+          s.unit_label || '',
+          Number(s.quantity),
+          Number(s.cost_price),
+          Number(s.total_cost),
+          s.notes || '',
+        ])
+      ]
 
-  // Set column widths
-  salesSheet['!cols'] = [12,10,20,8,10,14,14,12,16,12,10,20].map(w => ({ wch: w }))
-  stockSheet['!cols'] = [12,20,8,10,14,14,20].map(w => ({ wch: w }))
+      const wb = XLSX.utils.book_new()
+      const salesSheet = XLSX.utils.aoa_to_sheet(salesRows)
+      const stockSheet = XLSX.utils.aoa_to_sheet(stockRows)
 
-  XLSX.utils.book_append_sheet(wb, salesSheet, 'Sales')
-  XLSX.utils.book_append_sheet(wb, stockSheet, 'Stock Records')
+      // Column widths
+      salesSheet['!cols'] = [12, 10, 22, 8, 10, 16, 14, 12, 18, 12, 10, 22].map(w => ({ wch: w }))
+      stockSheet['!cols'] = [12, 22, 8, 10, 16, 14, 22].map(w => ({ wch: w }))
 
-  XLSX.writeFile(wb, `report-${period}.xlsx`)
-}
+      XLSX.utils.book_append_sheet(wb, salesSheet, 'Sales')
+      XLSX.utils.book_append_sheet(wb, stockSheet, 'Stock Records')
+
+      XLSX.writeFile(wb, `report-${period}.xlsx`)
+    } catch (err) {
+      console.error('Export failed:', err)
+      alert('Export failed. Please try again.')
+    } finally {
+      setExporting(false)
+    }
   }
 
   const years = Array.from(new Set([
@@ -213,13 +225,15 @@ export default function Analytics({ userId, tenantId, isAdmin, refreshKey }: Pro
             </div>
           )}
 
-          <div className="flex gap-2">
-            <Button onClick={() => exportXLSX(false)} size="sm" className="gap-1.5">
-  <Download className="w-3.5 h-3.5" /> Export Period (.xlsx)
-</Button>
-<Button onClick={() => exportXLSX(true)} size="sm" variant="secondary" className="gap-1.5">
-  <Download className="w-3.5 h-3.5" /> Full Year (.xlsx)
-</Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button onClick={() => exportXLSX(false)} size="sm" className="gap-1.5" disabled={exporting}>
+              <Download className="w-3.5 h-3.5" />
+              {exporting ? 'Exporting...' : 'Export Period (.xlsx)'}
+            </Button>
+            <Button onClick={() => exportXLSX(true)} size="sm" variant="secondary" className="gap-1.5" disabled={exporting}>
+              <Download className="w-3.5 h-3.5" />
+              {exporting ? 'Exporting...' : 'Full Year (.xlsx)'}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -256,7 +270,9 @@ export default function Analytics({ userId, tenantId, isAdmin, refreshKey }: Pro
         <Card className={`border-border/50 shadow-sm ${estimatedProfit >= 0 ? '' : 'border-destructive/20'}`}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
-              {estimatedProfit >= 0 ? <TrendingUp className="w-4 h-4 text-success" /> : <TrendingDown className="w-4 h-4 text-destructive" />}
+              {estimatedProfit >= 0
+                ? <TrendingUp className="w-4 h-4 text-success" />
+                : <TrendingDown className="w-4 h-4 text-destructive" />}
               <span className="text-xs text-muted-foreground">Est. Profit</span>
             </div>
             <p className={`text-xl font-bold ${estimatedProfit >= 0 ? 'text-success' : 'text-destructive'}`}>
@@ -268,16 +284,14 @@ export default function Analytics({ userId, tenantId, isAdmin, refreshKey }: Pro
 
       {outstandingCredit > 0 && (
         <Card className="border-warning/20 bg-warning/5 shadow-sm">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground">Outstanding Credit</p>
-              <p className="text-lg font-bold text-warning">₦{outstandingCredit.toLocaleString()}</p>
-            </div>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Outstanding Credit</p>
+            <p className="text-lg font-bold text-warning">₦{outstandingCredit.toLocaleString()}</p>
           </CardContent>
         </Card>
       )}
 
-      {/* ── TOP PRODUCTS RANKED LIST ── */}
+      {/* Top Products ranked list */}
       {topProducts.length > 0 && (
         <Card className="border-border/50 shadow-sm">
           <CardHeader className="pb-3">
@@ -289,7 +303,6 @@ export default function Analytics({ userId, tenantId, isAdmin, refreshKey }: Pro
               return (
                 <div key={product.name}>
                   <div className="flex items-center gap-3">
-                    {/* Rank number */}
                     <span className={`text-xs font-bold w-5 text-right shrink-0 ${
                       index === 0 ? 'text-primary' :
                       index === 1 ? 'text-muted-foreground' :
@@ -298,8 +311,6 @@ export default function Analytics({ userId, tenantId, isAdmin, refreshKey }: Pro
                     }`}>
                       {index + 1}
                     </span>
-
-                    {/* Name + bar + amount */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1 gap-2">
                         <span className="text-sm text-foreground truncate">{product.name}</span>
@@ -307,7 +318,6 @@ export default function Analytics({ userId, tenantId, isAdmin, refreshKey }: Pro
                           ₦{product.revenue.toLocaleString()}
                         </span>
                       </div>
-                      {/* Progress bar */}
                       <div className="h-1.5 w-full bg-primary/10 rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full bg-primary transition-all duration-500"
@@ -352,7 +362,8 @@ export default function Analytics({ userId, tenantId, isAdmin, refreshKey }: Pro
           <CardContent className="p-4 pt-0">
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
-                <Pie data={paymentPieData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                <Pie data={paymentPieData} cx="50%" cy="50%" outerRadius={80} dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
                   {paymentPieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                 </Pie>
                 <Legend />
