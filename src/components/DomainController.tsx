@@ -154,42 +154,53 @@ export default function DomainController({ userId, tenantId, company, onClose, o
   }
 
   const deleteUser = async (uid: string, email: string) => {
-    if (!confirm(`Remove ${email} from your business permanently?`)) return
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch(`${supabaseUrl}/functions/v1/delete-user`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({ userId: uid }),
-      })
-      const result = await res.json()
-      if (result.error) {
-        toast({ title: 'Error', description: result.error, variant: 'destructive' })
-      } else {
-        setStaff(prev => prev.filter(s => s.id !== uid))
-        toast({ title: 'User deleted' })
-      }
-    } catch {
-      toast({ title: 'Error', description: 'Failed to delete user', variant: 'destructive' })
+  if (!confirm(`Remove ${email} from your business permanently?`)) return
+  try {
+    // Use getUser() + refreshSession() to ensure we have a valid token
+    const { data: { session }, error: sessionError } = await supabase.auth.refreshSession()
+    if (sessionError || !session?.access_token) {
+      toast({ title: 'Error', description: 'Session expired. Please log in again.', variant: 'destructive' })
+      return
     }
+    const res = await fetch(`${supabaseUrl}/functions/v1/delete-user`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ userId: uid }),
+    })
+    const result = await res.json()
+    if (result.error) {
+      toast({ title: 'Error', description: result.error, variant: 'destructive' })
+    } else {
+      setStaff(prev => prev.filter(s => s.id !== uid))
+      toast({ title: 'User deleted successfully' })
+    }
+  } catch {
+    toast({ title: 'Error', description: 'Failed to delete user', variant: 'destructive' })
   }
-
+}
   const deleteCompany = async () => {
     if (deleteConfirmText !== company.company_name) return
     setDeletingCompany(true)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch(`${supabaseUrl}/functions/v1/delete-user`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({ deleteTenant: true, tenantId }),
-      })
+      const { data: { session }, error: sessionError } = await supabase.auth.refreshSession()
+if (sessionError || !session?.access_token) {
+  toast({ title: 'Error', description: 'Session expired. Please log in again.', variant: 'destructive' })
+  setDeletingCompany(false)
+  return
+}
+const res = await fetch(`${supabaseUrl}/functions/v1/delete-user`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+    'Authorization': `Bearer ${session.access_token}`,
+  },
+  body: JSON.stringify({ deleteTenant: true, tenantId }),
+})
       const result = await res.json()
       if (result.error) {
         toast({ title: 'Error', description: result.error, variant: 'destructive' })
