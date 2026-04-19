@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Android build files (generated, don't commit)
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/build/
+android/.idea/
+android/app/src/main/assets/public/
+
+# Environment
+.env
+.env.local

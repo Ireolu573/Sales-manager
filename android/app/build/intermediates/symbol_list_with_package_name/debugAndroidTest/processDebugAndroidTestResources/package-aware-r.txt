@@ -1,3 +1,0 @@
-com.stepan.salesmanager.test
-style WhiteBackgroundDialogTheme
-style WhiteBackgroundTheme
