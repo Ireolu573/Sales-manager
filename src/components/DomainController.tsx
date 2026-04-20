@@ -253,7 +253,7 @@ export default function DomainController({ userId, tenantId, company, onClose, o
                 className="flex items-center gap-2 text-destructive/70 hover:text-destructive text-sm font-medium transition-colors"
               >
                 <AlertTriangle className="w-4 h-4" />
-                Close Business Account
+                Danger Zone
               </button>
 
               {showDangerZone && (
