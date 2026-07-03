@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { CreditCard, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { SkeletonRowList } from '@/components/ui/loading-skeletons'
 
 interface Props {
   isAdmin: boolean
@@ -75,9 +76,7 @@ export default function CreditManager({ isAdmin, userId, tenantId }: Props) {
       </Card>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-8 h-8 rounded-full border-4 border-muted animate-spin border-t-primary" />
-        </div>
+        <SkeletonRowList count={3} />
       ) : credits.length === 0 ? (
         <Card className="border-border/50">
           <CardContent className="py-12 text-center text-muted-foreground">

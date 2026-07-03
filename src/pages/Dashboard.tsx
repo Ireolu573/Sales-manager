@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import KeyboardShortcutsHelp from '@/components/KeyboardShortcutsHelp'
 import { Keyboard } from 'lucide-react'
+import { SkeletonPage } from '@/components/ui/loading-skeletons'
 
 // Init dark mode from localStorage before render
 const savedTheme = localStorage.getItem('theme')
@@ -272,11 +273,7 @@ export default function Dashboard() {
       {/* Main Content */}
       <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-5 pb-24">
         <div key={animKey} className="slide-up">
-          <Suspense fallback={
-            <div className="flex items-center justify-center py-20">
-              <div className="w-8 h-8 rounded-full border-4 border-muted animate-spin border-t-primary" />
-            </div>
-          }>
+          <Suspense fallback={<SkeletonPage />}>
             {tab === 'record' && permissions.can_record_sales && tenantId && (
               <SaleForm userId={user.id} tenantId={tenantId} />
             )}

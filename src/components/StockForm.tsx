@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Package, PlusCircle, Trash2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { SkeletonRowList } from '@/components/ui/loading-skeletons'
 
 interface Props {
   userId: string
@@ -28,14 +29,17 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [recordsLoading, setRecordsLoading] = useState(true)
 
   const totalCost = Number(quantity) * Number(costPrice) || 0
   const selectedProduct = products.find(p => p.id === productId)
   const units = selectedProduct?.product_units || []
 
   const fetchRecords = () => {
+    setRecordsLoading(true)
     getStockRecordsForUser(userId, tenantId).then(({ data }) => {
       if (data) setRecords(data as unknown as StockRecord[])
+      setRecordsLoading(false)
     })
   }
 
@@ -173,7 +177,12 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
       )}
 
       {/* Stock records as cards */}
-      {records.length > 0 && (
+      {recordsLoading ? (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Recent Stock Entries</p>
+          <SkeletonRowList count={3} />
+        </div>
+      ) : records.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Recent Stock Entries</p>
           {records.map(r => (
@@ -213,7 +222,7 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
         </div>
       )}
 
-      {records.length === 0 && !isAdmin && (
+      {!recordsLoading && records.length === 0 && !isAdmin && (
         <Card className="border-border/50">
           <CardContent className="py-12 text-center text-muted-foreground text-sm">No stock records yet</CardContent>
         </Card>

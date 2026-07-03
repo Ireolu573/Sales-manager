@@ -13,6 +13,7 @@ import { useAuth } from '@/hooks/useAuth'
 
 import AnalyticsCards from '@/components/analytics/AnalyticsCards'
 import AnalyticsCharts from '@/components/analytics/AnalyticsCharts'
+import { SkeletonAnalytics } from '@/components/ui/loading-skeletons'
 import WeekOverWeek from '@/components/analytics/WeekOverWeek'
 
 interface Props {
@@ -152,11 +153,7 @@ export default function Analytics({ userId, tenantId, isAdmin }: Props) {
   ])).sort().reverse()
 
   if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="w-8 h-8 rounded-full border-4 border-muted animate-spin border-t-primary" />
-      </div>
-    )
+    return <SkeletonAnalytics />
   }
 
   return (

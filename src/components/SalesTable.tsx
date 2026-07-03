@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { SkeletonRowList } from '@/components/ui/loading-skeletons'
 import { supabase } from '@/integrations/supabase/client'
 import type { Sale } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
@@ -240,9 +241,7 @@ export default function SalesTable({ userId, tenantId, isAdmin }: Props) {
       )}
 
       {loading ? (
-        <div className="flex justify-center py-16">
-          <div className="w-8 h-8 rounded-full border-4 border-muted animate-spin border-t-primary" />
-        </div>
+        <SkeletonRowList count={5} />
       ) : filtered.length === 0 ? (
         <Card className="border-border/50">
           <CardContent className="py-14 text-center">

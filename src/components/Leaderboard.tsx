@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { Card, CardContent } from '@/components/ui/card'
 import { Trophy, TrendingUp, ShoppingCart, Crown, Medal } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
+import { SkeletonLeaderboard } from '@/components/ui/loading-skeletons'
 
 interface Props {
   tenantId: string
@@ -139,9 +140,7 @@ export default function Leaderboard({ tenantId, isAdmin }: Props) {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <div className="w-8 h-8 rounded-full border-4 border-muted animate-spin border-t-primary" />
-        </div>
+        <SkeletonLeaderboard />
       ) : sorted.length === 0 ? (
         <Card className="border-border/50">
           <CardContent className="py-12 text-center">
