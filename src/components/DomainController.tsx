@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Plus, Trash2, Users, Package, Palette, Copy, Check, X, AlertTriangle, RefreshCw } from 'lucide-react'
+import { Plus, Trash2, Users, Package, Palette, Copy, Check, X, AlertTriangle, RefreshCw, Pencil, Save } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
 interface Props {
@@ -55,6 +55,10 @@ export default function DomainController({ userId, tenantId, company, onClose, o
   const [units, setUnits] = useState<{ unit_label: string; unit_price: string }[]>([emptyUnit()])
   const [addingProduct, setAddingProduct] = useState(false)
   const [productError, setProductError] = useState('')
+
+  const [editingProductId, setEditingProductId] = useState<string | null>(null)
+  const [editPrices, setEditPrices] = useState<Record<string, string>>({})
+  const [savingPrices, setSavingPrices] = useState(false)
 
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [inviteCode, setInviteCode] = useState('')
@@ -132,6 +136,40 @@ export default function DomainController({ userId, tenantId, company, onClose, o
       toast({ title: 'Product added!' })
     }
     setAddingProduct(false)
+  }
+
+  const startEditPrices = (product: Product) => {
+    setEditingProductId(product.id)
+    const initial: Record<string, string> = {}
+    product.product_units?.forEach(u => { initial[u.id] = String(u.unit_price) })
+    setEditPrices(initial)
+  }
+
+  const cancelEditPrices = () => {
+    setEditingProductId(null)
+    setEditPrices({})
+  }
+
+  const savePrices = async (product: Product) => {
+    setSavingPrices(true)
+    const updates = (product.product_units || []).map(u =>
+      supabase.from('product_units').update({ unit_price: Number(editPrices[u.id]) }).eq('id', u.id)
+    )
+    const results = await Promise.all(updates)
+    const failed = results.find(r => r.error)
+    setSavingPrices(false)
+    if (failed?.error) {
+      toast({ title: 'Error updating prices', description: failed.error.message, variant: 'destructive' })
+      return
+    }
+    setProducts(prev => prev.map(p => p.id === product.id
+      ? { ...p, product_units: p.product_units?.map(u => ({ ...u, unit_price: Number(editPrices[u.id]) })) }
+      : p
+    ))
+    setEditingProductId(null)
+    setEditPrices({})
+    onProductsChanged()
+    toast({ title: 'Prices updated!' })
   }
 
   const deleteProduct = async (id: string) => {
@@ -294,17 +332,56 @@ export default function DomainController({ userId, tenantId, company, onClose, o
           <div className="space-y-4">
             <div className="space-y-2">
               {products.map(p => (
-                <div key={p.id} className="flex items-start justify-between p-3 bg-muted/50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-sm">{p.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {p.product_units?.map(u => `${u.unit_label}: ₦${u.unit_price.toLocaleString()}`).join(' · ')}
-                    </p>
+                <div key={p.id} className="p-3 bg-muted/50 rounded-lg space-y-2">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-medium text-sm">{p.name}</p>
+                      {editingProductId !== p.id && (
+                        <p className="text-xs text-muted-foreground">
+                          {p.product_units?.map(u => `${u.unit_label}: ₦${u.unit_price.toLocaleString()}`).join(' · ')}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {editingProductId === p.id ? (
+                        <>
+                          <Button variant="ghost" size="icon" onClick={() => savePrices(p)} disabled={savingPrices}
+                            className="h-8 w-8 text-primary hover:text-primary">
+                            <Save className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={cancelEditPrices} disabled={savingPrices}
+                            className="h-8 w-8 text-muted-foreground">
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button variant="ghost" size="icon" onClick={() => startEditPrices(p)}
+                            className="h-8 w-8 text-muted-foreground hover:text-primary">
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => deleteProduct(p.id)}
+                            className="h-8 w-8 text-destructive hover:text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => deleteProduct(p.id)}
-                    className="h-8 w-8 text-destructive hover:text-destructive shrink-0">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+
+                  {editingProductId === p.id && (
+                    <div className="space-y-2 pt-1">
+                      {p.product_units?.map(u => (
+                        <div key={u.id} className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground w-16 shrink-0">{u.unit_label}</span>
+                          <Input type="number" min="0" step="any"
+                            value={editPrices[u.id] ?? ''}
+                            onChange={e => setEditPrices(prev => ({ ...prev, [u.id]: e.target.value }))}
+                            placeholder="Price" className="flex-1 h-8 text-sm" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
               {products.length === 0 && (
