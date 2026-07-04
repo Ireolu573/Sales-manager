@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Plus, Trash2, Users, Package, Palette, Copy, Check, X, AlertTriangle, RefreshCw, Pencil, Save } from 'lucide-react'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useToast } from '@/hooks/use-toast'
 
 interface Props {
@@ -172,8 +173,11 @@ export default function DomainController({ userId, tenantId, company, onClose, o
     toast({ title: 'Prices updated!' })
   }
 
+  const [confirmAction, setConfirmAction] = useState<
+    { type: 'product'; id: string } | { type: 'user'; id: string; email: string } | null
+  >(null)
+
   const deleteProduct = async (id: string) => {
-    if (!confirm('Delete this product?')) return
     await supabase.from('products').update({ is_active: false }).eq('id', id)
     setProducts(prev => prev.filter(p => p.id !== id))
     onProductsChanged()
@@ -193,7 +197,6 @@ export default function DomainController({ userId, tenantId, company, onClose, o
   }
 
   const deleteUser = async (uid: string, email: string) => {
-    if (!confirm(`Remove ${email} from your business permanently?`)) return
     try {
       const { data, error } = await supabase.functions.invoke('delete-user', {
         body: { userId: uid },
@@ -360,7 +363,7 @@ export default function DomainController({ userId, tenantId, company, onClose, o
                             className="h-8 w-8 text-muted-foreground hover:text-primary">
                             <Pencil className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => deleteProduct(p.id)}
+                          <Button variant="ghost" size="icon" onClick={() => setConfirmAction({ type: 'product', id: p.id })}
                             className="h-8 w-8 text-destructive hover:text-destructive">
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -464,7 +467,7 @@ export default function DomainController({ userId, tenantId, company, onClose, o
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="font-medium text-sm truncate">{member.email}</div>
-                    <Button variant="ghost" size="icon" onClick={() => deleteUser(member.id, member.email)}
+                    <Button variant="ghost" size="icon" onClick={() => setConfirmAction({ type: 'user', id: member.id, email: member.email })}
                       className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 ml-2"
                       title="Delete user">
                       <Trash2 className="w-3.5 h-3.5" />
@@ -496,6 +499,23 @@ export default function DomainController({ userId, tenantId, company, onClose, o
           </div>
         )}
       </DialogContent>
+
+      <ConfirmDialog
+        open={confirmAction !== null}
+        title={confirmAction?.type === 'product' ? 'Delete this product?' : 'Remove this team member?'}
+        description={
+          confirmAction?.type === 'product'
+            ? "This removes the product and all its units from your catalog. This can't be undone."
+            : `This removes ${confirmAction?.type === 'user' ? confirmAction.email : ''} from your business permanently. This can't be undone.`
+        }
+        confirmLabel={confirmAction?.type === 'product' ? 'Delete product' : 'Remove member'}
+        onConfirm={() => {
+          if (confirmAction?.type === 'product') deleteProduct(confirmAction.id)
+          if (confirmAction?.type === 'user') deleteUser(confirmAction.id, confirmAction.email)
+          setConfirmAction(null)
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
     </Dialog>
   )
 }

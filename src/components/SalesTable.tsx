@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { SkeletonRowList } from '@/components/ui/loading-skeletons'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { supabase } from '@/integrations/supabase/client'
 import type { Sale } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
@@ -95,8 +96,9 @@ export default function SalesTable({ userId, tenantId, isAdmin }: Props) {
     }
   })
 
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this sale record?')) return
     setDeletingId(id)
     const { error } = await supabase.from('sales').delete().eq('id', id)
     setDeletingId(null)
@@ -372,7 +374,7 @@ export default function SalesTable({ userId, tenantId, isAdmin }: Props) {
                           </div>
                           {isAdmin && (
                             <Button variant="destructive" size="sm" className="w-full h-8 text-xs gap-1.5"
-                              disabled={deletingId === sale.id} onClick={() => handleDelete(sale.id)}>
+                              disabled={deletingId === sale.id} onClick={() => setConfirmDeleteId(sale.id)}>
                               <Trash2 className="w-3.5 h-3.5" />
                               {deletingId === sale.id ? 'Deleting…' : 'Delete this sale'}
                             </Button>
@@ -387,6 +389,15 @@ export default function SalesTable({ userId, tenantId, isAdmin }: Props) {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDeleteId !== null}
+        title="Delete this sale?"
+        description="This removes the sale record permanently. This can't be undone."
+        confirmLabel="Delete sale"
+        onConfirm={() => { if (confirmDeleteId) handleDelete(confirmDeleteId); setConfirmDeleteId(null) }}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   )
 }

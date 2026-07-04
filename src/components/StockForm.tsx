@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Package, PlusCircle, Trash2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { SkeletonRowList } from '@/components/ui/loading-skeletons'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 interface Props {
   userId: string
@@ -81,8 +82,9 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
     }
   }
 
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this stock record?')) return
     setDeletingId(id)
     const { error } = await supabase.from('stock_records').delete().eq('id', id)
     setDeletingId(null)
@@ -209,7 +211,7 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
                     </div>
                     {isAdmin && (
                       <button
-                        onClick={() => handleDelete(r.id)}
+                        onClick={() => setConfirmDeleteId(r.id)}
                         disabled={deletingId === r.id}
                         className="text-destructive/60 hover:text-destructive transition-colors p-1 rounded-lg hover:bg-destructive/10 disabled:opacity-50"
                       >
@@ -229,6 +231,15 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
           <CardContent className="py-12 text-center text-muted-foreground text-sm">No stock records yet</CardContent>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={confirmDeleteId !== null}
+        title="Delete this stock record?"
+        description="This removes the stock entry permanently. This can't be undone."
+        confirmLabel="Delete record"
+        onConfirm={() => { if (confirmDeleteId) handleDelete(confirmDeleteId); setConfirmDeleteId(null) }}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   )
 }
