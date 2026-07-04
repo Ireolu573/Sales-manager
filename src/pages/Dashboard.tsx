@@ -6,7 +6,7 @@ import AuthPage from '@/components/AuthPage'
 import BusinessRegistration from '@/components/BusinessRegistration'
 import DomainController from '@/components/DomainController'
 import AccountModal from '@/components/AccountModal'
-import { Settings, Wifi, WifiOff, LogOut, UserCircle, Sun, Moon } from 'lucide-react'
+import { Settings, Wifi, WifiOff, LogOut, UserCircle, Sun, Moon, NotebookPen, History, Package, BarChart3, CreditCard, Trophy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useQueryClient } from '@tanstack/react-query'
 import { flushQueue, getQueueLength } from '@/lib/offlineQueue'
@@ -29,12 +29,12 @@ const Analytics = lazy(() => import('@/components/Analytics'))
 const Leaderboard = lazy(() => import('@/components/Leaderboard'))
 
 const NAV_TABS = [
-  { id: 'record' as Tab, label: 'Record', icon: '📝', perm: 'can_record_sales' },
-  { id: 'history' as Tab, label: 'History', icon: '🗂️', perm: 'can_view_history' },
-  { id: 'stock' as Tab, label: 'Stock', icon: '📦', perm: 'can_view_stock' },
-  { id: 'analytics' as Tab, label: 'Analytics', icon: '📊', perm: 'can_view_analytics' },
-  { id: 'credit' as Tab, label: 'Credit', icon: '📋', perm: 'can_manage_credit' },
-  { id: 'leaderboard' as Tab, label: 'Board', icon: '🏆', perm: 'can_view_analytics' },
+  { id: 'record' as Tab, label: 'Record', icon: NotebookPen, perm: 'can_record_sales' },
+  { id: 'history' as Tab, label: 'History', icon: History, perm: 'can_view_history' },
+  { id: 'stock' as Tab, label: 'Stock', icon: Package, perm: 'can_view_stock' },
+  { id: 'analytics' as Tab, label: 'Analytics', icon: BarChart3, perm: 'can_view_analytics' },
+  { id: 'credit' as Tab, label: 'Credit', icon: CreditCard, perm: 'can_manage_credit' },
+  { id: 'leaderboard' as Tab, label: 'Board', icon: Trophy, perm: 'can_view_analytics' },
 ]
 
 function hexToHsl(hex: string): string | null {
@@ -96,7 +96,7 @@ export default function Dashboard() {
     if (pending === 0) return
 
     toast({
-      title: '📶 Back online!',
+      title: 'Back online!',
       description: `Syncing ${pending} queued sale${pending > 1 ? 's' : ''}…`,
     })
 
@@ -105,7 +105,7 @@ export default function Dashboard() {
       // Invalidate so SaleForm, SalesTable, Analytics all refresh
       queryClient.invalidateQueries({ queryKey: ['sales'] })
       toast({
-        title: '✅ Sync complete',
+        title: 'Sync complete',
         description: `${synced} sale${synced > 1 ? 's' : ''} pushed to the server.`,
       })
     }
@@ -307,7 +307,7 @@ export default function Dashboard() {
                 tab === t.id ? 'text-primary scale-105' : 'text-muted-foreground opacity-60 hover:opacity-80'
               }`}
             >
-              <span className="text-xl">{t.icon}</span>
+              <t.icon size={20} strokeWidth={tab === t.id ? 2.25 : 2} />
               <span className="text-xs font-medium truncate">{t.label}</span>
               {tab === t.id && <div className="w-1 h-1 rounded-full bg-primary" />}
             </button>
@@ -322,6 +322,7 @@ export default function Dashboard() {
           company={company}
           onClose={() => setShowDC(false)}
           onCompanyUpdated={handleCompanyUpdated}
+          onProductsChanged={() => {}}
         />
       )}
 

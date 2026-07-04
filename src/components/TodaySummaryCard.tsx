@@ -5,7 +5,7 @@
  * Fetches from React Query cache (sales query) — no extra network call.
  */
 import { useMemo } from 'react'
-import { TrendingUp, ShoppingCart, Package, Zap } from 'lucide-react'
+import { TrendingUp, ShoppingCart, Package, Zap, Trophy } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import type { Sale } from '@/lib/types'
@@ -92,7 +92,9 @@ export default function TodaySummaryCard({ userId, tenantId, isAdmin }: Props) {
 
           {topItem && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">🏆 Top today:</span>
+              <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                <Trophy className="w-3 h-3" />Top today:
+              </span>
               <span className="text-xs font-semibold text-foreground truncate">{topItem[0]}</span>
               <span className="text-xs text-primary font-bold ml-auto shrink-0">
                 ₦{topItem[1].toLocaleString()}

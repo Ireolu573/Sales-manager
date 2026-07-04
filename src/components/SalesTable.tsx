@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Trash2, Search, FileText, TrendingUp, ChevronDown, ChevronUp, Calendar, X } from 'lucide-react'
+import { Trash2, Search, FileText, TrendingUp, ChevronDown, ChevronUp, Calendar, X, Banknote, Landmark, CreditCard, FileClock, type LucideIcon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
@@ -20,11 +20,11 @@ interface SaleWithStaff extends Sale {
   staff_email?: string
 }
 
-const PAYMENT_CONFIG: Record<string, { label: string; className: string; icon: string }> = {
-  cash:     { label: 'Cash',     className: 'bg-success/10 text-success border-success/20',   icon: '💵' },
-  transfer: { label: 'Transfer', className: 'bg-info/10 text-info border-info/20',             icon: '🏦' },
-  pos:      { label: 'POS',      className: 'bg-primary/10 text-primary border-primary/20',   icon: '💳' },
-  credit:   { label: 'Credit',   className: 'bg-warning/10 text-warning border-warning/20',   icon: '📋' },
+const PAYMENT_CONFIG: Record<string, { label: string; className: string; icon: LucideIcon }> = {
+  cash:     { label: 'Cash',     className: 'bg-success/10 text-success border-success/20',   icon: Banknote },
+  transfer: { label: 'Transfer', className: 'bg-info/10 text-info border-info/20',             icon: Landmark },
+  pos:      { label: 'POS',      className: 'bg-primary/10 text-primary border-primary/20',   icon: CreditCard },
+  credit:   { label: 'Credit',   className: 'bg-warning/10 text-warning border-warning/20',   icon: FileClock },
 }
 
 const FILTER_OPTIONS = ['All', 'Cash', 'Transfer', 'POS', 'Credit'] as const
@@ -187,14 +187,17 @@ export default function SalesTable({ userId, tenantId, isAdmin }: Props) {
       {/* Payment pills + date filter button */}
       <div className="flex items-center gap-2">
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide flex-1">
-          {FILTER_OPTIONS.map(opt => (
-            <button key={opt} onClick={() => setFilter(opt)}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
-                filter === opt ? 'bg-primary text-primary-foreground border-primary shadow-sm' : 'bg-background text-muted-foreground border-border hover:border-primary/40'
-              }`}>
-              {opt !== 'All' && PAYMENT_CONFIG[opt.toLowerCase()]?.icon + ' '}{opt}
-            </button>
-          ))}
+          {FILTER_OPTIONS.map(opt => {
+            const OptIcon = opt !== 'All' ? PAYMENT_CONFIG[opt.toLowerCase()]?.icon : null
+            return (
+              <button key={opt} onClick={() => setFilter(opt)}
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                  filter === opt ? 'bg-primary text-primary-foreground border-primary shadow-sm' : 'bg-background text-muted-foreground border-border hover:border-primary/40'
+                }`}>
+                {OptIcon && <OptIcon className="w-3.5 h-3.5" />}{opt}
+              </button>
+            )
+          })}
         </div>
         <button onClick={() => setShowDateFilter(v => !v)}
           className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
@@ -245,7 +248,7 @@ export default function SalesTable({ userId, tenantId, isAdmin }: Props) {
       ) : filtered.length === 0 ? (
         <Card className="border-border/50">
           <CardContent className="py-14 text-center">
-            <div className="text-3xl mb-3">🔍</div>
+            <Search className="w-8 h-8 text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-muted-foreground text-sm">No sales found</p>
             {(search || filter !== 'All' || hasDateFilter) && (
               <button onClick={() => { setSearch(''); setFilter('All'); clearDateFilter() }} className="text-primary text-sm mt-2 underline underline-offset-2">
@@ -278,11 +281,17 @@ export default function SalesTable({ userId, tenantId, isAdmin }: Props) {
                         <CardContent className="p-3.5">
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-start gap-3 min-w-0">
-                              <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm shrink-0 ${
+                              <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
                                 payConfig.className.includes('success') ? 'bg-success/10' :
                                 payConfig.className.includes('info') ? 'bg-info/10' :
                                 payConfig.className.includes('warning') ? 'bg-warning/10' : 'bg-primary/10'
-                              }`}>{payConfig.icon}</div>
+                              }`}>
+                                <payConfig.icon className={`w-4 h-4 ${
+                                  payConfig.className.includes('success') ? 'text-success' :
+                                  payConfig.className.includes('info') ? 'text-info' :
+                                  payConfig.className.includes('warning') ? 'text-warning' : 'text-primary'
+                                }`} />
+                              </div>
                               <div className="min-w-0">
                                 <div className="font-semibold text-foreground text-sm truncate">{sale.item_name}</div>
                                 <div className="text-xs text-muted-foreground mt-0.5">

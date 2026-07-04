@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
-import { KeyRound, Mail, Eye, EyeOff, Link, Unlink } from 'lucide-react'
+import { KeyRound, Mail, Eye, EyeOff, Link, Unlink, AlertTriangle } from 'lucide-react'
 
 interface Props {
   email: string
@@ -171,7 +171,9 @@ export default function AccountModal({ email, onClose }: Props) {
 
               {!hasPasswordLogin ? (
                 <div className="bg-warning/10 border border-warning/30 rounded-xl p-3 space-y-2">
-                  <p className="text-xs font-medium text-warning">⚠️ Set a password before unlinking</p>
+                  <p className="text-xs font-medium text-warning flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5" />Set a password before unlinking
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     You currently only have Google sign-in. If you unlink Google without setting a password first, you will be locked out of your account.
                   </p>

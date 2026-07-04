@@ -190,7 +190,9 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
               <CardContent className="p-3.5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-base">📦</div>
+                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Package className="w-4 h-4 text-primary" />
+                    </div>
                     <div className="min-w-0">
                       <div className="font-semibold text-sm text-foreground truncate">{r.item_name}</div>
                       <div className="text-xs text-muted-foreground mt-0.5">

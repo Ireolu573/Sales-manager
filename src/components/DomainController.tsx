@@ -451,7 +451,9 @@ export default function DomainController({ userId, tenantId, company, onClose, o
                     <RefreshCw className={`w-4 h-4 ${regenerating ? 'animate-spin' : ''}`} />
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">🔄 Regenerate if the wrong person got this code</p>
+                <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                  <RefreshCw className="w-3 h-3" />Regenerate if the wrong person got this code
+                </p>
               </CardContent>
             </Card>
 

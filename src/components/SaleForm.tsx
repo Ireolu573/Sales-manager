@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { PlusCircle, ShoppingCart, Trash2, Package, Zap, Plus } from 'lucide-react'
+import { PlusCircle, ShoppingCart, Trash2, Package, Zap, Plus, Banknote, Landmark, CreditCard, FileClock, BookUser, User, type LucideIcon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useQueryClient } from '@tanstack/react-query'
 import { enqueueSale } from '@/lib/offlineQueue'
@@ -35,11 +35,11 @@ interface LineItem {
   unitPrice: string
 }
 
-const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: string }[] = [
-  { value: 'cash', label: 'Cash', icon: '💵' },
-  { value: 'transfer', label: 'Transfer', icon: '🏦' },
-  { value: 'pos', label: 'POS', icon: '💳' },
-  { value: 'credit', label: 'Credit', icon: '📋' },
+const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: LucideIcon }[] = [
+  { value: 'cash', label: 'Cash', icon: Banknote },
+  { value: 'transfer', label: 'Transfer', icon: Landmark },
+  { value: 'pos', label: 'POS', icon: CreditCard },
+  { value: 'credit', label: 'Credit', icon: FileClock },
 ]
 
 function newLine(): LineItem {
@@ -153,7 +153,7 @@ export default function SaleForm({ userId, tenantId }: Props) {
     if (!navigator.onLine) {
       enqueueSale(saleData, tenantId, userId)
       setLoading(false)
-      toast({ title: '📥 Sale queued', description: `Will sync when back online — ₦${singleTotal.toLocaleString()}` })
+      toast({ title: 'Sale queued', description: `Will sync when back online — ₦${singleTotal.toLocaleString()}` })
       const rd = buildReceiptData([saleData], singleTotal)
       setReceiptData(rd); setShowReceipt(true)
       setQuantity(''); setUnitPrice(''); setCustomerName(''); setNotes(''); setSelectedUnit(null)
@@ -199,7 +199,7 @@ export default function SaleForm({ userId, tenantId }: Props) {
     if (!navigator.onLine) {
       bulkSaleData.forEach(sd => enqueueSale(sd, tenantId, userId))
       setLoading(false)
-      toast({ title: `📥 ${validLines.length} item(s) queued`, description: `Will sync when back online — ₦${bulkTotal.toLocaleString()}` })
+      toast({ title: `${validLines.length} item(s) queued`, description: `Will sync when back online — ₦${bulkTotal.toLocaleString()}` })
       const rd = buildReceiptData(bulkSaleData, bulkTotal)
       setReceiptData(rd); setShowReceipt(true)
       setLineItems([newLine()]); setCustomerName(''); setNotes('')
@@ -421,7 +421,7 @@ function SharedFields({ saleDate, setSaleDate, paymentMethod, setPaymentMethod, 
           {PAYMENT_METHODS.map(m => (
             <button key={m.value} type="button" onClick={() => setPaymentMethod(m.value)}
               className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border text-xs font-medium transition-all ${paymentMethod === m.value ? 'border-primary bg-primary/5 text-primary' : 'border-border text-muted-foreground hover:border-primary/30'}`}>
-              <span className="text-lg">{m.icon}</span>
+              <m.icon className="w-[18px] h-[18px]" />
               {m.label}
             </button>
           ))}
@@ -431,7 +431,11 @@ function SharedFields({ saleDate, setSaleDate, paymentMethod, setPaymentMethod, 
         <Label>
           Customer Name
           {paymentMethod === 'credit' ? <span className="text-destructive ml-1">*</span> : <span className="text-muted-foreground text-xs ml-1">(optional)</span>}
-          {savedCustomers.length > 0 && <span className="text-xs text-primary ml-2">📖 {savedCustomers.length} saved</span>}
+          {savedCustomers.length > 0 && (
+            <span className="text-xs text-primary ml-2 inline-flex items-center gap-1">
+              <BookUser className="w-3 h-3" />{savedCustomers.length} saved
+            </span>
+          )}
         </Label>
         <div className="relative">
           <Input value={customerName} onChange={e => { setCustomerName(e.target.value); setShowSuggestions(true) }}
@@ -440,8 +444,8 @@ function SharedFields({ saleDate, setSaleDate, paymentMethod, setPaymentMethod, 
             <div className="absolute z-10 w-full bg-card border border-border rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
               {filteredCustomers.slice(0, 8).map((c: string) => (
                 <button key={c} type="button" onMouseDown={() => { setCustomerName(c); setShowSuggestions(false) }}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-muted text-foreground border-b border-border/50 last:border-0">
-                  👤 {c}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-muted text-foreground border-b border-border/50 last:border-0 flex items-center gap-2">
+                  <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />{c}
                 </button>
               ))}
             </div>

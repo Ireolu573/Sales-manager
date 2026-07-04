@@ -4,7 +4,7 @@
  * Includes a small sparkline bar chart comparing day-by-day.
  */
 import { useMemo } from 'react'
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, Calendar } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import type { Sale } from '@/lib/types'
@@ -114,7 +114,7 @@ export default function WeekOverWeek({ sales }: Props) {
     <Card className="border-border/50 shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-          📅 Week-over-Week
+          <Calendar className="w-4 h-4" />Week-over-Week
           <span className="text-xs font-normal text-muted-foreground">This week vs last week</span>
         </CardTitle>
       </CardHeader>
