@@ -6,8 +6,9 @@ import AuthPage from '@/components/AuthPage'
 import BusinessRegistration from '@/components/BusinessRegistration'
 import DomainController from '@/components/DomainController'
 import AccountModal from '@/components/AccountModal'
-import { Settings, Wifi, WifiOff, LogOut, UserCircle, Sun, Moon, NotebookPen, History, Package, BarChart3, CreditCard, Trophy } from 'lucide-react'
+import { Menu, Settings, Wifi, WifiOff, LogOut, UserCircle, Sun, Moon, NotebookPen, History, Package, BarChart3, CreditCard, Trophy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { useQueryClient } from '@tanstack/react-query'
 import { flushQueue, getQueueLength } from '@/lib/offlineQueue'
 import { useToast } from '@/hooks/use-toast'
@@ -81,6 +82,7 @@ export default function Dashboard() {
   const [animKey, setAnimKey] = useState(0)
   const [showDC, setShowDC] = useState(false)
   const [showAccount, setShowAccount] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
   const [online, setOnline] = useState(navigator.onLine)
   // 🌙 Dark mode: read from localStorage so it persists across sessions
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark')
@@ -198,7 +200,7 @@ export default function Dashboard() {
               <div className="text-xs text-muted-foreground leading-tight">{company.app_name}</div>
             </div>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             {/* 📶 Wi-Fi indicator — shows queue count when offline */}
             <div className="relative">
               {online
@@ -212,50 +214,15 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* ⌨️ Keyboard shortcuts help */}
+            {/* ☰ Hamburger — opens the menu pane with theme, settings, account, sign out */}
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setShowHelp(v => !v)}
-              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 hidden sm:flex"
-              title="Keyboard shortcuts (?)"
-            >
-              <Keyboard size={14} />
-            </Button>
-
-            {/* 🌙 Dark mode toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
+              onClick={() => setShowMenu(true)}
               className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              title="Menu"
             >
-              {isDark ? <Sun size={15} /> : <Moon size={15} />}
-            </Button>
-
-            {isAdmin && (
-              <Button variant="ghost" size="icon" onClick={() => setShowDC(true)} className="h-8 w-8 text-primary hover:bg-primary/10">
-                <Settings size={16} />
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowAccount(true)}
-              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-              title="My Account"
-            >
-              <UserCircle size={16} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => supabase.auth.signOut()}
-              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-              title="Sign out"
-            >
-              <LogOut size={16} />
+              <Menu size={18} />
             </Button>
           </div>
         </div>
@@ -335,6 +302,64 @@ export default function Dashboard() {
 
       {/* ⌨️ Keyboard shortcuts overlay */}
       {showHelp && <KeyboardShortcutsHelp onClose={() => setShowHelp(false)} />}
+
+      {/* ☰ Hamburger menu pane */}
+      <Sheet open={showMenu} onOpenChange={setShowMenu}>
+        <SheetContent side="right" className="flex flex-col gap-1">
+          <SheetHeader>
+            <SheetTitle>Menu</SheetTitle>
+          </SheetHeader>
+
+          <Button
+            variant="ghost"
+            className="justify-start gap-3 h-11 text-foreground"
+            onClick={() => { setShowMenu(false); setShowHelp(true) }}
+          >
+            <Keyboard size={16} />
+            Keyboard shortcuts
+          </Button>
+
+          <Button
+            variant="ghost"
+            className="justify-start gap-3 h-11 text-foreground"
+            onClick={() => { toggleTheme() }}
+          >
+            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+            {isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          </Button>
+
+          {isAdmin && (
+            <Button
+              variant="ghost"
+              className="justify-start gap-3 h-11 text-foreground"
+              onClick={() => { setShowMenu(false); setShowDC(true) }}
+            >
+              <Settings size={16} />
+              Settings
+            </Button>
+          )}
+
+          <Button
+            variant="ghost"
+            className="justify-start gap-3 h-11 text-foreground"
+            onClick={() => { setShowMenu(false); setShowAccount(true) }}
+          >
+            <UserCircle size={16} />
+            My Account
+          </Button>
+
+          <div className="mt-auto pt-2 border-t border-border">
+            <Button
+              variant="ghost"
+              className="justify-start gap-3 h-11 w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => { setShowMenu(false); supabase.auth.signOut() }}
+            >
+              <LogOut size={16} />
+              Sign out
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
