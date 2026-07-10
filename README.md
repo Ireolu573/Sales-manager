@@ -1,19 +1,13 @@
-# Sales Manager — Complete Setup Guide
+ Sales Manager — Complete Setup Guide
 
 A multi-tenant sales management web app. Businesses can record sales, track stock, manage credit, and view analytics.
 
----
-
-## Tech Stack
+Tech Stack
 - React + TypeScript + Vite
 - Tailwind CSS + Shadcn/ui
 - Supabase (Auth + Database)
 - React Router + React Query
-
----
-
-## Step 1 — Database Setup (Supabase)
-
+Step 1 — Database Setup (Supabase)
 Go to your Supabase project → SQL Editor and run this:
 
 ```sql
@@ -165,7 +159,7 @@ CREATE POLICY "company_settings_update" ON company_settings FOR UPDATE USING (au
 
 ---
 
-## Step 2 — Edge Function (Delete User)
+Step 2 — Edge Function (Delete User)
 
 Go to **Supabase → Edge Functions → New Function**, name it `delete-user`, paste:
 
@@ -200,7 +194,7 @@ Click **Deploy**.
 
 ---
 
-## Step 3 — Google OAuth Setup
+Step 3 — Google OAuth Setup
 
 1. Go to [console.cloud.google.com](https://console.cloud.google.com)
 2. Create OAuth credentials (Web application)
@@ -211,9 +205,7 @@ Click **Deploy**.
    - Site URL: `https://your-app.vercel.app`
    - Redirect URLs: `https://your-app.vercel.app`
 
----
-
-## Step 4 — Local Development
+Step 4 — Local Development
 
 ```bash
 # 1. Clone or copy this folder
@@ -231,9 +223,7 @@ npm run dev
 # Opens at http://localhost:8080
 ```
 
----
-
-## Step 5 — Deploy to Vercel
+Step 5 — Deploy to Vercel
 
 ```bash
 # 1. Push to GitHub
@@ -259,10 +249,7 @@ git push -u origin main
 3. You'll be made admin automatically
 4. Go to Settings (gear icon) → Products → Add your products
 5. Share the invite code with staff so they can join
-
----
-
-## Features
+ Features
 
 | Feature | Admin | Staff |
 |---------|-------|-------|
@@ -276,9 +263,7 @@ git push -u origin main
 | Customer Autocomplete | ✅ | ✅ |
 | WhatsApp Receipt | ✅ | ✅ |
 
----
-
-## Project Structure
+Project Structure
 
 ```
 src/
@@ -303,5 +288,6 @@ src/
 └── pages/
     └── Dashboard.tsx          ← Main app layout
 ```
-#   S a l e s - m a n a g e r  
+#   S a l e s - m a n a g e r 
+ 
  
