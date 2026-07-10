@@ -1,12 +1,11 @@
 import { useState, useEffect, createContext, useContext, type ReactNode } from 'react'
+import { useUser, useAuth as useClerkAuth } from '@clerk/clerk-react'
 import { supabase } from '@/integrations/supabase/client'
-import { Capacitor } from '@capacitor/core'
-import { App } from '@capacitor/app'
-import type { User } from '@supabase/supabase-js'
+import type { UserResource } from '@clerk/types'
 import { Permissions, CompanySettings, DEFAULT_PERMS, ADMIN_PERMS, DEFAULT_COMPANY } from '@/lib/types'
 
 interface AuthContextType {
-  user: User | null
+  user: UserResource | null
   isAdmin: boolean
   loading: boolean
   permissions: Permissions
@@ -27,7 +26,9 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+  const { isLoaded, isSignedIn, userId } = useClerkAuth()
+  const { user } = useUser()
+
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
   const [permissions, setPermissions] = useState<Permissions>(DEFAULT_PERMS)
@@ -35,32 +36,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [showBusinessRegistration, setShowBusinessRegistration] = useState(false)
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (clerkUserId: string) => {
     try {
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('id, is_admin, permissions, tenant_id, email')
-        .eq('id', userId)
-        .single()
+        .select('id, is_admin, permissions, tenant_id, email, clerk_user_id')
+        .eq('clerk_user_id', clerkUserId)
+        .maybeSingle()
 
-      if (profileError) {
-        if (profileError.code === 'PGRST116') {
-          setTenantId(null)
-          setIsAdmin(false)
-          setPermissions(DEFAULT_PERMS)
-          setShowBusinessRegistration(true)
-          setLoading(false)
-          return
-        }
-        throw profileError
+      if (profileError) throw profileError
+
+      if (!profileData) {
+        setTenantId(null)
+        setIsAdmin(false)
+        setPermissions(DEFAULT_PERMS)
+        setShowBusinessRegistration(true)
+        setLoading(false)
+        return
       }
 
-      const admin = profileData?.is_admin ?? false
-      const tID = profileData?.tenant_id
+      const admin = profileData.is_admin ?? false
+      const tID = profileData.tenant_id
 
       setTenantId(tID)
       setIsAdmin(admin)
-      setPermissions(admin ? ADMIN_PERMS : (profileData?.permissions as unknown as Permissions) || DEFAULT_PERMS)
+      setPermissions(admin ? ADMIN_PERMS : (profileData.permissions as unknown as Permissions) || DEFAULT_PERMS)
 
       if (!tID) {
         setShowBusinessRegistration(true)
@@ -83,64 +83,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    // Initial session check
-    supabase.auth.getSession().then(({ data }) => {
-      const u = data.session?.user ?? null
-      setUser(u)
-      if (u) fetchProfile(u.id)
-      else setLoading(false)
-    })
+    if (!isLoaded) return
 
-    // Listen for auth state changes (handles web OAuth redirect)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      const u = session?.user ?? null
-      setUser(u)
-      if (u) fetchProfile(u.id)
-      else { setIsAdmin(false); setLoading(false) }
-    })
-
-    // Handle deep link redirect on Android/iOS
-    // When Google OAuth redirects back to com.stepan.salesmanager://login-callback
-    // Capacitor catches it and fires this event with the full URL
-    if (Capacitor.isNativePlatform()) {
-      App.addListener('appUrlOpen', async ({ url }) => {
-        // The URL will look like:
-        // com.stepan.salesmanager://login-callback#access_token=...&refresh_token=...
-        if (url.includes('login-callback')) {
-          // Extract the fragment (everything after #)
-          const fragment = url.split('#')[1]
-          if (fragment) {
-            // Parse the tokens from the URL fragment
-            const params = new URLSearchParams(fragment)
-            const accessToken = params.get('access_token')
-            const refreshToken = params.get('refresh_token')
-
-            if (accessToken && refreshToken) {
-              // Set the session manually using the tokens from the deep link
-              const { data, error } = await supabase.auth.setSession({
-                access_token: accessToken,
-                refresh_token: refreshToken,
-              })
-              if (!error && data.user) {
-                setUser(data.user)
-                fetchProfile(data.user.id)
-              }
-            }
-          }
-        }
-      })
+    if (isSignedIn && userId) {
+      fetchProfile(userId)
+    } else {
+      setIsAdmin(false)
+      setLoading(false)
     }
-
-    return () => subscription.unsubscribe()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, isSignedIn, userId])
 
   const refreshProfile = () => {
-    if (user) fetchProfile(user.id)
+    if (userId) fetchProfile(userId)
   }
 
   return (
     <AuthContext.Provider value={{
-      user, isAdmin, loading, permissions, company, tenantId,
+      user: user ?? null, isAdmin, loading, permissions, company, tenantId,
       showBusinessRegistration, setShowBusinessRegistration,
       refreshProfile, setCompany
     }}>
