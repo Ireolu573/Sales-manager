@@ -1,13 +1,16 @@
- Sales Manager — Complete Setup Guide
+# Sales Manager — Complete Setup Guide
 
 A multi-tenant sales management web app. Businesses can record sales, track stock, manage credit, and view analytics.
 
-Tech Stack
+## Tech Stack
+
 - React + TypeScript + Vite
 - Tailwind CSS + Shadcn/ui
 - Supabase (Auth + Database)
 - React Router + React Query
-Step 1 — Database Setup (Supabase)
+
+## Step 1 — Database Setup (Supabase)
+
 Go to your Supabase project → SQL Editor and run this:
 
 ```sql
@@ -159,30 +162,41 @@ CREATE POLICY "company_settings_update" ON company_settings FOR UPDATE USING (au
 
 ---
 
-Step 2 — Edge Function (Delete User)
+## Step 2 — Edge Function (Delete User)
 
 Go to **Supabase → Edge Functions → New Function**, name it `delete-user`, paste:
 
 ```typescript
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' } })
   }
+
   try {
     const body = await req.text()
     if (!body) return new Response(JSON.stringify({ error: 'Empty body' }), { status: 400 })
+
     const { userId } = JSON.parse(body)
     const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
     const authHeader = req.headers.get('Authorization')
+
     if (!authHeader) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+
     const supabaseClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authHeader } } })
     const { data: { user } } = await supabaseClient.auth.getUser()
+
     if (!user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+
     const { data: profile } = await supabaseAdmin.from('profiles').select('is_admin').eq('id', user.id).single()
+
     if (!profile?.is_admin) return new Response(JSON.stringify({ error: 'Admin only' }), { status: 403 })
+
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId)
+
     if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400 })
+
     return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } })
   } catch (err) {
     return new Response(JSON.stringify({ error: String(err) }), { status: 500 })
@@ -194,7 +208,7 @@ Click **Deploy**.
 
 ---
 
-Step 3 — Google OAuth Setup
+## Step 3 — Google OAuth Setup
 
 1. Go to [console.cloud.google.com](https://console.cloud.google.com)
 2. Create OAuth credentials (Web application)
@@ -205,7 +219,9 @@ Step 3 — Google OAuth Setup
    - Site URL: `https://your-app.vercel.app`
    - Redirect URLs: `https://your-app.vercel.app`
 
-Step 4 — Local Development
+---
+
+## Step 4 — Local Development
 
 ```bash
 # 1. Clone or copy this folder
@@ -223,7 +239,9 @@ npm run dev
 # Opens at http://localhost:8080
 ```
 
-Step 5 — Deploy to Vercel
+---
+
+## Step 5 — Deploy to Vercel
 
 ```bash
 # 1. Push to GitHub
@@ -249,7 +267,10 @@ git push -u origin main
 3. You'll be made admin automatically
 4. Go to Settings (gear icon) → Products → Add your products
 5. Share the invite code with staff so they can join
- Features
+
+---
+
+## Features
 
 | Feature | Admin | Staff |
 |---------|-------|-------|
@@ -263,7 +284,9 @@ git push -u origin main
 | Customer Autocomplete | ✅ | ✅ |
 | WhatsApp Receipt | ✅ | ✅ |
 
-Project Structure
+---
+
+## Project Structure
 
 ```
 src/
@@ -288,6 +311,3 @@ src/
 └── pages/
     └── Dashboard.tsx          ← Main app layout
 ```
-#   S a l e s - m a n a g e r 
- 
- 
