@@ -16,35 +16,47 @@ export type Database = {
     Tables: {
       company_settings: {
         Row: {
+          admin_clerk_user_id: string | null
           admin_id: string | null
           app_name: string
           brand_color: string
+          business_category: string | null
           company_name: string
           created_at: string | null
           id: string
           logo_emoji: string
+          onboarding_complete: boolean
+          onboarding_step: number
           tenant_id: string | null
           updated_at: string | null
         }
         Insert: {
+          admin_clerk_user_id?: string | null
           admin_id?: string | null
           app_name?: string
           brand_color?: string
+          business_category?: string | null
           company_name?: string
           created_at?: string | null
           id?: string
           logo_emoji?: string
+          onboarding_complete?: boolean
+          onboarding_step?: number
           tenant_id?: string | null
           updated_at?: string | null
         }
         Update: {
+          admin_clerk_user_id?: string | null
           admin_id?: string | null
           app_name?: string
           brand_color?: string
+          business_category?: string | null
           company_name?: string
           created_at?: string | null
           id?: string
           logo_emoji?: string
+          onboarding_complete?: boolean
+          onboarding_step?: number
           tenant_id?: string | null
           updated_at?: string | null
         }
@@ -136,6 +148,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          clerk_user_id: string | null
           created_at: string | null
           email: string | null
           id: string
@@ -144,14 +157,16 @@ export type Database = {
           tenant_id: string | null
         }
         Insert: {
+          clerk_user_id?: string | null
           created_at?: string | null
           email?: string | null
-          id: string
+          id?: string
           is_admin?: boolean | null
           permissions?: Json | null
           tenant_id?: string | null
         }
         Update: {
+          clerk_user_id?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
@@ -171,6 +186,7 @@ export type Database = {
       }
       sales: {
         Row: {
+          clerk_user_id: string | null
           created_at: string | null
           customer_name: string | null
           id: string
@@ -184,12 +200,14 @@ export type Database = {
           sale_date: string | null
           tenant_id: string | null
           total_amount: number | null
+          transaction_id: string | null
           unit_label: string | null
           unit_price: number
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          clerk_user_id?: string | null
           created_at?: string | null
           customer_name?: string | null
           id?: string
@@ -203,12 +221,14 @@ export type Database = {
           sale_date?: string | null
           tenant_id?: string | null
           total_amount?: number | null
+          transaction_id?: string | null
           unit_label?: string | null
           unit_price: number
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          clerk_user_id?: string | null
           created_at?: string | null
           customer_name?: string | null
           id?: string
@@ -222,6 +242,7 @@ export type Database = {
           sale_date?: string | null
           tenant_id?: string | null
           total_amount?: number | null
+          transaction_id?: string | null
           unit_label?: string | null
           unit_price?: number
           updated_at?: string | null
@@ -246,6 +267,7 @@ export type Database = {
       }
       stock_records: {
         Row: {
+          clerk_user_id: string | null
           cost_price: number
           created_at: string | null
           id: string
@@ -261,6 +283,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          clerk_user_id?: string | null
           cost_price: number
           created_at?: string | null
           id?: string
@@ -276,6 +299,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          clerk_user_id?: string | null
           cost_price?: number
           created_at?: string | null
           id?: string
@@ -309,8 +333,10 @@ export type Database = {
       }
       tenants: {
         Row: {
+          clerk_org_id: string | null
           created_at: string | null
           created_by: string | null
+          created_by_clerk_user_id: string | null
           id: string
           invite_code: string | null
           monthly_sales_limit: number | null
@@ -319,8 +345,10 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          clerk_org_id?: string | null
           created_at?: string | null
           created_by?: string | null
+          created_by_clerk_user_id?: string | null
           id?: string
           invite_code?: string | null
           monthly_sales_limit?: number | null
@@ -329,8 +357,10 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          clerk_org_id?: string | null
           created_at?: string | null
           created_by?: string | null
+          created_by_clerk_user_id?: string | null
           id?: string
           invite_code?: string | null
           monthly_sales_limit?: number | null
@@ -340,12 +370,276 @@ export type Database = {
         }
         Relationships: []
       }
+      wrappers_fdw_stats: {
+        Row: {
+          bytes_in: number | null
+          bytes_out: number | null
+          create_times: number | null
+          created_at: string
+          fdw_name: string
+          metadata: Json | null
+          rows_in: number | null
+          rows_out: number | null
+          updated_at: string
+        }
+        Insert: {
+          bytes_in?: number | null
+          bytes_out?: number | null
+          create_times?: number | null
+          created_at?: string
+          fdw_name: string
+          metadata?: Json | null
+          rows_in?: number | null
+          rows_out?: number | null
+          updated_at?: string
+        }
+        Update: {
+          bytes_in?: number | null
+          bytes_out?: number | null
+          create_times?: number | null
+          created_at?: string
+          fdw_name?: string
+          metadata?: Json | null
+          rows_in?: number | null
+          rows_out?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      airtable_fdw_handler: { Args: never; Returns: unknown }
+      airtable_fdw_meta: {
+        Args: never
+        Returns: {
+          author: string
+          name: string
+          version: string
+          website: string
+        }[]
+      }
+      airtable_fdw_validator: {
+        Args: { catalog: unknown; options: string[] }
+        Returns: undefined
+      }
+      auth0_fdw_handler: { Args: never; Returns: unknown }
+      auth0_fdw_meta: {
+        Args: never
+        Returns: {
+          author: string
+          name: string
+          version: string
+          website: string
+        }[]
+      }
+      auth0_fdw_validator: {
+        Args: { catalog: unknown; options: string[] }
+        Returns: undefined
+      }
+      big_query_fdw_handler: { Args: never; Returns: unknown }
+      big_query_fdw_meta: {
+        Args: never
+        Returns: {
+          author: string
+          name: string
+          version: string
+          website: string
+        }[]
+      }
+      big_query_fdw_validator: {
+        Args: { catalog: unknown; options: string[] }
+        Returns: undefined
+      }
+      click_house_fdw_handler: { Args: never; Returns: unknown }
+      click_house_fdw_meta: {
+        Args: never
+        Returns: {
+          author: string
+          name: string
+          version: string
+          website: string
+        }[]
+      }
+      click_house_fdw_validator: {
+        Args: { catalog: unknown; options: string[] }
+        Returns: undefined
+      }
+      cognito_fdw_handler: { Args: never; Returns: unknown }
+      cognito_fdw_meta: {
+        Args: never
+        Returns: {
+          author: string
+          name: string
+          version: string
+          website: string
+        }[]
+      }
+      cognito_fdw_validator: {
+        Args: { catalog: unknown; options: string[] }
+        Returns: undefined
+      }
+      duckdb_fdw_handler: { Args: never; Returns: unknown }
+      duckdb_fdw_meta: {
+        Args: never
+        Returns: {
+          author: string
+          name: string
+          version: string
+          website: string
+        }[]
+      }
+      duckdb_fdw_validator: {
+        Args: { catalog: unknown; options: string[] }
+        Returns: undefined
+      }
+      firebase_fdw_handler: { Args: never; Returns: unknown }
+      firebase_fdw_meta: {
+        Args: never
+        Returns: {
+          author: string
+          name: string
+          version: string
+          website: string
+        }[]
+      }
+      firebase_fdw_validator: {
+        Args: { catalog: unknown; options: string[] }
+        Returns: undefined
+      }
+      hello_world_fdw_handler: { Args: never; Returns: unknown }
+      hello_world_fdw_meta: {
+        Args: never
+        Returns: {
+          author: string
+          name: string
+          version: string
+          website: string
+        }[]
+      }
+      hello_world_fdw_validator: {
+        Args: { catalog: unknown; options: string[] }
+        Returns: undefined
+      }
+      iceberg_fdw_handler: { Args: never; Returns: unknown }
+      iceberg_fdw_meta: {
+        Args: never
+        Returns: {
+          author: string
+          name: string
+          version: string
+          website: string
+        }[]
+      }
+      iceberg_fdw_validator: {
+        Args: { catalog: unknown; options: string[] }
+        Returns: undefined
+      }
+      logflare_fdw_handler: { Args: never; Returns: unknown }
+      logflare_fdw_meta: {
+        Args: never
+        Returns: {
+          author: string
+          name: string
+          version: string
+          website: string
+        }[]
+      }
+      logflare_fdw_validator: {
+        Args: { catalog: unknown; options: string[] }
+        Returns: undefined
+      }
+      metadata_filter: { Args: { _left: Json; _right: Json }; Returns: boolean }
+      mssql_fdw_handler: { Args: never; Returns: unknown }
+      mssql_fdw_meta: {
+        Args: never
+        Returns: {
+          author: string
+          name: string
+          version: string
+          website: string
+        }[]
+      }
+      mssql_fdw_validator: {
+        Args: { catalog: unknown; options: string[] }
+        Returns: undefined
+      }
+      redis_fdw_handler: { Args: never; Returns: unknown }
+      redis_fdw_meta: {
+        Args: never
+        Returns: {
+          author: string
+          name: string
+          version: string
+          website: string
+        }[]
+      }
+      redis_fdw_validator: {
+        Args: { catalog: unknown; options: string[] }
+        Returns: undefined
+      }
+      s3_fdw_handler: { Args: never; Returns: unknown }
+      s3_fdw_meta: {
+        Args: never
+        Returns: {
+          author: string
+          name: string
+          version: string
+          website: string
+        }[]
+      }
+      s3_fdw_validator: {
+        Args: { catalog: unknown; options: string[] }
+        Returns: undefined
+      }
+      s3_vectors_fdw_handler: { Args: never; Returns: unknown }
+      s3_vectors_fdw_meta: {
+        Args: never
+        Returns: {
+          author: string
+          name: string
+          version: string
+          website: string
+        }[]
+      }
+      s3_vectors_fdw_validator: {
+        Args: { catalog: unknown; options: string[] }
+        Returns: undefined
+      }
+      s3vec_distance: { Args: { s3vec: unknown }; Returns: number }
+      s3vec_in: { Args: { input: unknown }; Returns: unknown }
+      s3vec_knn: { Args: { _left: unknown; _right: unknown }; Returns: boolean }
+      s3vec_out: { Args: { input: unknown }; Returns: unknown }
+      stripe_fdw_handler: { Args: never; Returns: unknown }
+      stripe_fdw_meta: {
+        Args: never
+        Returns: {
+          author: string
+          name: string
+          version: string
+          website: string
+        }[]
+      }
+      stripe_fdw_validator: {
+        Args: { catalog: unknown; options: string[] }
+        Returns: undefined
+      }
+      wasm_fdw_handler: { Args: never; Returns: unknown }
+      wasm_fdw_meta: {
+        Args: never
+        Returns: {
+          author: string
+          name: string
+          version: string
+          website: string
+        }[]
+      }
+      wasm_fdw_validator: {
+        Args: { catalog: unknown; options: string[] }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

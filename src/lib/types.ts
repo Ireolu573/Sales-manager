@@ -16,6 +16,9 @@ export interface CompanySettings {
   app_name: string
   brand_color: string
   logo_emoji: string
+  onboarding_step?: number
+  onboarding_complete?: boolean
+  business_category?: string | null
 }
 
 export interface ProductUnit {
@@ -84,4 +87,7 @@ export const DEFAULT_COMPANY: CompanySettings = {
   app_name: 'Sales Manager',
   brand_color: '#d97706',
   logo_emoji: '🏢',
+  onboarding_step: 1,
+  onboarding_complete: false,
+  business_category: null,
 }

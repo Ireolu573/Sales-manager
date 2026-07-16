@@ -74,7 +74,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('tenant_id', tID)
         .maybeSingle()
 
-      if (companyData) setCompany(companyData as unknown as CompanySettings)
+      if (companyData) {
+        setCompany(companyData as unknown as CompanySettings)
+        // Admin created the tenant but never finished onboarding — resume the wizard.
+        if (admin && (companyData as unknown as CompanySettings).onboarding_complete === false) {
+          setShowBusinessRegistration(true)
+        }
+      }
     } catch (err) {
       console.error('Error fetching profile:', err)
     } finally {

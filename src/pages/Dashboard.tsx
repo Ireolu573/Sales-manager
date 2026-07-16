@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth'
 import type { Tab, Permissions } from '@/lib/types'
 import { supabase } from '@/integrations/supabase/client'
 import AuthPage from '@/components/AuthPage'
-import BusinessRegistration from '@/components/BusinessRegistration'
+import OnboardingWizard from '@/components/onboarding/OnboardingWizard'
 import DomainController from '@/components/DomainController'
 import AccountModal from '@/components/AccountModal'
 import { Menu, Settings, Wifi, WifiOff, LogOut, UserCircle, Sun, Moon, NotebookPen, History, Package, BarChart3, CreditCard, Trophy } from 'lucide-react'
@@ -180,9 +180,11 @@ export default function Dashboard() {
 
   if (showBusinessRegistration) {
     return (
-      <BusinessRegistration
+      <OnboardingWizard
         userId={user.id}
         email={user.email || ''}
+        tenantId={tenantId}
+        company={company}
         onComplete={() => { setShowBusinessRegistration(false); refreshProfile() }}
       />
     )
