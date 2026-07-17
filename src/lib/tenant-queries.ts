@@ -42,6 +42,21 @@ export async function getStockRecordsForUser(userId: string, tenantId: string) {
     .limit(30)
 }
 
+export async function getExpensesForTenant(tenantId: string) {
+  return supabase
+    .from('expenses')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .order('expense_date', { ascending: false })
+    .limit(100)
+}
+
+export async function insertExpense(expenseData: Record<string, unknown>, tenantId: string, userId: string) {
+  return supabase
+    .from('expenses')
+    .insert({ ...expenseData, tenant_id: tenantId, user_id: userId } as any)
+}
+
 export async function getProfileWithTenant(userId: string) {
   return supabase
     .from('profiles')

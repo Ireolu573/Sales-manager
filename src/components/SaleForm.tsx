@@ -146,6 +146,7 @@ export default function SaleForm({ userId, tenantId }: Props) {
       total_amount: singleTotal,
       sale_date: saleDate,
       payment_method: paymentMethod,
+      paid_at: paymentMethod !== 'credit' ? new Date().toISOString() : null,
       customer_name: customerName || null,
       notes: notes || null,
     }
@@ -191,6 +192,7 @@ export default function SaleForm({ userId, tenantId }: Props) {
         total_amount: Number(line.quantity) * Number(line.unitPrice),
         sale_date: saleDate,
         payment_method: paymentMethod,
+        paid_at: paymentMethod !== 'credit' ? new Date().toISOString() : null,
         customer_name: customerName || null,
         notes: notes || null,
       }

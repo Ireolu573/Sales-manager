@@ -6,7 +6,7 @@ import AuthPage from '@/components/AuthPage'
 import OnboardingWizard from '@/components/onboarding/OnboardingWizard'
 import DomainController from '@/components/DomainController'
 import AccountModal from '@/components/AccountModal'
-import { Menu, Settings, Wifi, WifiOff, LogOut, UserCircle, Sun, Moon, NotebookPen, History, Package, BarChart3, CreditCard, Trophy } from 'lucide-react'
+import { Menu, Settings, Wifi, WifiOff, LogOut, UserCircle, Sun, Moon, NotebookPen, History, Package, BarChart3, CreditCard, Trophy, Receipt } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { useQueryClient } from '@tanstack/react-query'
@@ -28,6 +28,7 @@ const StockForm = lazy(() => import('@/components/StockForm'))
 const CreditManager = lazy(() => import('@/components/CreditManager'))
 const Analytics = lazy(() => import('@/components/Analytics'))
 const Leaderboard = lazy(() => import('@/components/Leaderboard'))
+const Reports = lazy(() => import('@/components/reports/Reports'))
 
 const NAV_TABS = [
   { id: 'record' as Tab, label: 'Record', icon: NotebookPen, perm: 'can_record_sales' },
@@ -36,6 +37,7 @@ const NAV_TABS = [
   { id: 'analytics' as Tab, label: 'Analytics', icon: BarChart3, perm: 'can_view_analytics' },
   { id: 'credit' as Tab, label: 'Credit', icon: CreditCard, perm: 'can_manage_credit' },
   { id: 'leaderboard' as Tab, label: 'Board', icon: Trophy, perm: 'can_view_analytics' },
+  { id: 'reports' as Tab, label: 'Reports', icon: Receipt, perm: 'can_view_analytics' },
 ]
 
 function hexToHsl(hex: string): string | null {
@@ -260,6 +262,9 @@ export default function Dashboard() {
             )}
             {tab === 'leaderboard' && permissions.can_view_analytics && tenantId && (
               <Leaderboard tenantId={tenantId} isAdmin={isAdmin} />
+            )}
+            {tab === 'reports' && permissions.can_view_analytics && tenantId && (
+              <Reports userId={user.id} tenantId={tenantId} isAdmin={isAdmin} />
             )}
           </Suspense>
         </div>

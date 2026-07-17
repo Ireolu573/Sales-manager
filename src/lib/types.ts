@@ -1,4 +1,4 @@
-export type Tab = 'record' | 'history' | 'stock' | 'credit' | 'analytics' | 'leaderboard'
+export type Tab = 'record' | 'history' | 'stock' | 'credit' | 'analytics' | 'leaderboard' | 'reports'
 export type PaymentMethod = 'cash' | 'transfer' | 'credit' | 'pos'
 
 export interface Permissions {
@@ -61,6 +61,18 @@ export interface StockRecord {
   user_id?: string
   tenant_id?: string
   notes?: string
+}
+
+export const EXPENSE_CATEGORIES = ['Rent', 'Transport', 'Salaries', 'Utilities', 'Supplies', 'Other'] as const
+
+export interface Expense {
+  id: string
+  category: string
+  description?: string | null
+  amount: number
+  expense_date: string
+  user_id?: string
+  tenant_id?: string
 }
 
 export const DEFAULT_PERMS: Permissions = {

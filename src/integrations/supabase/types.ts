@@ -70,6 +70,50 @@ export type Database = {
           },
         ]
       }
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string | null
+          description: string | null
+          expense_date: string | null
+          id: string
+          tenant_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string | null
+          description?: string | null
+          expense_date?: string | null
+          id?: string
+          tenant_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          expense_date?: string | null
+          id?: string
+          tenant_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_units: {
         Row: {
           created_at: string | null
@@ -370,276 +414,12 @@ export type Database = {
         }
         Relationships: []
       }
-      wrappers_fdw_stats: {
-        Row: {
-          bytes_in: number | null
-          bytes_out: number | null
-          create_times: number | null
-          created_at: string
-          fdw_name: string
-          metadata: Json | null
-          rows_in: number | null
-          rows_out: number | null
-          updated_at: string
-        }
-        Insert: {
-          bytes_in?: number | null
-          bytes_out?: number | null
-          create_times?: number | null
-          created_at?: string
-          fdw_name: string
-          metadata?: Json | null
-          rows_in?: number | null
-          rows_out?: number | null
-          updated_at?: string
-        }
-        Update: {
-          bytes_in?: number | null
-          bytes_out?: number | null
-          create_times?: number | null
-          created_at?: string
-          fdw_name?: string
-          metadata?: Json | null
-          rows_in?: number | null
-          rows_out?: number | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      airtable_fdw_handler: { Args: never; Returns: unknown }
-      airtable_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      airtable_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      auth0_fdw_handler: { Args: never; Returns: unknown }
-      auth0_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      auth0_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      big_query_fdw_handler: { Args: never; Returns: unknown }
-      big_query_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      big_query_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      click_house_fdw_handler: { Args: never; Returns: unknown }
-      click_house_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      click_house_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      cognito_fdw_handler: { Args: never; Returns: unknown }
-      cognito_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      cognito_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      duckdb_fdw_handler: { Args: never; Returns: unknown }
-      duckdb_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      duckdb_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      firebase_fdw_handler: { Args: never; Returns: unknown }
-      firebase_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      firebase_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      hello_world_fdw_handler: { Args: never; Returns: unknown }
-      hello_world_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      hello_world_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      iceberg_fdw_handler: { Args: never; Returns: unknown }
-      iceberg_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      iceberg_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      logflare_fdw_handler: { Args: never; Returns: unknown }
-      logflare_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      logflare_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      metadata_filter: { Args: { _left: Json; _right: Json }; Returns: boolean }
-      mssql_fdw_handler: { Args: never; Returns: unknown }
-      mssql_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      mssql_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      redis_fdw_handler: { Args: never; Returns: unknown }
-      redis_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      redis_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      s3_fdw_handler: { Args: never; Returns: unknown }
-      s3_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      s3_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      s3_vectors_fdw_handler: { Args: never; Returns: unknown }
-      s3_vectors_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      s3_vectors_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      s3vec_distance: { Args: { s3vec: unknown }; Returns: number }
-      s3vec_in: { Args: { input: unknown }; Returns: unknown }
-      s3vec_knn: { Args: { _left: unknown; _right: unknown }; Returns: boolean }
-      s3vec_out: { Args: { input: unknown }; Returns: unknown }
-      stripe_fdw_handler: { Args: never; Returns: unknown }
-      stripe_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      stripe_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      wasm_fdw_handler: { Args: never; Returns: unknown }
-      wasm_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      wasm_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
