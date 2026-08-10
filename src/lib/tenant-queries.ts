@@ -1,4 +1,7 @@
 import { supabase } from '@/integrations/supabase/client'
+import { SalesService, InsertSaleDTO } from '@/services/sales.service'
+import { StockService, InsertStockDTO } from '@/services/stock.service'
+import { TenantService } from '@/services/tenant.service'
 
 export async function getCurrentTenant() {
   const { data: { user } } = await supabase.auth.getUser()
@@ -51,19 +54,23 @@ export async function getProfileWithTenant(userId: string) {
 }
 
 export async function insertSale(saleData: Record<string, unknown>, tenantId: string, userId: string) {
-  // total_amount is a generated column in the DB — must not be sent
   const { total_amount, ...rest } = saleData
-  return supabase
-    .from('sales')
-    .insert({ ...rest, tenant_id: tenantId, user_id: userId } as any)
+  try {
+    const data = await SalesService.addSale(rest as unknown as InsertSaleDTO, tenantId, userId)
+    return { data, error: null }
+  } catch (error: any) {
+    return { data: null, error }
+  }
 }
 
 export async function insertStockRecord(recordData: Record<string, unknown>, tenantId: string, userId: string) {
-  // total_cost is a generated column in the DB — must not be sent
   const { total_cost, ...rest } = recordData
-  return supabase
-    .from('stock_records')
-    .insert({ ...rest, tenant_id: tenantId, user_id: userId } as any)
+  try {
+    const data = await StockService.addStockRecord(rest as unknown as InsertStockDTO, tenantId, userId)
+    return { data, error: null }
+  } catch (error: any) {
+    return { data: null, error }
+  }
 }
 
 export async function getCreditSalesForTenant(tenantId: string) {
@@ -77,9 +84,10 @@ export async function getCreditSalesForTenant(tenantId: string) {
 }
 
 export async function getCompanySettingsForTenant(tenantId: string) {
-  return supabase
-    .from('company_settings')
-    .select('*')
-    .eq('tenant_id', tenantId)
-    .maybeSingle()
+  try {
+    const data = await TenantService.getCompanySettings(tenantId)
+    return { data, error: null }
+  } catch (error: any) {
+    return { data: null, error }
+  }
 }

@@ -108,8 +108,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Handle deep link redirect on Android/iOS
     // When Google OAuth redirects back to com.stepan.salesmanager://login-callback
     // Capacitor catches it and fires this event with the full URL
+    let appUrlOpenListener: any = null
+
     if (Capacitor.isNativePlatform()) {
-      App.addListener('appUrlOpen', async ({ url }) => {
+      const listener = App.addListener('appUrlOpen', async ({ url }) => {
         // The URL will look like:
         // com.stepan.salesmanager://login-callback#access_token=...&refresh_token=...
         if (url.includes('login-callback')) {
@@ -135,9 +137,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
       })
+
+      if (listener?.then) {
+        listener.then((handle: any) => { appUrlOpenListener = handle })
+      } else {
+        appUrlOpenListener = listener
+      }
     }
 
-    return () => subscription.unsubscribe()
+    return () => {
+      subscription.unsubscribe()
+
+      if (appUrlOpenListener?.remove) {
+        appUrlOpenListener.remove()
+      }
+    }
   }, [])
 
   const refreshProfile = () => {

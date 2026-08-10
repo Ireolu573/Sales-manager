@@ -12,7 +12,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "static-build": "vite build && npx cap copy",
-    "android-open": "npx cap open android"
+    "android-open": "npx cap open android",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:status": "supabase status",
+    "db:reset": "supabase db reset",
+    "docker:up": "docker compose up --build"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",

@@ -1,5 +1,6 @@
-import { useState, lazy, Suspense, useEffect, useCallback } from 'react'
+import { useState, lazy, Suspense, useEffect, useCallback, useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { useStock } from '@/hooks/useStock'
 import type { Tab, Permissions } from '@/lib/types'
 import { supabase } from '@/integrations/supabase/client'
 import AuthPage from '@/components/AuthPage'
@@ -16,11 +17,6 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import KeyboardShortcutsHelp from '@/components/KeyboardShortcutsHelp'
 import { Keyboard } from 'lucide-react'
 import { SkeletonPage } from '@/components/ui/loading-skeletons'
-
-// Init dark mode from localStorage before render
-const savedTheme = localStorage.getItem('theme')
-if (savedTheme === 'dark') document.documentElement.classList.add('dark')
-else if (savedTheme === 'light') document.documentElement.classList.remove('dark')
 
 const SaleForm = lazy(() => import('@/components/SaleForm'))
 const SalesTable = lazy(() => import('@/components/SalesTable'))
@@ -76,6 +72,14 @@ function applyBrandColor(hex: string) {
 export default function Dashboard() {
   const { user, isAdmin, loading, permissions, company, tenantId, showBusinessRegistration, setShowBusinessRegistration, refreshProfile, setCompany } = useAuth()
   const { toast } = useToast()
+  const { inventorySummary: dashboardInventorySummary } = useStock(tenantId ?? '')
+
+  const lowStockItems = useMemo(
+    () => Object.values(dashboardInventorySummary).filter(item => item.status !== 'in_stock'),
+    [dashboardInventorySummary]
+  )
+  const lowStockCount = lowStockItems.length
+  const outOfStockCount = lowStockItems.filter(item => item.status === 'out_of_stock').length
   const queryClient = useQueryClient()
 
   const [tab, setTab] = useState<Tab>('record')
@@ -83,9 +87,21 @@ export default function Dashboard() {
   const [showDC, setShowDC] = useState(false)
   const [showAccount, setShowAccount] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
-  const [online, setOnline] = useState(navigator.onLine)
+  const [online, setOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true)
   // 🌙 Dark mode: read from localStorage so it persists across sessions
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark')
+  const [isDark, setIsDark] = useState(() => false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme')
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark')
+      } else if (savedTheme === 'light') {
+        document.documentElement.classList.remove('dark')
+      }
+      setIsDark(savedTheme === 'dark')
+    }
+  }, [])
 
   useEffect(() => {
     if (company?.brand_color) applyBrandColor(company.brand_color)
@@ -158,6 +174,17 @@ export default function Dashboard() {
     onTabSwitch: switchTab,
     onToggleDark: toggleTheme,
   })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const savedTheme = localStorage.getItem('theme')
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else if (savedTheme === 'light') {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [])
 
   const visibleTabs = NAV_TABS.filter(t => permissions[t.perm as keyof Permissions])
   const handleCompanyUpdated = (c: typeof company) => {
@@ -235,6 +262,17 @@ export default function Dashboard() {
             <p className="text-xs text-destructive font-medium">
               You're offline.{queuedCount > 0 ? ` ${queuedCount} sale${queuedCount > 1 ? 's' : ''} queued — will sync when reconnected.` : ' Sales will be queued until reconnected.'}
             </p>
+          </div>
+        )}
+
+        {lowStockCount > 0 && (
+          <div className="bg-amber-500/10 border-t border-amber-200 px-4 py-2 text-sm text-amber-900">
+            <span className="font-semibold">
+              {outOfStockCount > 0 ? `${outOfStockCount} item${outOfStockCount > 1 ? 's' : ''} out of stock` : `${lowStockCount} low-stock item${lowStockCount > 1 ? 's' : ''}`}
+            </span>
+            <span className="ml-2 text-amber-800">
+              {outOfStockCount > 0 ? `${lowStockCount - outOfStockCount} low stock remaining` : 'Replenish inventory in Stock.'}
+            </span>
           </div>
         )}
       </header>
