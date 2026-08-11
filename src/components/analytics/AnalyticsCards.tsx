@@ -5,7 +5,8 @@ interface AnalyticsCardsProps {
   totalRevenue: number
   totalQty: number
   totalStockCost: number
-  estimatedProfit: number
+  grossProfit: number
+  grossMargin: number
   outstandingCredit: number
   isLoading?: boolean
 }
@@ -14,7 +15,8 @@ export default function AnalyticsCards({
   totalRevenue,
   totalQty,
   totalStockCost,
-  estimatedProfit,
+  grossProfit,
+  grossMargin,
   outstandingCredit,
   isLoading
 }: AnalyticsCardsProps) {
@@ -40,9 +42,10 @@ export default function AnalyticsCards({
           isLoading={isLoading}
         />
         <StatCard 
-          title="Est. Profit" 
-          value={`₦${Math.abs(estimatedProfit).toLocaleString()}`} 
-          icon={estimatedProfit >= 0 ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+          title="Gross Profit" 
+          value={`₦${grossProfit.toLocaleString()}`} 
+          icon={grossProfit >= 0 ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+          trend={`${grossMargin.toFixed(1)}% margin`}
           isLoading={isLoading}
         />
       </div>

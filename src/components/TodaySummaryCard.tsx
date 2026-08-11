@@ -70,7 +70,7 @@ export default function TodaySummaryCard({ userId, tenantId, isAdmin }: Props) {
         <p className="text-xs text-muted-foreground">No sales recorded today yet — yours could be the first! 🚀</p>
       ) : (
         <>
-          <div className="grid grid-cols-3 gap-2 mb-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
             <div className="bg-card rounded-xl p-2.5 text-center border border-border/50">
               <TrendingUp className="w-4 h-4 text-primary mx-auto mb-1" />
               <p className="text-xs text-muted-foreground leading-tight">Revenue</p>
