@@ -24,19 +24,18 @@ export interface CompanySettings {
 export interface ProductUnit {
   id: string
   unit_label: string
-  unit_price: number | null
+  unit_price: number
 }
 
 export interface Product {
   id: string
   name: string
   product_units: ProductUnit[]
-  is_active?: boolean | null
+  is_active?: boolean
 }
 
 export interface Sale {
   id: string
-  product_id?: string | null
   item_name: string
   unit_label: string
   quantity: number
@@ -46,7 +45,6 @@ export interface Sale {
   payment_method: string
   customer_name: string | null
   paid_at: string | null
-  paid_via?: string | null
   notes: string | null
   user_id?: string
   tenant_id?: string
@@ -55,9 +53,7 @@ export interface Sale {
 
 export interface StockRecord {
   id: string
-  product_id?: string | null
   item_name: string
-  unit_label?: string | null
   quantity: number
   cost_price: number
   total_cost: number
