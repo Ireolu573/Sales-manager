@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { CreditCard, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { SkeletonRowList } from '@/components/ui/loading-skeletons'
+import { Input } from '@/components/ui/input'
+import { SalesService } from '@/services/sales.service'
 
 interface Props {
   isAdmin: boolean
@@ -18,11 +20,21 @@ export default function CreditManager({ isAdmin, userId, tenantId }: Props) {
   const { toast } = useToast()
   const [credits, setCredits] = useState<Sale[]>([])
   const [loading, setLoading] = useState(true)
+  const [payments, setPayments] = useState<Record<string, number>>({})
+  const [paymentAmounts, setPaymentAmounts] = useState<Record<string, string>>({})
+  const [savingPayment, setSavingPayment] = useState<string | null>(null)
 
   const fetchCredits = async () => {
     setLoading(true)
-    const { data } = await getCreditSalesForTenant(tenantId)
+    const [{ data }, { data: paymentRows }] = await Promise.all([
+      getCreditSalesForTenant(tenantId),
+      (supabase as any).from('credit_payments').select('sale_id, amount').eq('tenant_id', tenantId),
+    ])
     if (data) setCredits(data as unknown as Sale[])
+    setPayments((paymentRows || []).reduce((totals: Record<string, number>, row: { sale_id: string; amount: number }) => {
+      totals[row.sale_id] = (totals[row.sale_id] || 0) + Number(row.amount)
+      return totals
+    }, {}))
     setLoading(false)
   }
 
@@ -30,21 +42,25 @@ export default function CreditManager({ isAdmin, userId, tenantId }: Props) {
     fetchCredits()
   }, [tenantId])
 
-  const handleSettle = async (saleId: string) => {
-    const { error } = await supabase
-      .from('sales')
-      .update({ paid_at: new Date().toISOString() })
-      .eq('id', saleId)
-
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' })
-    } else {
-      toast({ title: 'Credit settled!' })
-      fetchCredits()
+  const handlePayment = async (saleId: string, balance: number) => {
+    const amount = Number(paymentAmounts[saleId])
+    if (!amount || amount <= 0 || amount > balance) {
+      toast({ title: 'Enter a valid payment amount.', variant: 'destructive' })
+      return
     }
+    setSavingPayment(saleId)
+    try {
+      await SalesService.recordCreditPayment(saleId, amount, 'cash')
+      toast({ title: amount === balance ? 'Credit settled!' : 'Payment recorded.' })
+      setPaymentAmounts(prev => ({ ...prev, [saleId]: '' }))
+      fetchCredits()
+    } catch (error: any) {
+      toast({ title: 'Could not record payment', description: error.message, variant: 'destructive' })
+    } finally { setSavingPayment(null) }
   }
 
-  const totalOutstanding = credits.reduce((sum, s) => sum + Number(s.total_amount), 0)
+  const balanceFor = (sale: Sale) => Math.max(0, Number(sale.total_amount) - (payments[sale.id] || 0))
+  const totalOutstanding = credits.reduce((sum, s) => sum + balanceFor(s), 0)
 
   const byCustomer: Record<string, Sale[]> = {}
   credits.forEach(c => {
@@ -87,7 +103,7 @@ export default function CreditManager({ isAdmin, userId, tenantId }: Props) {
       ) : (
         <div className="space-y-3">
           {Object.entries(byCustomer).map(([customer, customerCredits]) => {
-            const customerTotal = customerCredits.reduce((sum, s) => sum + Number(s.total_amount), 0)
+            const customerTotal = customerCredits.reduce((sum, s) => sum + balanceFor(s), 0)
             return (
               <Card key={customer} className="border-border/50 shadow-sm">
                 <CardContent className="p-4">
@@ -106,11 +122,14 @@ export default function CreditManager({ isAdmin, userId, tenantId }: Props) {
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold">₦{Number(credit.total_amount).toLocaleString()}</span>
+                          <span className="text-sm font-semibold">₦{balanceFor(credit).toLocaleString()} due</span>
                           {isAdmin && (
-                            <Button size="sm" variant="outline" onClick={() => handleSettle(credit.id)} className="h-7 text-xs gap-1 border-success/30 text-success hover:bg-success/10">
-                              <CheckCircle2 className="w-3 h-3" /> Settle
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              <Input aria-label="Payment amount" type="number" min="1" max={balanceFor(credit)} value={paymentAmounts[credit.id] || ''} onChange={e => setPaymentAmounts(prev => ({ ...prev, [credit.id]: e.target.value }))} className="h-8 w-24 text-xs" placeholder="Amount" />
+                              <Button size="sm" variant="outline" disabled={savingPayment === credit.id} onClick={() => handlePayment(credit.id, balanceFor(credit))} className="h-8 text-xs gap-1 border-success/30 text-success hover:bg-success/10">
+                                <CheckCircle2 className="w-3 h-3" /> Pay
+                              </Button>
+                            </div>
                           )}
                         </div>
                       </div>

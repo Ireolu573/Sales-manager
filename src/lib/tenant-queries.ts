@@ -16,7 +16,7 @@ export async function getCurrentTenant() {
 export async function getProductsForTenant(tenantId: string) {
   return supabase
     .from('products')
-    .select('id, name, product_units(id, unit_label, unit_price), is_active')
+    .select('id, name, product_units(id, unit_label, unit_price, base_unit_quantity), is_active')
     .eq('tenant_id', tenantId)
     .eq('is_active', true)
     .order('name')
@@ -51,11 +51,7 @@ export async function getProfileWithTenant(userId: string) {
 }
 
 export async function insertSale(saleData: Record<string, unknown>, tenantId: string, userId: string) {
-  // total_amount is a generated column in the DB — must not be sent
-  const { total_amount, ...rest } = saleData
-  return supabase
-    .from('sales')
-    .insert({ ...rest, tenant_id: tenantId, user_id: userId } as any)
+  throw new Error('Direct sales table writes are disabled. Use the secure record_sales_transaction RPC instead.')
 }
 
 export async function insertStockRecord(recordData: Record<string, unknown>, tenantId: string, userId: string) {

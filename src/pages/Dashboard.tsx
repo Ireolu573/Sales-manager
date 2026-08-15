@@ -1,5 +1,6 @@
-import { useState, lazy, Suspense, useEffect, useCallback } from 'react'
+import { useState, lazy, Suspense, useEffect, useCallback, useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { useStock } from '@/hooks/useStock'
 import type { Tab, Permissions } from '@/lib/types'
 import { supabase } from '@/integrations/supabase/client'
 import AuthPage from '@/components/AuthPage'
@@ -16,11 +17,6 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import KeyboardShortcutsHelp from '@/components/KeyboardShortcutsHelp'
 import { Keyboard } from 'lucide-react'
 import { SkeletonPage } from '@/components/ui/loading-skeletons'
-
-// Init dark mode from localStorage before render
-const savedTheme = localStorage.getItem('theme')
-if (savedTheme === 'dark') document.documentElement.classList.add('dark')
-else if (savedTheme === 'light') document.documentElement.classList.remove('dark')
 
 const SaleForm = lazy(() => import('@/components/SaleForm'))
 const SalesTable = lazy(() => import('@/components/SalesTable'))
@@ -76,6 +72,14 @@ function applyBrandColor(hex: string) {
 export default function Dashboard() {
   const { user, isAdmin, loading, permissions, company, tenantId, showBusinessRegistration, setShowBusinessRegistration, refreshProfile, setCompany } = useAuth()
   const { toast } = useToast()
+  const { inventorySummary: dashboardInventorySummary } = useStock(tenantId ?? '')
+
+  const lowStockItems = useMemo(
+    () => Object.values(dashboardInventorySummary).filter(item => item.status !== 'in_stock'),
+    [dashboardInventorySummary]
+  )
+  const lowStockCount = lowStockItems.length
+  const outOfStockCount = lowStockItems.filter(item => item.status === 'out_of_stock').length
   const queryClient = useQueryClient()
 
   const [tab, setTab] = useState<Tab>('record')
@@ -83,9 +87,21 @@ export default function Dashboard() {
   const [showDC, setShowDC] = useState(false)
   const [showAccount, setShowAccount] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
-  const [online, setOnline] = useState(navigator.onLine)
+  const [online, setOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true)
   // 🌙 Dark mode: read from localStorage so it persists across sessions
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark')
+  const [isDark, setIsDark] = useState(() => false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme')
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark')
+      } else if (savedTheme === 'light') {
+        document.documentElement.classList.remove('dark')
+      }
+      setIsDark(savedTheme === 'dark')
+    }
+  }, [])
 
   useEffect(() => {
     if (company?.brand_color) applyBrandColor(company.brand_color)
@@ -159,6 +175,17 @@ export default function Dashboard() {
     onToggleDark: toggleTheme,
   })
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const savedTheme = localStorage.getItem('theme')
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else if (savedTheme === 'light') {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [])
+
   const visibleTabs = NAV_TABS.filter(t => permissions[t.perm as keyof Permissions])
   const handleCompanyUpdated = (c: typeof company) => {
     setCompany(c)
@@ -193,16 +220,16 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-20 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="text-xl">{company.logo_emoji}</span>
-            <div>
-              <div className="font-bold text-foreground text-sm leading-tight">{company.company_name}</div>
-              <div className="text-xs text-muted-foreground leading-tight">{company.app_name}</div>
+      <header className="bg-card/95 border-b border-border sticky top-0 z-20 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-card/80">
+        <div className="max-w-2xl mx-auto px-3 py-2.5 flex items-center justify-between gap-2 sm:px-4 sm:py-3">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <span className="text-xl shrink-0">{company.logo_emoji}</span>
+            <div className="min-w-0 flex-1">
+              <div className="font-bold text-foreground text-[11px] leading-tight tracking-wide uppercase break-words sm:text-sm">{company.company_name}</div>
+              <div className="text-[10px] text-muted-foreground leading-tight sm:text-xs">{company.app_name}</div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {/* 📶 Wi-Fi indicator — shows queue count when offline */}
             <div className="relative">
               {online
@@ -237,10 +264,21 @@ export default function Dashboard() {
             </p>
           </div>
         )}
+
+        {lowStockCount > 0 && (
+          <div className="bg-amber-500/10 border-t border-amber-200 px-4 py-2 text-sm text-amber-900">
+            <span className="font-semibold">
+              {outOfStockCount > 0 ? `${outOfStockCount} item${outOfStockCount > 1 ? 's' : ''} out of stock` : `${lowStockCount} low-stock item${lowStockCount > 1 ? 's' : ''}`}
+            </span>
+            <span className="ml-2 text-amber-800">
+              {outOfStockCount > 0 ? `${lowStockCount - outOfStockCount} low stock remaining` : 'Replenish inventory in Stock.'}
+            </span>
+          </div>
+        )}
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-5 pb-24">
+      <main className="flex-1 max-w-2xl w-full mx-auto px-3 py-4 pb-28 sm:px-4 sm:py-5">
         <div key={animKey} className="slide-up">
           <Suspense fallback={<SkeletonPage />}>
             {tab === 'record' && permissions.can_record_sales && tenantId && (
@@ -266,13 +304,13 @@ export default function Dashboard() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-20 shadow-[0_-4px_16px_-4px_hsl(var(--foreground)/0.06)]">
-        <div className="max-w-2xl mx-auto px-2 py-1.5 flex justify-around">
+      <nav className="fixed bottom-0 left-0 right-0 bg-card/95 border-t border-border z-20 shadow-[0_-4px_16px_-4px_hsl(var(--foreground)/0.06)] backdrop-blur supports-[backdrop-filter]:bg-card/80">
+        <div className="max-w-2xl mx-auto px-2 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] flex flex-nowrap justify-around gap-1 overflow-x-auto">
           {visibleTabs.map(t => (
             <button
               key={t.id}
               onClick={() => switchTab(t.id)}
-              className={`flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl transition-all duration-200 min-w-0 flex-1 active:scale-95 ${
+              className={`flex flex-col items-center gap-0.5 py-2 px-2 rounded-xl transition-all duration-200 min-w-[4.25rem] flex-1 active:scale-95 ${
                 tab === t.id ? 'text-primary scale-105' : 'text-muted-foreground opacity-60 hover:opacity-80'
               }`}
             >

@@ -24,27 +24,35 @@ export interface CompanySettings {
 export interface ProductUnit {
   id: string
   unit_label: string
-  unit_price: number
+  unit_price: number | null
+  /** Number of the product's smallest stock units represented by this sale/purchase unit. */
+  base_unit_quantity: number
 }
 
 export interface Product {
   id: string
   name: string
   product_units: ProductUnit[]
-  is_active?: boolean
+  is_active?: boolean | null
 }
 
 export interface Sale {
   id: string
+  product_id?: string | null
   item_name: string
   unit_label: string
   quantity: number
   unit_price: number
   total_amount: number
+  base_quantity?: number | null
+  cogs_amount?: number | null
+  inventory_override?: boolean | null
+  override_reason?: string | null
   sale_date: string
   payment_method: string
   customer_name: string | null
   paid_at: string | null
+  paid_via?: string | null
   notes: string | null
   user_id?: string
   tenant_id?: string
@@ -53,10 +61,14 @@ export interface Sale {
 
 export interface StockRecord {
   id: string
+  product_id?: string | null
   item_name: string
+  unit_label?: string | null
   quantity: number
   cost_price: number
   total_cost: number
+  base_quantity?: number | null
+  base_cost?: number | null
   stock_date: string
   user_id?: string
   tenant_id?: string

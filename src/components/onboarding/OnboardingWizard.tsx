@@ -69,48 +69,11 @@ export default function OnboardingWizard({ userId, email, tenantId, company, onC
     setError('')
 
     try {
-      const { data: tenant, error: tenantError } = await supabase
-        .from('tenants')
-        .insert({ name: companyName, created_by: userId })
-        .select('id')
-        .single()
-
-      if (tenantError) throw tenantError
-
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          tenant_id: tenant.id,
-          is_admin: true,
-          permissions: {
-            can_record_sales: true,
-            can_view_history: true,
-            can_view_stock: true,
-            can_add_stock: true,
-            can_view_analytics: true,
-            can_manage_credit: true,
-          }
-        })
-        .eq('id', userId)
-
-      if (profileError) throw profileError
-
-      const { error: settingsError } = await supabase
-        .from('company_settings')
-        .insert({
-          tenant_id: tenant.id,
-          admin_id: userId,
-          company_name: companyName,
-          app_name: appName,
-          brand_color: brandColor,
-          logo_emoji: logoEmoji,
-          onboarding_step: 2,
-          onboarding_complete: false,
-        })
-
-      if (settingsError) throw settingsError
-
-      setLocalTenantId(tenant.id)
+      const { data: tenantId, error } = await supabase.rpc('create_business' as never, {
+        p_name: companyName, p_app_name: appName, p_brand_color: brandColor, p_logo_emoji: logoEmoji,
+      } as never)
+      if (error || !tenantId) throw error || new Error('Failed to create business')
+      setLocalTenantId(tenantId as string)
       setStep(2)
     } catch (err: any) {
       setError(err.message || 'Failed to create business')
@@ -127,25 +90,8 @@ export default function OnboardingWizard({ userId, email, tenantId, company, onC
     setError('')
 
     try {
-      const { data: tenant, error: tenantError } = await supabase
-        .from('tenants')
-        .select('id')
-        .eq('invite_code', joinCode.trim().toLowerCase())
-        .maybeSingle()
-
-      if (tenantError) throw new Error('Something went wrong. Please try again.')
-      if (!tenant) throw new Error('Invalid invite code. Please check and try again.')
-
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          tenant_id: tenant.id,
-          is_admin: false,
-          permissions: DEFAULT_STAFF_PERMISSIONS,
-        })
-        .eq('id', userId)
-
-      if (profileError) throw profileError
+      const { error } = await supabase.rpc('join_business' as never, { p_invite_code: joinCode } as never)
+      if (error) throw error
 
       onComplete()
     } catch (err: any) {

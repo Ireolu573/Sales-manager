@@ -5,6 +5,7 @@
  */
 
 import { insertSale } from '@/lib/tenant-queries'
+import { SalesService, type RecordSaleTransactionDTO } from '@/services/sales.service'
 
 export interface QueuedSale {
   id: string
@@ -63,13 +64,13 @@ export async function flushQueue(
 
   for (const item of queue) {
     try {
-      const { error } = await insertSale(item.saleData, item.tenantId, item.userId)
-      if (error) {
-        remaining.push(item)
+      if ('__transaction' in item.saleData) {
+        await SalesService.recordTransaction((item.saleData.__transaction as RecordSaleTransactionDTO), item.tenantId)
       } else {
-        synced++
-        onProgress?.(synced, queue.length)
+        throw new Error('Direct sales table writes are disabled. Use the secure record_sales_transaction RPC instead.')
       }
+      synced++
+      onProgress?.(synced, queue.length)
     } catch {
       remaining.push(item)
     }
