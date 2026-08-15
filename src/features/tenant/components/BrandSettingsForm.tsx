@@ -38,13 +38,13 @@ export function BrandSettingsForm({ tenantId, company, onCompanyUpdated }: Props
 
   return (
     <Card className="border shadow-sm">
-      <CardContent className="pt-6 space-y-4">
+      <CardContent className="pt-5 sm:pt-6 space-y-4">
         <div className="flex items-center gap-2 font-semibold text-lg border-b pb-2">
           <Palette className="h-5 w-5 text-amber-600" />
           <span>Brand Settings</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div className="space-y-2">
             <Label htmlFor="companyName">Business / Store Name</Label>
             <Input
@@ -71,7 +71,7 @@ export function BrandSettingsForm({ tenantId, company, onCompanyUpdated }: Props
               <Input
                 id="brandColor"
                 type="color"
-                className="w-14 h-10 p-1 cursor-pointer"
+                className="w-14 h-10 p-1 cursor-pointer shrink-0"
                 value={brandColor}
                 onChange={(e) => setBrandColor(e.target.value)}
               />
@@ -95,8 +95,8 @@ export function BrandSettingsForm({ tenantId, company, onCompanyUpdated }: Props
           </div>
         </div>
 
-        <div className="flex justify-end pt-4">
-          <Button onClick={saveBrand} disabled={saving} className="bg-amber-600 hover:bg-amber-700 text-white">
+        <div className="flex justify-end pt-2">
+          <Button onClick={saveBrand} disabled={saving} className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white">
             {saving ? 'Saving...' : 'Save Brand Settings'}
           </Button>
         </div>

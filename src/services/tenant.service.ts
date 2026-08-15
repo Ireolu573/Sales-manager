@@ -28,7 +28,7 @@ export class TenantService {
   static async getProducts(tenantId: string): Promise<Product[]> {
     const { data, error } = await supabase
       .from('products')
-      .select('id, name, is_active, product_units(id, unit_label, unit_price)')
+      .select('id, name, is_active, product_units(id, unit_label, unit_price, base_unit_quantity)')
       .eq('tenant_id', tenantId)
       .eq('is_active', true)
       .order('name')
@@ -37,7 +37,7 @@ export class TenantService {
     return (data as Product[]) || []
   }
 
-  static async addProduct(name: string, tenantId: string, units: { unit_label: string; unit_price: number }[]): Promise<Product> {
+  static async addProduct(name: string, tenantId: string, units: { unit_label: string; unit_price: number; base_unit_quantity?: number }[]): Promise<Product> {
     const { data: product, error: prodErr } = await supabase
       .from('products')
       .insert({ name, tenant_id: tenantId, is_active: true })
@@ -52,6 +52,7 @@ export class TenantService {
           product_id: product.id,
           unit_label: u.unit_label,
           unit_price: u.unit_price,
+          base_unit_quantity: u.base_unit_quantity || 1,
         }))
       )
       if (unitErr) throw new Error(unitErr.message)
@@ -69,11 +70,11 @@ export class TenantService {
     if (error) throw new Error(error.message)
   }
 
-  static async updateProductUnitPrices(unitPrices: { id: string; unit_price: number }[]): Promise<void> {
+  static async updateProductUnitPrices(unitPrices: { id: string; unit_price: number; base_unit_quantity?: number }[]): Promise<void> {
     for (const item of unitPrices) {
       const { error } = await supabase
         .from('product_units')
-        .update({ unit_price: item.unit_price })
+        .update({ unit_price: item.unit_price, ...(item.base_unit_quantity ? { base_unit_quantity: item.base_unit_quantity } : {}) } as any)
         .eq('id', item.id)
       if (error) throw new Error(error.message)
     }

@@ -16,7 +16,7 @@ interface Props {
   isAdmin: boolean
 }
 
-export default function TodaySummaryCard({ userId, tenantId, isAdmin }: Props) {
+export default function TodaySummaryCard({ userId, tenantId, isAdmin }: Props): import("react/jsx-runtime").JSX.Element {
   const today = new Date().toISOString().split('T')[0]
 
   // Re-uses the same cache key as Analytics / SalesTable — zero extra requests
@@ -58,45 +58,45 @@ export default function TodaySummaryCard({ userId, tenantId, isAdmin }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
-      <div className="flex items-center gap-2 mb-3">
+    <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 sm:p-4">
+      <div className="flex items-center gap-2 mb-2.5">
         <Zap className="w-4 h-4 text-primary" />
-        <span className="text-sm font-semibold text-primary">
+        <span className="text-xs sm:text-sm font-semibold text-primary leading-tight">
           {totalCount === 0 ? `Good ${getTimeOfDay()}! Let's start recording` : `${dayName}'s progress`}
         </span>
       </div>
 
       {totalCount === 0 ? (
-        <p className="text-xs text-muted-foreground">No sales recorded today yet — yours could be the first! 🚀</p>
+        <p className="text-[11px] text-muted-foreground leading-relaxed">No sales recorded today yet </p>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
-            <div className="bg-card rounded-xl p-2.5 text-center border border-border/50">
-              <TrendingUp className="w-4 h-4 text-primary mx-auto mb-1" />
-              <p className="text-xs text-muted-foreground leading-tight">Revenue</p>
-              <p className="text-sm font-bold text-foreground tabular-nums">
+          <div className="grid grid-cols-3 gap-2 mb-2.5">
+            <div className="bg-card rounded-lg p-2 text-center border border-border/50">
+              <TrendingUp className="w-3.5 h-3.5 text-primary mx-auto mb-1" />
+              <p className="text-[10px] text-muted-foreground leading-tight">Revenue</p>
+              <p className="text-xs font-bold text-foreground tabular-nums">
                 ₦{totalRevenue >= 1000 ? `${(totalRevenue/1000).toFixed(1)}k` : totalRevenue.toLocaleString()}
               </p>
             </div>
-            <div className="bg-card rounded-xl p-2.5 text-center border border-border/50">
-              <ShoppingCart className="w-4 h-4 text-primary mx-auto mb-1" />
-              <p className="text-xs text-muted-foreground leading-tight">Sales</p>
-              <p className="text-sm font-bold text-foreground tabular-nums">{totalCount}</p>
+            <div className="bg-card rounded-lg p-2 text-center border border-border/50">
+              <ShoppingCart className="w-3.5 h-3.5 text-primary mx-auto mb-1" />
+              <p className="text-[10px] text-muted-foreground leading-tight">Sales</p>
+              <p className="text-xs font-bold text-foreground tabular-nums">{totalCount}</p>
             </div>
-            <div className="bg-card rounded-xl p-2.5 text-center border border-border/50">
-              <Package className="w-4 h-4 text-primary mx-auto mb-1" />
-              <p className="text-xs text-muted-foreground leading-tight">Items</p>
-              <p className="text-sm font-bold text-foreground tabular-nums">{totalQty}</p>
+            <div className="bg-card rounded-lg p-2 text-center border border-border/50">
+              <Package className="w-3.5 h-3.5 text-primary mx-auto mb-1" />
+              <p className="text-[10px] text-muted-foreground leading-tight">Items</p>
+              <p className="text-xs font-bold text-foreground tabular-nums">{totalQty}</p>
             </div>
           </div>
 
           {topItem && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-[10px] text-muted-foreground inline-flex items-center gap-1 shrink-0">
                 <Trophy className="w-3 h-3" />Top today:
               </span>
-              <span className="text-xs font-semibold text-foreground truncate">{topItem[0]}</span>
-              <span className="text-xs text-primary font-bold ml-auto shrink-0">
+              <span className="text-[10px] font-semibold text-foreground truncate">{topItem[0]}</span>
+              <span className="text-[10px] text-primary font-bold ml-auto shrink-0">
                 ₦{topItem[1].toLocaleString()}
               </span>
             </div>

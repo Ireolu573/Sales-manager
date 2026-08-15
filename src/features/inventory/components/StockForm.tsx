@@ -67,6 +67,8 @@ export function StockForm({ userId, tenantId, isAdmin }: Props) {
       unit_label: selectedUnit?.unit_label || null,
       quantity: Number(quantity),
       cost_price: Number(costPrice),
+      base_quantity: Number(quantity) * (selectedUnit?.base_unit_quantity || 1),
+      base_cost: Number(quantity) * Number(costPrice),
       stock_date: stockDate,
       notes: notes || null,
     }, tenantId, userId)
@@ -207,7 +209,7 @@ export function StockForm({ userId, tenantId, isAdmin }: Props) {
                   <div className="flex flex-col items-end gap-2 shrink-0">
                     <div className="text-right">
                       <div className="font-bold text-sm text-foreground">₦{Number(r.total_cost).toLocaleString()}</div>
-                      <div className="text-xs text-muted-foreground">₦{Number(r.cost_price).toLocaleString()}/unit</div>
+                      <div className="text-xs text-muted-foreground">₦{Number(r.cost_price).toLocaleString()}/{r.unit_label || 'unit'}</div>
                     </div>
                     {isAdmin && (
                       <button

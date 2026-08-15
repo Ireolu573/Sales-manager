@@ -58,18 +58,18 @@ export default function DomainController({ userId, tenantId, company, onClose, o
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-1rem)] max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl sm:rounded-lg p-3 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">Business Domain & Store Controller</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl font-bold">Business Domain & Store Controller</DialogTitle>
         </DialogHeader>
 
         {/* Navigation Tabs */}
-        <div className="flex border-b gap-2 pb-2">
+        <div className="flex flex-wrap border-b gap-2 pb-2">
           <Button
             variant={tab === 'brand' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setTab('brand')}
-            className={tab === 'brand' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}
+            className={`flex-1 min-w-[140px] justify-center ${tab === 'brand' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}`}
           >
             <Palette className="h-4 w-4 mr-1.5" /> Brand & Styling
           </Button>
@@ -78,7 +78,7 @@ export default function DomainController({ userId, tenantId, company, onClose, o
             variant={tab === 'products' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setTab('products')}
-            className={tab === 'products' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}
+            className={`flex-1 min-w-[140px] justify-center ${tab === 'products' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}`}
           >
             <Package className="h-4 w-4 mr-1.5" /> Product Catalog ({products.length})
           </Button>
@@ -87,7 +87,7 @@ export default function DomainController({ userId, tenantId, company, onClose, o
             variant={tab === 'staff' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setTab('staff')}
-            className={tab === 'staff' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}
+            className={`flex-1 min-w-[140px] justify-center ${tab === 'staff' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}`}
           >
             <Users className="h-4 w-4 mr-1.5" /> Staff & Access
           </Button>

@@ -71,15 +71,22 @@ export function SaleForm({ userId, tenantId }: Props) {
 
   const { inventorySummary } = useStock(tenantId)
   const [allowInventoryOverride, setAllowInventoryOverride] = useState(false)
+  const [overrideReason, setOverrideReason] = useState('')
 
   const selectedProductInventory = productId ? inventorySummary[productId] : undefined
   const selectedProductAvailable = selectedProductInventory?.availableStock ?? null
   const isLowStock = selectedProductInventory?.status === 'low_stock'
   const isOutOfStock = selectedProductInventory?.status === 'out_of_stock'
-  const numericQuantity = Number(quantity) || 0
-  const singleStockIssue = selectedProductInventory ? numericQuantity > selectedProductInventory.availableStock : false
+  const numericQuantity = Number(quantity) * (selectedUnit?.base_unit_quantity || 1) || 0
+  const hasInventoryValue = selectedProductInventory && typeof selectedProductInventory.availableStock === 'number'
+  const singleStockIssue = hasInventoryValue ? numericQuantity > selectedProductInventory.availableStock : false
   const bulkStockIssues = useMemo(
-    () => lineItems.filter(item => item.productId && item.quantity && Number(item.quantity) > (inventorySummary[item.productId]?.availableStock ?? Infinity)),
+    () => Object.entries(lineItems.reduce<Record<string, number>>((totals, item) => {
+      if (item.productId && item.quantity) {
+        totals[item.productId] = (totals[item.productId] || 0) + Number(item.quantity) * (item.selectedUnit?.base_unit_quantity || 1)
+      }
+      return totals
+    }, {})).filter(([productId, required]) => required > (inventorySummary[productId]?.availableBaseQuantity ?? Infinity)),
     [inventorySummary, lineItems]
   )
 
@@ -150,6 +157,7 @@ export function SaleForm({ userId, tenantId }: Props) {
     setLoading(true)
 
     try {
+      let receiptItems: ReceiptData['items'] = []
       if (mode === 'single') {
         if (!selectedProduct || !selectedUnit || !quantity || !unitPrice) {
           toast({ title: 'Please fill in all required fields.', variant: 'destructive' })
@@ -158,52 +166,17 @@ export function SaleForm({ userId, tenantId }: Props) {
         }
 
         if (singleStockIssue && !allowInventoryOverride) {
-          toast({ title: 'Sale quantity exceeds available stock.', description: 'Enable override to proceed with the sale.', variant: 'destructive' })
+          const remaining = Math.max((selectedProductInventory?.availableStock ?? 0), 0)
+          toast({
+            title: 'Stock limit reached.',
+            description: `Only ${remaining} ${selectedUnit?.unit_label || 'unit'}${remaining === 1 ? '' : 's'} available for this product.`,
+            variant: 'destructive',
+          })
           setLoading(false)
           return
         }
 
-        const salePayload = {
-          product_id: selectedProduct.id,
-          item_name: selectedProduct.name,
-          unit_label: selectedUnit.unit_label,
-          quantity: Number(quantity),
-          unit_price: Number(unitPrice),
-          sale_date: saleDate,
-          payment_method: paymentMethod,
-          customer_name: customerName || null,
-          notes: notes || null,
-          paid_at: paymentMethod === 'credit' ? null : new Date().toISOString(),
-        }
-
-        if (!navigator.onLine) {
-          enqueueSale(salePayload, tenantId, userId)
-          toast({ title: 'Offline mode: Sale queued for sync!' })
-        } else {
-          await SalesService.addSale(salePayload, tenantId, userId)
-          toast({ title: 'Sale recorded successfully!' })
-        }
-
-        setReceiptData({
-          items: [{ item_name: selectedProduct.name, unit_label: selectedUnit.unit_label, quantity: Number(quantity), unit_price: Number(unitPrice), total_amount: Number(quantity) * Number(unitPrice) }],
-          total: Number(quantity) * Number(unitPrice),
-          paymentMethod,
-          customerName: customerName || '',
-          saleDate,
-          notes: notes || '',
-          companyName: company?.company_name || 'My Business',
-          appName: company?.app_name || 'Sales Manager',
-          logoEmoji: company?.logo_emoji || '🏢',
-          brandColor: company?.brand_color || '#d97706',
-        })
-        setShowReceipt(true)
-
-        setProductId('')
-        setSelectedUnit(null)
-        setQuantity('')
-        setUnitPrice('')
-        setCustomerName('')
-        setNotes('')
+        receiptItems = [{ item_name: selectedProduct.name, unit_label: selectedUnit.unit_label, quantity: Number(quantity), unit_price: Number(unitPrice), total_amount: Number(quantity) * Number(unitPrice) }]
       } else {
         const validItems = lineItems.filter(i => i.productId && i.selectedUnit && i.quantity && i.unitPrice)
         if (validItems.length === 0) {
@@ -213,63 +186,50 @@ export function SaleForm({ userId, tenantId }: Props) {
         }
 
         if (bulkStockIssues.length > 0 && !allowInventoryOverride) {
-          toast({ title: 'One or more line items exceed available stock.', description: 'Enable override to proceed with the sale.', variant: 'destructive' })
+          const [productId] = bulkStockIssues[0]
+          const productName = products.find(p => p.id === productId)?.name || 'This product'
+          const available = inventorySummary[productId]?.availableBaseQuantity ?? 0
+          toast({
+            title: 'One or more items exceed stock.',
+            description: `${productName} only has ${available} unit${available === 1 ? '' : 's'} left.`,
+            variant: 'destructive',
+          })
           setLoading(false)
           return
         }
 
-        const receiptsItems = []
-        let total = 0
-
-        for (const item of validItems) {
+        receiptItems = validItems.map(item => {
           const prod = products.find(p => p.id === item.productId)!
-          const payload = {
-            product_id: prod.id,
-            item_name: prod.name,
-            unit_label: item.selectedUnit!.unit_label,
-            quantity: Number(item.quantity),
-            unit_price: Number(item.unitPrice),
-            sale_date: saleDate,
-            payment_method: paymentMethod,
-            customer_name: customerName || null,
-            notes: notes || null,
-            paid_at: paymentMethod === 'credit' ? null : new Date().toISOString(),
-          }
-
-          if (!navigator.onLine) {
-            enqueueSale(payload, tenantId, userId)
-          } else {
-            await SalesService.addSale(payload, tenantId, userId)
-          }
-
           const lineTotal = Number(item.quantity) * Number(item.unitPrice)
-          total += lineTotal
-          receiptsItems.push({ item_name: prod.name, unit_label: item.selectedUnit!.unit_label, quantity: Number(item.quantity), unit_price: Number(item.unitPrice), total_amount: lineTotal })
-        }
-
-        toast({ title: `${validItems.length} sales recorded successfully!` })
-
-        setReceiptData({
-          items: receiptsItems,
-          total,
-          paymentMethod,
-          customerName: customerName || '',
-          saleDate,
-          notes: notes || '',
-          companyName: company?.company_name || 'My Business',
-          appName: company?.app_name || 'Sales Manager',
-          logoEmoji: company?.logo_emoji || '🏢',
-          brandColor: company?.brand_color || '#d97706',
+          return { item_name: prod.name, unit_label: item.selectedUnit!.unit_label, quantity: Number(item.quantity), unit_price: Number(item.unitPrice), total_amount: lineTotal }
         })
-        setShowReceipt(true)
-
-        setLineItems([newLine()])
-        setCustomerName('')
-        setNotes('')
       }
+
+      if (allowInventoryOverride && (!isAdmin || !overrideReason.trim())) {
+        throw new Error('Only an administrator can override stock, and a reason is required.')
+      }
+      const transactionPayload = {
+        items: mode === 'single'
+          ? [{ product_id: selectedProduct!.id, product_unit_id: selectedUnit!.id, quantity: Number(quantity), unit_price: Number(unitPrice) }]
+          : lineItems.filter(i => i.productId && i.selectedUnit && i.quantity && i.unitPrice).map(i => ({ product_id: i.productId, product_unit_id: i.selectedUnit!.id, quantity: Number(i.quantity), unit_price: Number(i.unitPrice) })),
+        sale_date: saleDate, payment_method: paymentMethod, customer_name: customerName || null, notes: notes || null,
+        allow_override: allowInventoryOverride, override_reason: overrideReason || null, transaction_id: `TXN-${crypto.randomUUID()}`,
+      }
+      if (!navigator.onLine) {
+        enqueueSale({ __transaction: transactionPayload }, tenantId, userId)
+        toast({ title: 'Offline sale queued', description: 'Stock will be re-checked securely when it syncs.' })
+      } else {
+        await SalesService.recordTransaction(transactionPayload, tenantId)
+        toast({ title: 'Transaction recorded successfully!' })
+      }
+      const total = receiptItems.reduce((sum, item) => sum + item.total_amount, 0)
+      setReceiptData({ items: receiptItems, total, paymentMethod, customerName: customerName || '', saleDate, notes: notes || '', companyName: company?.company_name || 'My Business', appName: company?.app_name || 'Sales Manager', logoEmoji: company?.logo_emoji || '🏢', brandColor: company?.brand_color || '#d97706' })
+      setShowReceipt(true)
+      setProductId(''); setSelectedUnit(null); setQuantity(''); setUnitPrice(''); setLineItems([newLine()]); setCustomerName(''); setNotes(''); setAllowInventoryOverride(false); setOverrideReason('')
 
       queryClient.invalidateQueries({ queryKey: ['sales', tenantId] })
       queryClient.invalidateQueries({ queryKey: ['analytics', tenantId] })
+      queryClient.invalidateQueries({ queryKey: ['inventorySummary', tenantId] })
     } catch (err: any) {
       toast({ title: 'Error saving sale', description: err.message, variant: 'destructive' })
     } finally {
@@ -281,31 +241,33 @@ export function SaleForm({ userId, tenantId }: Props) {
   const bulkTotal = lineItems.reduce((acc, i) => acc + (Number(i.quantity) * Number(i.unitPrice) || 0), 0)
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-4 max-w-md mx-auto md:max-w-4xl md:space-y-6">
       <TodaySummaryCard tenantId={tenantId} userId={userId} isAdmin={isAdmin} />
 
-      <Card className="shadow-md border">
-        <CardContent className="pt-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between border-b pb-4">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5 text-amber-600" /> Record Sales Transaction
-              </h2>
+      <Card className="shadow-sm border border-border/80 bg-card/95 backdrop-blur-sm rounded-2xl">
+        <CardContent className="p-4 md:p-6">
+          <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+            <div className="flex flex-col gap-3 border-b pb-4">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-lg md:text-xl font-bold flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5 text-amber-600" /> Record Sales
+                </h2>
+              </div>
 
-              <div className="flex flex-wrap items-center gap-2 bg-muted p-1 rounded-lg text-xs font-semibold">
+              <div className="flex items-center gap-2 bg-muted p-1 rounded-xl text-xs font-semibold w-full">
                 <button
                   type="button"
                   onClick={() => setMode('single')}
-                  className={`px-3 py-1.5 rounded-md transition-all ${mode === 'single' ? 'bg-background text-foreground shadow' : 'text-muted-foreground'}`}
+                  className={`flex-1 px-3 py-2 rounded-lg transition-all ${mode === 'single' ? 'bg-background text-foreground shadow-sm ring-1 ring-border' : 'text-muted-foreground'}`}
                 >
-                  <Zap className="h-3.5 w-3.5 inline mr-1" /> Quick Single
+                  <Zap className="h-3.5 w-3.5 inline mr-1" /> Single
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode('bulk')}
-                  className={`px-3 py-1.5 rounded-md transition-all ${mode === 'bulk' ? 'bg-background text-foreground shadow' : 'text-muted-foreground'}`}
+                  className={`flex-1 px-3 py-2 rounded-lg transition-all ${mode === 'bulk' ? 'bg-background text-foreground shadow-sm ring-1 ring-border' : 'text-muted-foreground'}`}
                 >
-                  <Package className="h-3.5 w-3.5 inline mr-1" /> Multi-Item Cart
+                  <Package className="h-3.5 w-3.5 inline mr-1" /> Multi
                 </button>
               </div>
             </div>
@@ -313,9 +275,9 @@ export function SaleForm({ userId, tenantId }: Props) {
             {mode === 'single' ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Product</Label>
+                  <Label className="text-sm font-medium">Product</Label>
                   <Select value={productId} onValueChange={handleProductSelect}>
-                    <SelectTrigger><SelectValue placeholder="Select catalog product" /></SelectTrigger>
+                    <SelectTrigger className="h-11 rounded-xl bg-muted/40 border-border/80"><SelectValue placeholder="Select catalog product" /></SelectTrigger>
                     <SelectContent>
                       {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                     </SelectContent>
@@ -333,9 +295,9 @@ export function SaleForm({ userId, tenantId }: Props) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Unit Type</Label>
+                  <Label className="text-sm font-medium">Unit Type</Label>
                   <Select value={selectedUnit?.id || ''} onValueChange={handleUnitSelect} disabled={!selectedProduct}>
-                    <SelectTrigger><SelectValue placeholder="Select unit" /></SelectTrigger>
+                    <SelectTrigger className="h-11 rounded-xl bg-muted/40 border-border/80"><SelectValue placeholder="Select unit" /></SelectTrigger>
                     <SelectContent>
                       {selectedProduct?.product_units.map(u => (
                         <SelectItem key={u.id} value={u.id}>{u.unit_label} (₦{Number(u.unit_price).toLocaleString()})</SelectItem>
@@ -345,16 +307,16 @@ export function SaleForm({ userId, tenantId }: Props) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Quantity</Label>
-                  <Input type="number" min="0.01" step="any" placeholder="0" value={quantity} onChange={e => setQuantity(e.target.value)} />
+                  <Label className="text-sm font-medium">Quantity</Label>
+                  <Input className="h-11 rounded-xl bg-muted/40 border-border/80" type="number" min="0.01" step="any" placeholder="0" value={quantity} onChange={e => setQuantity(e.target.value)} />
                   {singleStockIssue && !allowInventoryOverride && (
-                    <p className="text-xs text-destructive">Quantity exceeds available stock. Enable override to proceed.</p>
+                    <p className="text-xs text-destructive">Not enough stock left for this sale. You can enable override if needed.</p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Unit Price (₦)</Label>
-                  <Input type="number" min="0" step="any" placeholder="0" value={unitPrice} onChange={e => setUnitPrice(e.target.value)} />
+                  <Label className="text-sm font-medium">Unit Price (₦)</Label>
+                  <Input className="h-11 rounded-xl bg-muted/40 border-border/80" type="number" min="0" step="any" placeholder="0" value={unitPrice} onChange={e => setUnitPrice(e.target.value)} />
                 </div>
               </div>
             ) : (
@@ -485,26 +447,32 @@ export function SaleForm({ userId, tenantId }: Props) {
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="text-sm text-muted-foreground">
                   <p className="font-medium">Inventory override</p>
-                  <p className="text-xs">If enabled, sales may be recorded even when stock is low or unavailable.</p>
+                  <p className="text-xs">Admin-only. Every override is saved with a reason for review.</p>
                 </div>
-                <Button type="button" variant={allowInventoryOverride ? 'outline' : 'ghost'} className="h-10 w-full sm:w-auto" onClick={() => setAllowInventoryOverride(v => !v)}>
+                <Button type="button" disabled={!isAdmin} variant={allowInventoryOverride ? 'outline' : 'ghost'} className="h-10 w-full sm:w-auto" onClick={() => setAllowInventoryOverride(v => !v)}>
                   {allowInventoryOverride ? 'Disable override' : 'Enable override'}
                 </Button>
               </div>
+              {allowInventoryOverride && (
+                <div className="space-y-2 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
+                  <Label htmlFor="override-reason">Reason for override</Label>
+                  <Textarea id="override-reason" value={overrideReason} onChange={e => setOverrideReason(e.target.value)} placeholder="e.g. Physical count confirmed, stock entry pending" className="min-h-[72px]" required />
+                </div>
+              )}
             </div>
 
             {/* Total Footer */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t pt-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t pt-3 sm:pt-4">
               <div>
-                <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold block">Total Transaction Amount</span>
-                <span className="text-2xl font-black text-amber-600">
+                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-semibold block">Total</span>
+                <span className="text-xl sm:text-2xl font-black text-amber-600">
                   ₦{(mode === 'single' ? singleTotal : bulkTotal).toLocaleString()}
                 </span>
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-bold px-6">
+              <Button type="submit" disabled={loading} className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-bold px-5 sm:px-6 h-11">
                 <PlusCircle className="h-4 w-4 mr-2" />
-                {loading ? 'Recording...' : 'Record Transaction'}
+                {loading ? 'Recording...' : 'Record'}
               </Button>
             </div>
           </form>

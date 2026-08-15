@@ -220,16 +220,16 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-20 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <span className="text-xl">{company.logo_emoji}</span>
-            <div>
-              <div className="font-bold text-foreground text-sm leading-tight">{company.company_name}</div>
-              <div className="text-xs text-muted-foreground leading-tight">{company.app_name}</div>
+      <header className="bg-card/95 border-b border-border sticky top-0 z-20 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-card/80">
+        <div className="max-w-2xl mx-auto px-3 py-2.5 flex items-center justify-between gap-2 sm:px-4 sm:py-3">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <span className="text-xl shrink-0">{company.logo_emoji}</span>
+            <div className="min-w-0 flex-1">
+              <div className="font-bold text-foreground text-[11px] leading-tight tracking-wide uppercase break-words sm:text-sm">{company.company_name}</div>
+              <div className="text-[10px] text-muted-foreground leading-tight sm:text-xs">{company.app_name}</div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {/* 📶 Wi-Fi indicator — shows queue count when offline */}
             <div className="relative">
               {online
@@ -278,7 +278,7 @@ export default function Dashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-5 pb-24">
+      <main className="flex-1 max-w-2xl w-full mx-auto px-3 py-4 pb-28 sm:px-4 sm:py-5">
         <div key={animKey} className="slide-up">
           <Suspense fallback={<SkeletonPage />}>
             {tab === 'record' && permissions.can_record_sales && tenantId && (
@@ -304,13 +304,13 @@ export default function Dashboard() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-20 shadow-[0_-4px_16px_-4px_hsl(var(--foreground)/0.06)]">
-        <div className="max-w-2xl mx-auto px-2 py-1.5 flex flex-wrap justify-around gap-1 overflow-x-auto">
+      <nav className="fixed bottom-0 left-0 right-0 bg-card/95 border-t border-border z-20 shadow-[0_-4px_16px_-4px_hsl(var(--foreground)/0.06)] backdrop-blur supports-[backdrop-filter]:bg-card/80">
+        <div className="max-w-2xl mx-auto px-2 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] flex flex-nowrap justify-around gap-1 overflow-x-auto">
           {visibleTabs.map(t => (
             <button
               key={t.id}
               onClick={() => switchTab(t.id)}
-              className={`flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl transition-all duration-200 min-w-[4.5rem] flex-1 active:scale-95 ${
+              className={`flex flex-col items-center gap-0.5 py-2 px-2 rounded-xl transition-all duration-200 min-w-[4.25rem] flex-1 active:scale-95 ${
                 tab === t.id ? 'text-primary scale-105' : 'text-muted-foreground opacity-60 hover:opacity-80'
               }`}
             >

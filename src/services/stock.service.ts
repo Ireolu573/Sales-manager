@@ -17,7 +17,65 @@ export interface InventorySummary {
   totalStock: number
   totalSold: number
   availableStock: number
+  availableBaseQuantity: number
   status: 'in_stock' | 'low_stock' | 'out_of_stock'
+}
+
+export function calculateInventorySummaryFromRecords(
+  stockRows: Array<{ product_id?: string | null; item_name: string; quantity?: number | null; base_quantity?: number | null }>,
+  salesRows: Array<{ product_id?: string | null; item_name: string; quantity?: number | null; base_quantity?: number | null }>,
+): Record<string, InventorySummary> {
+  const summary: Record<string, InventorySummary> = {}
+
+  stockRows.forEach(item => {
+    const key = item.product_id || item.item_name
+    if (!summary[key]) {
+      summary[key] = {
+        productId: item.product_id,
+        itemName: item.item_name,
+        totalStock: 0,
+        totalSold: 0,
+        availableStock: 0,
+        availableBaseQuantity: 0,
+        status: 'out_of_stock',
+      }
+    }
+    summary[key].totalStock += Number(item.base_quantity ?? item.quantity ?? 0)
+  })
+
+  salesRows.forEach(item => {
+    const key = item.product_id || item.item_name
+    if (!summary[key]) {
+      summary[key] = {
+        productId: item.product_id,
+        itemName: item.item_name,
+        totalStock: 0,
+        totalSold: 0,
+        availableStock: 0,
+        availableBaseQuantity: 0,
+        status: 'out_of_stock',
+      }
+    }
+    summary[key].totalSold += Number(item.base_quantity ?? item.quantity ?? 0)
+  })
+
+  Object.values(summary).forEach(item => {
+    const rawAvailable = item.totalStock - item.totalSold
+    item.availableStock = Math.max(rawAvailable, 0)
+    item.availableBaseQuantity = item.availableStock
+
+    if (item.totalStock === 0 && item.totalSold === 0) {
+      item.status = 'out_of_stock'
+    } else if (item.availableStock <= 0) {
+      item.status = 'out_of_stock'
+    } else if (item.availableStock <= 5) {
+      item.status = 'low_stock'
+    } else {
+      item.status = 'in_stock'
+    }
+  })
+
+  return summary
 }
 
 export class StockService {
@@ -41,60 +99,14 @@ export class StockService {
 
   static async getInventorySummary(tenantId: string): Promise<Record<string, InventorySummary>> {
     const [{ data: stockData, error: stockErr }, { data: salesData, error: salesErr }] = await Promise.all([
-      supabase.from('stock_records').select('product_id, item_name, quantity').eq('tenant_id', tenantId),
-      supabase.from('sales').select('product_id, item_name, quantity').eq('tenant_id', tenantId),
+      supabase.from('stock_records').select('product_id, item_name, quantity, base_quantity').eq('tenant_id', tenantId),
+      supabase.from('sales').select('product_id, item_name, quantity, base_quantity').eq('tenant_id', tenantId),
     ])
 
     if (stockErr) throw new Error(stockErr.message)
     if (salesErr) throw new Error(salesErr.message)
 
-    const summary: Record<string, InventorySummary> = {}
-
-    // Aggregate stock received
-    stockData?.forEach(item => {
-      const key = item.product_id || item.item_name
-      if (!summary[key]) {
-        summary[key] = {
-          productId: item.product_id,
-          itemName: item.item_name,
-          totalStock: 0,
-          totalSold: 0,
-          availableStock: 0,
-          status: 'out_of_stock',
-        }
-      }
-      summary[key].totalStock += Number(item.quantity || 0)
-    })
-
-    // Aggregate sales made
-    salesData?.forEach(item => {
-      const key = item.product_id || item.item_name
-      if (!summary[key]) {
-        summary[key] = {
-          productId: item.product_id,
-          itemName: item.item_name,
-          totalStock: 0,
-          totalSold: 0,
-          availableStock: 0,
-          status: 'out_of_stock',
-        }
-      }
-      summary[key].totalSold += Number(item.quantity || 0)
-    })
-
-    // Calculate available balance & status
-    Object.values(summary).forEach(item => {
-      item.availableStock = item.totalStock - item.totalSold
-      if (item.totalStock === 0) {
-        item.status = 'out_of_stock'
-      } else if (item.availableStock <= 5) {
-        item.status = item.availableStock <= 0 ? 'out_of_stock' : 'low_stock'
-      } else {
-        item.status = 'in_stock'
-      }
-    })
-
-    return summary
+    return calculateInventorySummaryFromRecords(stockData || [], salesData || [])
   }
 
   static async getProductInventorySummary(tenantId: string): Promise<Record<string, InventorySummary>> {
@@ -125,4 +137,3 @@ export class StockService {
     if (error) throw new Error(error.message)
   }
 }
-

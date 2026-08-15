@@ -79,25 +79,10 @@ export function Analytics({ userId, tenantId, isAdmin }: Props) {
   const totalQty = monthSales.reduce((sum, s) => sum + Number(s.quantity), 0)
   const totalStockCost = monthStock.reduce((sum, s) => sum + Number(s.total_cost), 0)
 
-  const productCostMap = useMemo(() => {
-    const totals: Record<string, { quantity: number; totalCost: number }> = {}
-    monthStock.forEach(stock => {
-      const key = (stock as any).product_id || stock.item_name
-      if (!totals[key]) totals[key] = { quantity: 0, totalCost: 0 }
-      totals[key].quantity += Number(stock.quantity)
-      totals[key].totalCost += Number(stock.total_cost)
-    })
-    return totals
-  }, [monthStock])
-
-  const totalCOGS = useMemo(() => {
-    return monthSales.reduce((sum, sale) => {
-      const key = (sale as any).product_id || sale.item_name
-      const costData = productCostMap[key]
-      const avgCostPerUnit = costData?.quantity ? costData.totalCost / costData.quantity : 0
-      return sum + avgCostPerUnit * Number(sale.quantity)
-    }, 0)
-  }, [monthSales, productCostMap])
+  // COGS is allocated at the moment a transaction is recorded, using the
+  // server's weighted-average inventory cost. It must not be recalculated
+  // from the current reporting window or historic reports will drift.
+  const totalCOGS = monthSales.reduce((sum, sale) => sum + Number(sale.cogs_amount || 0), 0)
 
   const grossProfit = totalRevenue - totalCOGS
   const grossMargin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0

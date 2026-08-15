@@ -15,17 +15,18 @@ interface Props {
 }
 
 const UNIT_OPTIONS = ['bag','kg','paint','sachet','small','medium','large','big','bird','pack','crate','bottle','litre','unit']
-const emptyUnit = () => ({ unit_label: 'bag', unit_price: '' })
+const emptyUnit = () => ({ unit_label: 'bag', unit_price: '', base_unit_quantity: '1' })
 
 export function ProductManagementTable({ tenantId, products, onProductsChanged }: Props) {
   const { toast } = useToast()
   const [newProductName, setNewProductName] = useState('')
-  const [units, setUnits] = useState<{ unit_label: string; unit_price: string }[]>([emptyUnit()])
+  const [units, setUnits] = useState<{ unit_label: string; unit_price: string; base_unit_quantity: string }[]>([emptyUnit()])
   const [addingProduct, setAddingProduct] = useState(false)
   const [productError, setProductError] = useState('')
 
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
   const [editPrices, setEditPrices] = useState<Record<string, string>>({})
+  const [editBaseUnits, setEditBaseUnits] = useState<Record<string, string>>({})
   const [savingPrices, setSavingPrices] = useState(false)
 
   const addProduct = async () => {
@@ -42,7 +43,7 @@ export function ProductManagementTable({ tenantId, products, onProductsChanged }
       await TenantService.addProduct(
         newProductName.trim(),
         tenantId,
-        validUnits.map(u => ({ unit_label: u.unit_label, unit_price: Number(u.unit_price) }))
+        validUnits.map(u => ({ unit_label: u.unit_label, unit_price: Number(u.unit_price), base_unit_quantity: Number(u.base_unit_quantity) || 1 }))
       )
       setNewProductName('')
       setUnits([emptyUnit()])
@@ -58,8 +59,10 @@ export function ProductManagementTable({ tenantId, products, onProductsChanged }
   const startEditPrices = (product: Product) => {
     setEditingProductId(product.id)
     const initial: Record<string, string> = {}
-    product.product_units?.forEach(u => { initial[u.id] = String(u.unit_price) })
+    const baseInitial: Record<string, string> = {}
+    product.product_units?.forEach(u => { initial[u.id] = String(u.unit_price); baseInitial[u.id] = String(u.base_unit_quantity || 1) })
     setEditPrices(initial)
+    setEditBaseUnits(baseInitial)
   }
 
   const saveEditedPrices = async (product: Product) => {
@@ -67,7 +70,8 @@ export function ProductManagementTable({ tenantId, products, onProductsChanged }
     try {
       const updates = product.product_units.map(u => ({
         id: u.id,
-        unit_price: Number(editPrices[u.id] ?? u.unit_price)
+        unit_price: Number(editPrices[u.id] ?? u.unit_price),
+        base_unit_quantity: Number(editBaseUnits[u.id] ?? u.base_unit_quantity ?? 1),
       }))
       await TenantService.updateProductUnitPrices(updates)
       setEditingProductId(null)
@@ -105,7 +109,7 @@ export function ProductManagementTable({ tenantId, products, onProductsChanged }
             <div className="space-y-2">
               <Label>Units & Standard Pricing</Label>
               {units.map((unit, idx) => (
-                <div key={idx} className="flex gap-2 items-center">
+                <div key={idx} className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-center">
                   <select
                     value={unit.unit_label}
                     onChange={(e) => {
@@ -129,11 +133,25 @@ export function ProductManagementTable({ tenantId, products, onProductsChanged }
                       setUnits(copy)
                     }}
                   />
+                  <Input
+                    type="number"
+                    min="0.001"
+                    step="any"
+                    aria-label="Base units per sale unit"
+                    placeholder="Base units"
+                    value={unit.base_unit_quantity}
+                    onChange={(e) => {
+                      const copy = [...units]
+                      copy[idx].base_unit_quantity = e.target.value
+                      setUnits(copy)
+                    }}
+                  />
                   {units.length > 1 && (
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
+                      className="self-end sm:self-auto"
                       onClick={() => setUnits(units.filter((_, i) => i !== idx))}
                     >
                       <Trash2 className="h-4 w-4 text-rose-500" />
@@ -141,6 +159,7 @@ export function ProductManagementTable({ tenantId, products, onProductsChanged }
                   )}
                 </div>
               ))}
+              <p className="text-xs text-muted-foreground">Base units tells stock control how much this unit contains. For example, set a crate to 30 when your base unit is one egg.</p>
 
               <Button
                 type="button"
@@ -158,7 +177,7 @@ export function ProductManagementTable({ tenantId, products, onProductsChanged }
             <Button
               onClick={addProduct}
               disabled={addingProduct}
-              className="bg-amber-600 hover:bg-amber-700 text-white w-full md:w-auto"
+              className="bg-amber-600 hover:bg-amber-700 text-white w-full sm:w-auto"
             >
               {addingProduct ? 'Adding...' : 'Save Product to Catalog'}
             </Button>
@@ -172,39 +191,30 @@ export function ProductManagementTable({ tenantId, products, onProductsChanged }
             {products.map(prod => {
               const isEditing = editingProductId === prod.id
               return (
-                <div key={prod.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card">
+                <div key={prod.id} className="p-4 flex flex-col gap-3 bg-card">
                   <div>
                     <span className="font-semibold text-foreground">{prod.name}</span>
                     <div className="flex flex-wrap gap-2 mt-1">
                       {prod.product_units?.map(u => (
                         <span key={u.id} className="text-xs bg-muted px-2.5 py-1 rounded-md text-muted-foreground border">
-                          {u.unit_label}: {isEditing ? (
-                            <Input
-                              type="number"
-                              className="w-20 h-6 inline-block text-xs ml-1"
-                              value={editPrices[u.id] ?? u.unit_price}
-                              onChange={(e) => setEditPrices({ ...editPrices, [u.id]: e.target.value })}
-                            />
-                          ) : (
-                            `₦${Number(u.unit_price).toLocaleString()}`
-                          )}
+                          {u.unit_label}: {isEditing ? <span className="inline-flex gap-1 align-middle"><Input type="number" className="w-20 h-6 text-xs" value={editPrices[u.id] ?? u.unit_price} onChange={(e) => setEditPrices({ ...editPrices, [u.id]: e.target.value })} /><Input type="number" min="0.001" step="any" className="w-16 h-6 text-xs" title="Base units" value={editBaseUnits[u.id] ?? u.base_unit_quantity ?? 1} onChange={(e) => setEditBaseUnits({ ...editBaseUnits, [u.id]: e.target.value })} /></span> : `₦${Number(u.unit_price).toLocaleString()} · ${u.base_unit_quantity || 1} base`}
                         </span>
                       ))}
                     </div>
                   </div>
 
-                  <div className="flex gap-2 self-end md:self-auto">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     {isEditing ? (
                       <>
-                        <Button size="sm" onClick={() => saveEditedPrices(prod)} disabled={savingPrices}>
+                        <Button size="sm" onClick={() => saveEditedPrices(prod)} disabled={savingPrices} className="w-full sm:w-auto">
                           <Save className="h-4 w-4 mr-1" /> Save
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setEditingProductId(null)}>
+                        <Button size="sm" variant="ghost" onClick={() => setEditingProductId(null)} className="w-full sm:w-auto">
                           <X className="h-4 w-4" />
                         </Button>
                       </>
                     ) : (
-                      <Button size="sm" variant="outline" onClick={() => startEditPrices(prod)}>
+                      <Button size="sm" variant="outline" onClick={() => startEditPrices(prod)} className="w-full sm:w-auto">
                         <Pencil className="h-4 w-4 mr-1" /> Edit Prices
                       </Button>
                     )}

@@ -105,7 +105,21 @@ export function useReceiptShare() {
     }
   }, [captureReceipt])
 
-  return { receiptRef, generating, shareAsImage, shareAsText, downloadReceipt }
+  const downloadReceiptPdf = useCallback(async (data: ReceiptData) => {
+    setGenerating(true)
+    try {
+      const blob = await captureReceipt()
+      if (!blob) throw new Error('Failed to generate receipt image')
+      const { jsPDF } = await import('jspdf')
+      const imageUrl = URL.createObjectURL(blob)
+      const pdf = new jsPDF({ unit: 'mm', format: 'a5' })
+      pdf.addImage(imageUrl, 'PNG', 8, 8, 132, 0)
+      pdf.save(`receipt-${data.companyName.replace(/\s+/g, '-')}-${data.saleDate}.pdf`)
+      URL.revokeObjectURL(imageUrl)
+    } finally { setGenerating(false) }
+  }, [captureReceipt])
+
+  return { receiptRef, generating, shareAsImage, shareAsText, downloadReceipt, downloadReceiptPdf }
 }
 
 function buildTextReceipt(data: ReceiptData): string {

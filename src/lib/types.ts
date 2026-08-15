@@ -25,6 +25,8 @@ export interface ProductUnit {
   id: string
   unit_label: string
   unit_price: number | null
+  /** Number of the product's smallest stock units represented by this sale/purchase unit. */
+  base_unit_quantity: number
 }
 
 export interface Product {
@@ -42,6 +44,10 @@ export interface Sale {
   quantity: number
   unit_price: number
   total_amount: number
+  base_quantity?: number | null
+  cogs_amount?: number | null
+  inventory_override?: boolean | null
+  override_reason?: string | null
   sale_date: string
   payment_method: string
   customer_name: string | null
@@ -61,6 +67,8 @@ export interface StockRecord {
   quantity: number
   cost_price: number
   total_cost: number
+  base_quantity?: number | null
+  base_cost?: number | null
   stock_date: string
   user_id?: string
   tenant_id?: string

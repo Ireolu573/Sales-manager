@@ -5,7 +5,7 @@
  * Also previews the receipt inline so the user can see it before sharing.
  */
 import { useState } from 'react'
-import { MessageCircle, Download, Image, X, Loader2, Eye, EyeOff } from 'lucide-react'
+import { MessageCircle, Download, Image, X, Loader2, Eye, EyeOff, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import type { ReceiptData } from './ReceiptCanvas'
@@ -18,7 +18,7 @@ interface Props {
 }
 
 export default function ReceiptShareSheet({ data, onClose }: Props) {
-  const { receiptRef, generating, shareAsImage, shareAsText, downloadReceipt } = useReceiptShare()
+  const { receiptRef, generating, shareAsImage, shareAsText, downloadReceipt, downloadReceiptPdf } = useReceiptShare()
   const [showPreview, setShowPreview] = useState(false)
 
   const total = data.items.reduce((s, i) => s + Number(i.total_amount), 0)
@@ -100,7 +100,7 @@ export default function ReceiptShareSheet({ data, onClose }: Props) {
             )}
 
             {/* Action buttons */}
-            <div className="grid grid-cols-1 gap-2.5 px-5 pb-5">
+            <div className="grid grid-cols-1 gap-2.5 px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
               {/* Primary: share image */}
               <Button
                 onClick={() => shareAsImage(data)}
@@ -139,6 +139,9 @@ export default function ReceiptShareSheet({ data, onClose }: Props) {
               >
                 <Download className="w-3.5 h-3.5" />
                 Download as PNG
+              </Button>
+              <Button onClick={() => downloadReceiptPdf(data)} disabled={generating} variant="ghost" className="w-full h-10 gap-2 text-xs text-muted-foreground">
+                <FileText className="w-3.5 h-3.5" /> Download as PDF
               </Button>
             </div>
           </CardContent>

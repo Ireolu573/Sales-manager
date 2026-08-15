@@ -1,0 +1,5 @@
+{
+  "description": "Example MCP config — store MCP_URL and MCP_TOKEN as env vars or in your CI.",
+  "mcpUrl": "https://your-mcp.example.com",
+  "notes": "Do NOT commit secrets here. Use the script `npm run mcp:fetch-db` after setting env vars."
+}
