@@ -102,6 +102,7 @@ CREATE OR REPLACE FUNCTION public.record_sales_transaction(
 RETURNS TABLE(id uuid, transaction_id uuid, total_amount numeric)
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
 AS $$
+#variable_conflict use_column
 DECLARE
   v_item jsonb;
   v_product public.products%ROWTYPE;
@@ -292,6 +293,7 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public
 AS $$
+#variable_conflict use_column
 BEGIN
   IF auth.uid() IS NULL OR public.current_tenant_id() IS DISTINCT FROM p_tenant_id THEN
     RAISE EXCEPTION 'Access denied';
