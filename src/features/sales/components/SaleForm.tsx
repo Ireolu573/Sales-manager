@@ -74,7 +74,10 @@ export function SaleForm({ userId, tenantId }: Props) {
   const [allowInventoryOverride, setAllowInventoryOverride] = useState(false)
   const [overrideReason, setOverrideReason] = useState('')
 
-  const selectedProductInventory = productId ? inventorySummary[productId] : undefined
+  const selectedProduct = useMemo(() => products.find(p => p.id === productId), [products, productId])
+  const selectedProductInventory = productId
+    ? (inventorySummary[productId] || (selectedProduct ? inventorySummary[selectedProduct.name] : undefined))
+    : undefined
   const selectedProductAvailable = selectedProductInventory?.availableStock ?? 0
   const isLowStock = selectedProductInventory ? selectedProductInventory.status === 'low_stock' : false
   const isOutOfStock = selectedProductInventory ? selectedProductInventory.status === 'out_of_stock' : true
