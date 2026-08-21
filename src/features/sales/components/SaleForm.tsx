@@ -89,8 +89,12 @@ export function SaleForm({ userId, tenantId }: Props) {
         totals[item.productId] = (totals[item.productId] || 0) + Number(item.quantity) * (item.selectedUnit?.base_unit_quantity || 1)
       }
       return totals
-    }, {})).filter(([productId, required]) => required > (inventorySummary[productId]?.availableBaseQuantity ?? 0)),
-    [inventorySummary, lineItems]
+    }, {})).filter(([pId, required]) => {
+      const prod = products.find(p => p.id === pId)
+      const inv = inventorySummary[pId] || (prod ? inventorySummary[prod.name] : undefined)
+      return required > (inv?.availableBaseQuantity ?? 0)
+    }),
+    [inventorySummary, lineItems, products]
   )
 
   const [savedCustomers, setSavedCustomers] = useState<string[]>([])
