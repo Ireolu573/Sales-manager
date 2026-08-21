@@ -145,32 +145,49 @@ BEGIN
     END IF;
 
     v_requested_base := (v_item->>'quantity')::numeric * v_unit.base_unit_quantity;
-    SELECT COALESCE(SUM(COALESCE(sr.base_quantity, sr.quantity)), 0) INTO v_available_base
+
+    SELECT COALESCE(SUM(COALESCE(sr.base_quantity, sr.quantity, 0)), 0) INTO v_available_base
       FROM public.stock_records sr 
-      WHERE sr.tenant_id = p_tenant_id 
-        AND (sr.product_id = v_product.id OR (sr.product_id IS NULL AND LOWER(TRIM(sr.item_name)) = LOWER(TRIM(v_product.name))));
+      WHERE (sr.tenant_id = p_tenant_id OR sr.tenant_id IS NULL)
+        AND (
+          sr.product_id = v_product.id 
+          OR LOWER(TRIM(sr.item_name)) = LOWER(TRIM(v_product.name))
+          OR sr.item_name ILIKE '%' || v_product.name || '%'
+        );
 
     v_available_base := v_available_base - COALESCE((
-      SELECT SUM(COALESCE(s.base_quantity, s.quantity)) 
+      SELECT SUM(COALESCE(s.base_quantity, s.quantity, 0)) 
       FROM public.sales s 
-      WHERE s.tenant_id = p_tenant_id 
-        AND (s.product_id = v_product.id OR (s.product_id IS NULL AND LOWER(TRIM(s.item_name)) = LOWER(TRIM(v_product.name))))
+      WHERE (s.tenant_id = p_tenant_id OR s.tenant_id IS NULL)
+        AND (
+          s.product_id = v_product.id 
+          OR LOWER(TRIM(s.item_name)) = LOWER(TRIM(v_product.name))
+          OR s.item_name ILIKE '%' || v_product.name || '%'
+        )
     ), 0);
 
     IF v_requested_base > v_available_base AND NOT p_allow_override THEN
       RAISE EXCEPTION 'Insufficient stock for %: % base units available, % requested', v_product.name, GREATEST(v_available_base, 0), v_requested_base;
     END IF;
 
-    SELECT COALESCE(SUM(sr.base_cost), 0) INTO v_available_cost
+    SELECT COALESCE(SUM(COALESCE(sr.base_cost, sr.total_cost, 0)), 0) INTO v_available_cost
       FROM public.stock_records sr 
-      WHERE sr.tenant_id = p_tenant_id 
-        AND (sr.product_id = v_product.id OR (sr.product_id IS NULL AND LOWER(TRIM(sr.item_name)) = LOWER(TRIM(v_product.name))));
+      WHERE (sr.tenant_id = p_tenant_id OR sr.tenant_id IS NULL)
+        AND (
+          sr.product_id = v_product.id 
+          OR LOWER(TRIM(sr.item_name)) = LOWER(TRIM(v_product.name))
+          OR sr.item_name ILIKE '%' || v_product.name || '%'
+        );
 
     v_available_cost := v_available_cost - COALESCE((
-      SELECT SUM(s.cogs_amount) 
+      SELECT SUM(COALESCE(s.cogs_amount, 0)) 
       FROM public.sales s 
-      WHERE s.tenant_id = p_tenant_id 
-        AND (s.product_id = v_product.id OR (s.product_id IS NULL AND LOWER(TRIM(s.item_name)) = LOWER(TRIM(v_product.name))))
+      WHERE (s.tenant_id = p_tenant_id OR s.tenant_id IS NULL)
+        AND (
+          s.product_id = v_product.id 
+          OR LOWER(TRIM(s.item_name)) = LOWER(TRIM(v_product.name))
+          OR s.item_name ILIKE '%' || v_product.name || '%'
+        )
     ), 0);
     v_unit_cost := CASE WHEN v_available_base > 0 THEN GREATEST(v_available_cost, 0) / v_available_base ELSE 0 END;
     v_cogs := ROUND(v_requested_base * v_unit_cost, 2);
