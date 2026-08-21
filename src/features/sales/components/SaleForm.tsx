@@ -114,8 +114,6 @@ export function SaleForm({ userId, tenantId }: Props) {
       })
   }, [tenantId])
 
-  const selectedProduct = products.find(p => p.id === productId)
-
   const handleProductSelect = (id: string) => {
     setProductId(id)
     const prod = products.find(p => p.id === id)
