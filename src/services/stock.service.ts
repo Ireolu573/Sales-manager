@@ -26,11 +26,24 @@ export function calculateInventorySummaryFromRecords(
   salesRows: Array<{ product_id?: string | null; item_name: string; quantity?: number | null; base_quantity?: number | null }>,
 ): Record<string, InventorySummary> {
   const summary: Record<string, InventorySummary> = {}
+  const keyToMeta: Record<string, { productId?: string | null; itemName: string }> = {}
+
+  const getCanonicalKey = (item: { product_id?: string | null; item_name: string }) => {
+    return (item.item_name || '').trim().toLowerCase()
+  }
 
   stockRows.forEach(item => {
-    const key = item.product_id || item.item_name
-    if (!summary[key]) {
-      summary[key] = {
+    const canonicalKey = getCanonicalKey(item)
+    if (!canonicalKey) return
+
+    if (!keyToMeta[canonicalKey]) {
+      keyToMeta[canonicalKey] = { productId: item.product_id, itemName: item.item_name }
+    } else if (item.product_id && !keyToMeta[canonicalKey].productId) {
+      keyToMeta[canonicalKey].productId = item.product_id
+    }
+
+    if (!summary[canonicalKey]) {
+      summary[canonicalKey] = {
         productId: item.product_id,
         itemName: item.item_name,
         totalStock: 0,
@@ -40,13 +53,15 @@ export function calculateInventorySummaryFromRecords(
         status: 'out_of_stock',
       }
     }
-    summary[key].totalStock += Number(item.base_quantity ?? item.quantity ?? 0)
+    summary[canonicalKey].totalStock += Number(item.base_quantity ?? item.quantity ?? 0)
   })
 
   salesRows.forEach(item => {
-    const key = item.product_id || item.item_name
-    if (!summary[key]) {
-      summary[key] = {
+    const canonicalKey = getCanonicalKey(item)
+    if (!canonicalKey) return
+
+    if (!summary[canonicalKey]) {
+      summary[canonicalKey] = {
         productId: item.product_id,
         itemName: item.item_name,
         totalStock: 0,
@@ -56,10 +71,11 @@ export function calculateInventorySummaryFromRecords(
         status: 'out_of_stock',
       }
     }
-    summary[key].totalSold += Number(item.base_quantity ?? item.quantity ?? 0)
+    summary[canonicalKey].totalSold += Number(item.base_quantity ?? item.quantity ?? 0)
   })
 
-  Object.values(summary).forEach(item => {
+  Object.keys(summary).forEach(key => {
+    const item = summary[key]
     const rawAvailable = item.totalStock - item.totalSold
     item.availableStock = Math.max(rawAvailable, 0)
     item.availableBaseQuantity = item.availableStock
@@ -75,7 +91,24 @@ export function calculateInventorySummaryFromRecords(
     }
   })
 
-  return summary
+  // Map result so lookups work by canonical key, item_name, and product_id
+  const result: Record<string, InventorySummary> = {}
+  Object.keys(summary).forEach(key => {
+    const item = summary[key]
+    const meta = keyToMeta[key]
+    result[key] = item
+    if (meta?.itemName) {
+      result[meta.itemName] = item
+    }
+    if (meta?.productId) {
+      result[meta.productId] = item
+    }
+    if (item.productId) {
+      result[item.productId] = item
+    }
+  })
+
+  return result
 }
 
 export class StockService {
