@@ -85,8 +85,8 @@ BEGIN
 END;
 $$;
 
--- Drop legacy text-signature overload if present from earlier dumps
-DROP FUNCTION IF EXISTS public.record_sales_transaction(uuid, jsonb, date, text, text, text, boolean, text, text);
+-- Drop existing function if present from earlier dumps
+DROP FUNCTION IF EXISTS public.record_sales_transaction;
 
 CREATE OR REPLACE FUNCTION public.record_sales_transaction(
   p_tenant_id uuid,
