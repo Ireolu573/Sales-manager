@@ -98,9 +98,31 @@ export class StockService {
   }
 
   static async getInventorySummary(tenantId: string): Promise<Record<string, InventorySummary>> {
+    const { data: rpcData, error: rpcErr } = await supabase.rpc('get_inventory_summary' as never, {
+      p_tenant_id: tenantId,
+    } as never)
+
+    if (!rpcErr && Array.isArray(rpcData)) {
+      const summary: Record<string, InventorySummary> = {}
+      ;(rpcData as any[]).forEach(row => {
+        const key = row.product_id || row.item_name
+        summary[key] = {
+          productId: row.product_id,
+          itemName: row.item_name,
+          totalStock: Number(row.total_stock || 0),
+          totalSold: Number(row.total_sold || 0),
+          availableStock: Number(row.available_stock || 0),
+          availableBaseQuantity: Number(row.available_base_quantity || 0),
+          status: row.status as 'in_stock' | 'low_stock' | 'out_of_stock',
+        }
+      })
+      return summary
+    }
+
+    // Fallback client-side calculation if RPC is unavailable
     const [{ data: stockData, error: stockErr }, { data: salesData, error: salesErr }] = await Promise.all([
-      supabase.from('stock_records').select('product_id, item_name, quantity, base_quantity').eq('tenant_id', tenantId),
-      supabase.from('sales').select('product_id, item_name, quantity, base_quantity').eq('tenant_id', tenantId),
+      supabase.from('stock_records').select('product_id, item_name, quantity, base_quantity').eq('tenant_id', tenantId).limit(5000),
+      supabase.from('sales').select('product_id, item_name, quantity, base_quantity').eq('tenant_id', tenantId).limit(5000),
     ])
 
     if (stockErr) throw new Error(stockErr.message)

@@ -6,6 +6,7 @@
 
 import { insertSale } from '@/lib/tenant-queries'
 import { SalesService, type RecordSaleTransactionDTO } from '@/services/sales.service'
+import { generateUUID } from '@/lib/utils'
 
 export interface QueuedSale {
   id: string
@@ -36,7 +37,7 @@ export function enqueueSale(
 ): void {
   const queue = getQueue()
   queue.push({
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     saleData,
     tenantId,
     userId,

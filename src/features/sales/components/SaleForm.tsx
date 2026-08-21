@@ -3,6 +3,7 @@ import { getProductsForTenant } from '@/lib/tenant-queries'
 import { supabase } from '@/integrations/supabase/client'
 import { useStock } from '@/hooks/useStock'
 import type { Product, ProductUnit, PaymentMethod } from '@/lib/types'
+import { generateUUID } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -42,7 +43,7 @@ const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: LucideIcon }
 ]
 
 function newLine(): LineItem {
-  return { id: crypto.randomUUID(), productId: '', selectedUnit: null, quantity: '', unitPrice: '' }
+  return { id: generateUUID(), productId: '', selectedUnit: null, quantity: '', unitPrice: '' }
 }
 
 export function SaleForm({ userId, tenantId }: Props) {
@@ -74,19 +75,18 @@ export function SaleForm({ userId, tenantId }: Props) {
   const [overrideReason, setOverrideReason] = useState('')
 
   const selectedProductInventory = productId ? inventorySummary[productId] : undefined
-  const selectedProductAvailable = selectedProductInventory?.availableStock ?? null
-  const isLowStock = selectedProductInventory?.status === 'low_stock'
-  const isOutOfStock = selectedProductInventory?.status === 'out_of_stock'
+  const selectedProductAvailable = selectedProductInventory?.availableStock ?? 0
+  const isLowStock = selectedProductInventory ? selectedProductInventory.status === 'low_stock' : false
+  const isOutOfStock = selectedProductInventory ? selectedProductInventory.status === 'out_of_stock' : true
   const numericQuantity = Number(quantity) * (selectedUnit?.base_unit_quantity || 1) || 0
-  const hasInventoryValue = selectedProductInventory && typeof selectedProductInventory.availableStock === 'number'
-  const singleStockIssue = hasInventoryValue ? numericQuantity > selectedProductInventory.availableStock : false
+  const singleStockIssue = numericQuantity > selectedProductAvailable
   const bulkStockIssues = useMemo(
     () => Object.entries(lineItems.reduce<Record<string, number>>((totals, item) => {
       if (item.productId && item.quantity) {
         totals[item.productId] = (totals[item.productId] || 0) + Number(item.quantity) * (item.selectedUnit?.base_unit_quantity || 1)
       }
       return totals
-    }, {})).filter(([productId, required]) => required > (inventorySummary[productId]?.availableBaseQuantity ?? Infinity)),
+    }, {})).filter(([productId, required]) => required > (inventorySummary[productId]?.availableBaseQuantity ?? 0)),
     [inventorySummary, lineItems]
   )
 
@@ -213,7 +213,7 @@ export function SaleForm({ userId, tenantId }: Props) {
           ? [{ product_id: selectedProduct!.id, product_unit_id: selectedUnit!.id, quantity: Number(quantity), unit_price: Number(unitPrice) }]
           : lineItems.filter(i => i.productId && i.selectedUnit && i.quantity && i.unitPrice).map(i => ({ product_id: i.productId, product_unit_id: i.selectedUnit!.id, quantity: Number(i.quantity), unit_price: Number(i.unitPrice) })),
         sale_date: saleDate, payment_method: paymentMethod, customer_name: customerName || null, notes: notes || null,
-        allow_override: allowInventoryOverride, override_reason: overrideReason || null, transaction_id: `TXN-${crypto.randomUUID()}`,
+        allow_override: allowInventoryOverride, override_reason: overrideReason || null, transaction_id: generateUUID(),
       }
       if (!navigator.onLine) {
         enqueueSale({ __transaction: transactionPayload }, tenantId, userId)
@@ -288,7 +288,13 @@ export function SaleForm({ userId, tenantId }: Props) {
                         {isOutOfStock ? 'Out of stock' : isLowStock ? 'Low stock' : 'In stock'}
                       </span>
                       <span className="text-muted-foreground">
-                        {selectedProductAvailable} unit{selectedProductAvailable === 1 ? '' : 's'} available
+                        {selectedUnit && selectedUnit.base_unit_quantity > 1 ? (
+                          <>
+                            {(selectedProductAvailable / selectedUnit.base_unit_quantity).toFixed(1).replace(/\.0$/, '')} {selectedUnit.unit_label}{Math.floor(selectedProductAvailable / selectedUnit.base_unit_quantity) === 1 ? '' : 's'} ({selectedProductAvailable} base unit{selectedProductAvailable === 1 ? '' : 's'}) available
+                          </>
+                        ) : (
+                          <>{selectedProductAvailable} {selectedUnit?.unit_label || 'unit'}{selectedProductAvailable === 1 ? '' : 's'} available</>
+                        )}
                       </span>
                     </div>
                   )}
@@ -385,8 +391,8 @@ export function SaleForm({ userId, tenantId }: Props) {
 
             {/* Payment & Metadata */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
-              <div className="space-y-2">
-                <Label>Payment Method</Label>
+              <div className="space-y-2.5">
+                <Label className="text-sm font-semibold tracking-tight">Payment Method</Label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {PAYMENT_METHODS.map(pm => {
                     const Icon = pm.icon
@@ -396,10 +402,14 @@ export function SaleForm({ userId, tenantId }: Props) {
                         key={pm.value}
                         type="button"
                         onClick={() => setPaymentMethod(pm.value)}
-                        className={`flex flex-col items-center justify-center p-2.5 rounded-lg border transition-all text-xs ${isSelected ? 'border-amber-600 bg-amber-500/10 text-amber-900 font-bold dark:text-amber-300' : 'hover:bg-muted'}`}
+                        className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all duration-200 min-h-[48px] touch-manipulation ${
+                          isSelected
+                            ? 'border-primary bg-primary/10 text-primary font-bold shadow-xs scale-102'
+                            : 'border-border/60 bg-card/60 hover:bg-secondary/40 text-muted-foreground'
+                        }`}
                       >
-                        <Icon className="h-4 w-4 mb-1" />
-                        <span>{pm.label}</span>
+                        <Icon className={`h-4 w-4 mb-1 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <span className="text-xs font-semibold">{pm.label}</span>
                       </button>
                     )
                   })}
@@ -407,27 +417,28 @@ export function SaleForm({ userId, tenantId }: Props) {
               </div>
 
               <div className="space-y-2">
-                <Label>Transaction Date</Label>
-                <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} />
+                <Label className="text-sm font-semibold tracking-tight">Transaction Date</Label>
+                <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} className="h-11 rounded-xl bg-muted/30 border-border/80 text-base md:text-sm" />
               </div>
 
               <div className="space-y-2 relative" ref={customerRef}>
-                <Label>Customer Name (Optional)</Label>
+                <Label className="text-sm font-semibold tracking-tight">Customer Name (Optional)</Label>
                 <div className="relative">
                   <Input
                     placeholder="Enter customer name"
                     value={customerName}
                     onChange={e => { setCustomerName(e.target.value); setShowSuggestions(true) }}
                     onFocus={() => setShowSuggestions(true)}
+                    className="h-11 rounded-xl bg-muted/30 border-border/80 pr-10 text-base md:text-sm"
                   />
-                  <User className="h-4 w-4 absolute right-3 top-3 text-muted-foreground" />
+                  <User className="h-4 w-4 absolute right-3 top-3.5 text-muted-foreground" />
                 </div>
                 {showSuggestions && savedCustomers.length > 0 && customerName && (
-                  <div className="absolute z-10 w-full bg-popover border rounded-md shadow-md max-h-40 overflow-y-auto">
+                  <div className="absolute z-10 w-full bg-popover border rounded-xl shadow-lg max-h-40 overflow-y-auto mt-1">
                     {savedCustomers.filter(c => c.toLowerCase().includes(customerName.toLowerCase())).map(c => (
                       <div
                         key={c}
-                        className="p-2 hover:bg-muted cursor-pointer text-xs"
+                        className="p-2.5 hover:bg-secondary cursor-pointer text-xs font-medium"
                         onClick={() => { setCustomerName(c); setShowSuggestions(false) }}
                       >
                         {c}
@@ -438,41 +449,41 @@ export function SaleForm({ userId, tenantId }: Props) {
               </div>
 
               <div className="space-y-2">
-                <Label>Notes (Optional)</Label>
-                <Textarea placeholder="Additional transaction notes..." value={notes} onChange={e => setNotes(e.target.value)} className="h-10 min-h-[40px]" />
+                <Label className="text-sm font-semibold tracking-tight">Notes (Optional)</Label>
+                <Textarea placeholder="Additional transaction notes..." value={notes} onChange={e => setNotes(e.target.value)} className="h-11 min-h-[44px] rounded-xl bg-muted/30 border-border/80 text-base md:text-sm" />
               </div>
             </div>
 
             <div className="flex flex-col gap-3 border-t pt-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="text-sm text-muted-foreground">
-                  <p className="font-medium">Inventory override</p>
-                  <p className="text-xs">Admin-only. Every override is saved with a reason for review.</p>
+                  <p className="font-semibold text-foreground">Inventory override</p>
+                  <p className="text-xs text-muted-foreground">Admin-only. Every override is saved with a reason for review.</p>
                 </div>
-                <Button type="button" disabled={!isAdmin} variant={allowInventoryOverride ? 'outline' : 'ghost'} className="h-10 w-full sm:w-auto" onClick={() => setAllowInventoryOverride(v => !v)}>
+                <Button type="button" disabled={!isAdmin} variant={allowInventoryOverride ? 'outline' : 'ghost'} className="h-10 w-full sm:w-auto rounded-xl" onClick={() => setAllowInventoryOverride(v => !v)}>
                   {allowInventoryOverride ? 'Disable override' : 'Enable override'}
                 </Button>
               </div>
               {allowInventoryOverride && (
                 <div className="space-y-2 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
-                  <Label htmlFor="override-reason">Reason for override</Label>
-                  <Textarea id="override-reason" value={overrideReason} onChange={e => setOverrideReason(e.target.value)} placeholder="e.g. Physical count confirmed, stock entry pending" className="min-h-[72px]" required />
+                  <Label htmlFor="override-reason" className="text-xs font-semibold">Reason for override</Label>
+                  <Textarea id="override-reason" value={overrideReason} onChange={e => setOverrideReason(e.target.value)} placeholder="e.g. Physical count confirmed, stock entry pending" className="min-h-[72px] rounded-lg text-base md:text-sm" required />
                 </div>
               )}
             </div>
 
-            {/* Total Footer */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t pt-3 sm:pt-4">
+            {/* Tactile Counter Register Bar */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-border/80 pt-4 bg-muted/20 -mx-6 -mb-6 p-4 rounded-b-2xl">
               <div>
-                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-semibold block">Total</span>
-                <span className="text-xl sm:text-2xl font-black text-amber-600">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold block">Total Amount</span>
+                <span className="text-2xl sm:text-3xl font-extrabold text-primary font-tabular tracking-tight">
                   ₦{(mode === 'single' ? singleTotal : bulkTotal).toLocaleString()}
                 </span>
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-bold px-5 sm:px-6 h-11">
-                <PlusCircle className="h-4 w-4 mr-2" />
-                {loading ? 'Recording...' : 'Record'}
+              <Button type="submit" disabled={loading} className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6 h-12 rounded-xl text-base shadow-md transition-transform active:scale-98">
+                <PlusCircle className="h-5 w-5 mr-2" />
+                {loading ? 'Recording...' : 'Record Transaction'}
               </Button>
             </div>
           </form>
@@ -487,3 +498,5 @@ export function SaleForm({ userId, tenantId }: Props) {
     </div>
   )
 }
+
+export default SaleForm

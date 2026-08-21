@@ -8,3 +8,7 @@ supabase/*
 !supabase/migrations/
 !supabase/migrations/*.sql
 .temp
+*.sql
+!supabase/migrations/*.sql
+test
+                

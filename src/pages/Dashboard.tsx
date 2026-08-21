@@ -140,7 +140,7 @@ export default function Dashboard() {
   }, [handleOnline])
 
   // 🌙 Toggle dark mode and persist to localStorage
-  const toggleTheme = () => {
+  function toggleTheme() {
     const next = !isDark
     setIsDark(next)
     if (next) {
@@ -278,7 +278,7 @@ export default function Dashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-2xl w-full mx-auto px-3 py-4 pb-28 sm:px-4 sm:py-5">
+      <main className="flex-1 max-w-4xl lg:max-w-5xl w-full mx-auto px-3 py-4 pb-32 sm:px-6 sm:py-6">
         <div key={animKey} className="slide-up">
           <Suspense fallback={<SkeletonPage />}>
             {tab === 'record' && permissions.can_record_sales && tenantId && (
@@ -303,20 +303,22 @@ export default function Dashboard() {
         </div>
       </main>
 
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-card/95 border-t border-border z-20 shadow-[0_-4px_16px_-4px_hsl(var(--foreground)/0.06)] backdrop-blur supports-[backdrop-filter]:bg-card/80">
-        <div className="max-w-2xl mx-auto px-2 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] flex flex-nowrap justify-around gap-1 overflow-x-auto">
+      {/* Floating Counter Dock Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-card/95 border-t border-border/80 z-20 shadow-[0_-8px_24px_-6px_rgba(0,0,0,0.3)] backdrop-blur-md supports-[backdrop-filter]:bg-card/85">
+        <div className="max-w-3xl mx-auto px-2 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex flex-nowrap justify-around gap-1 overflow-x-auto scrollbar-hide">
           {visibleTabs.map(t => (
             <button
               key={t.id}
               onClick={() => switchTab(t.id)}
-              className={`flex flex-col items-center gap-0.5 py-2 px-2 rounded-xl transition-all duration-200 min-w-[4.25rem] flex-1 active:scale-95 ${
-                tab === t.id ? 'text-primary scale-105' : 'text-muted-foreground opacity-60 hover:opacity-80'
+              className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-xl transition-all duration-200 min-w-[4rem] flex-1 active:scale-95 touch-manipulation ${
+                tab === t.id
+                  ? 'text-primary bg-primary/10 font-semibold shadow-xs scale-102'
+                  : 'text-muted-foreground opacity-70 hover:opacity-100 hover:bg-secondary/40'
               }`}
             >
-              <t.icon size={20} strokeWidth={tab === t.id ? 2.25 : 2} />
-              <span className="text-xs font-medium truncate">{t.label}</span>
-              {tab === t.id && <div className="w-1 h-1 rounded-full bg-primary" />}
+              <t.icon size={20} strokeWidth={tab === t.id ? 2.5 : 1.75} />
+              <span className="text-[11px] font-medium tracking-tight truncate">{t.label}</span>
+              {tab === t.id && <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />}
             </button>
           ))}
         </div>
@@ -329,7 +331,7 @@ export default function Dashboard() {
           company={company}
           onClose={() => setShowDC(false)}
           onCompanyUpdated={handleCompanyUpdated}
-          onProductsChanged={() => {}}
+          onProductsChanged={() => { }}
         />
       )}
 

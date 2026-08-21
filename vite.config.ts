@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => ({
         name: 'Sales Manager App',
         short_name: 'SalesManager',
         description: 'Manage sales and stock offline',
-        theme_color: '#ffffff',
+        theme_color: '#6b6a83ff',
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -43,12 +43,30 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
     dedupe: [
-      "react", 
-      "react-dom", 
-      "react/jsx-runtime", 
-      "react/jsx-dev-runtime", 
-      "@tanstack/react-query", 
+      "react",
+      "react-dom",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime",
+      "@tanstack/react-query",
       "@tanstack/query-core"
     ],
   },
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('recharts') || id.includes('d3-')) return 'vendor-charts'
+            if (id.includes('xlsx')) return 'vendor-xlsx'
+            if (id.includes('jspdf') || id.includes('html2canvas')) return 'vendor-pdf'
+            if (id.includes('lucide-react')) return 'vendor-icons'
+            if (id.includes('@radix-ui') || id.includes('clsx') || id.includes('tailwind-merge')) return 'vendor-ui'
+            if (id.includes('@supabase') || id.includes('@tanstack')) return 'vendor-core'
+          }
+        }
+      }
+    }
+  }
 }));
+

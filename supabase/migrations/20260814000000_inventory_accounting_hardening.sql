@@ -85,9 +85,9 @@ BEGIN
 END;
 $$;
 
--- This RPC is intentionally the only supported online write path for sales. It locks each
--- product key, computes weighted-average COGS from all historic purchases/sales, and writes
--- every receipt line atomically.
+-- Drop legacy text-signature overload if present from earlier dumps
+DROP FUNCTION IF EXISTS public.record_sales_transaction(uuid, jsonb, date, text, text, text, boolean, text, text);
+
 CREATE OR REPLACE FUNCTION public.record_sales_transaction(
   p_tenant_id uuid,
   p_items jsonb,
@@ -97,9 +97,9 @@ CREATE OR REPLACE FUNCTION public.record_sales_transaction(
   p_notes text DEFAULT NULL,
   p_allow_override boolean DEFAULT false,
   p_override_reason text DEFAULT NULL,
-  p_transaction_id text DEFAULT NULL
+  p_transaction_id uuid DEFAULT NULL
 )
-RETURNS TABLE(id uuid, transaction_id text, total_amount numeric)
+RETURNS TABLE(id uuid, transaction_id uuid, total_amount numeric)
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
 AS $$
 DECLARE
@@ -111,7 +111,7 @@ DECLARE
   v_available_cost numeric;
   v_unit_cost numeric;
   v_cogs numeric;
-  v_transaction_id text := COALESCE(p_transaction_id, 'TXN-' || gen_random_uuid()::text);
+  v_transaction_id uuid := COALESCE(p_transaction_id, gen_random_uuid());
   v_sale_id uuid;
   v_total numeric;
 BEGIN
@@ -131,12 +131,12 @@ BEGIN
   ORDER BY value->>'product_id';
 
   FOR v_item IN SELECT value FROM jsonb_array_elements(p_items) LOOP
-    SELECT * INTO v_product FROM public.products
-      WHERE id = (v_item->>'product_id')::uuid AND tenant_id = p_tenant_id AND is_active = true;
+    SELECT * INTO v_product FROM public.products p
+      WHERE p.id = (v_item->>'product_id')::uuid AND p.tenant_id = p_tenant_id AND p.is_active = true;
     IF NOT FOUND THEN RAISE EXCEPTION 'Product is unavailable'; END IF;
 
-    SELECT * INTO v_unit FROM public.product_units
-      WHERE id = (v_item->>'product_unit_id')::uuid AND product_id = v_product.id;
+    SELECT * INTO v_unit FROM public.product_units pu
+      WHERE pu.id = (v_item->>'product_unit_id')::uuid AND pu.product_id = v_product.id;
     IF NOT FOUND THEN RAISE EXCEPTION 'Selected unit does not belong to this product'; END IF;
 
     IF COALESCE((v_item->>'quantity')::numeric, 0) <= 0 OR COALESCE((v_item->>'unit_price')::numeric, -1) < 0 THEN
@@ -144,17 +144,17 @@ BEGIN
     END IF;
 
     v_requested_base := (v_item->>'quantity')::numeric * v_unit.base_unit_quantity;
-    SELECT COALESCE(SUM(base_quantity), 0) INTO v_available_base
-      FROM public.stock_records WHERE tenant_id = p_tenant_id AND product_id = v_product.id;
-    v_available_base := v_available_base - COALESCE((SELECT SUM(base_quantity) FROM public.sales WHERE tenant_id = p_tenant_id AND product_id = v_product.id), 0);
+    SELECT COALESCE(SUM(sr.base_quantity), 0) INTO v_available_base
+      FROM public.stock_records sr WHERE sr.tenant_id = p_tenant_id AND sr.product_id = v_product.id;
+    v_available_base := v_available_base - COALESCE((SELECT SUM(s.base_quantity) FROM public.sales s WHERE s.tenant_id = p_tenant_id AND s.product_id = v_product.id), 0);
 
     IF v_requested_base > v_available_base AND NOT p_allow_override THEN
       RAISE EXCEPTION 'Insufficient stock for %: % base units available, % requested', v_product.name, GREATEST(v_available_base, 0), v_requested_base;
     END IF;
 
-    SELECT COALESCE(SUM(base_cost), 0) INTO v_available_cost
-      FROM public.stock_records WHERE tenant_id = p_tenant_id AND product_id = v_product.id;
-    v_available_cost := v_available_cost - COALESCE((SELECT SUM(cogs_amount) FROM public.sales WHERE tenant_id = p_tenant_id AND product_id = v_product.id), 0);
+    SELECT COALESCE(SUM(sr.base_cost), 0) INTO v_available_cost
+      FROM public.stock_records sr WHERE sr.tenant_id = p_tenant_id AND sr.product_id = v_product.id;
+    v_available_cost := v_available_cost - COALESCE((SELECT SUM(s.cogs_amount) FROM public.sales s WHERE s.tenant_id = p_tenant_id AND s.product_id = v_product.id), 0);
     v_unit_cost := CASE WHEN v_available_base > 0 THEN GREATEST(v_available_cost, 0) / v_available_base ELSE 0 END;
     v_cogs := ROUND(v_requested_base * v_unit_cost, 2);
 
@@ -184,15 +184,15 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
 AS $$
 DECLARE v_sale public.sales%ROWTYPE; v_payment public.credit_payments%ROWTYPE; v_paid numeric;
 BEGIN
-  SELECT * INTO v_sale FROM public.sales WHERE id = p_sale_id AND tenant_id = public.current_tenant_id() FOR UPDATE;
+  SELECT * INTO v_sale FROM public.sales s WHERE s.id = p_sale_id AND s.tenant_id = public.current_tenant_id() FOR UPDATE;
   IF NOT FOUND OR NOT public.is_tenant_admin() THEN RAISE EXCEPTION 'Credit payment is not permitted'; END IF;
   IF p_amount <= 0 THEN RAISE EXCEPTION 'Payment must be greater than zero'; END IF;
-  SELECT COALESCE(SUM(amount), 0) INTO v_paid FROM public.credit_payments WHERE sale_id = p_sale_id;
+  SELECT COALESCE(SUM(cp.amount), 0) INTO v_paid FROM public.credit_payments cp WHERE cp.sale_id = p_sale_id;
   IF p_amount > v_sale.total_amount - v_paid THEN RAISE EXCEPTION 'Payment exceeds the outstanding balance'; END IF;
   INSERT INTO public.credit_payments(tenant_id, sale_id, amount, payment_method, note, received_by)
   VALUES (v_sale.tenant_id, p_sale_id, p_amount, p_payment_method, p_note, auth.uid()) RETURNING * INTO v_payment;
   IF v_paid + p_amount >= v_sale.total_amount THEN
-    UPDATE public.sales SET paid_at = now(), paid_via = p_payment_method WHERE id = p_sale_id;
+    UPDATE public.sales s SET paid_at = now(), paid_via = p_payment_method WHERE s.id = p_sale_id;
   END IF;
   RETURN v_payment;
 END;
@@ -279,3 +279,60 @@ REVOKE ALL ON FUNCTION public.create_business(text, text, text, text) FROM PUBLI
 GRANT EXECUTE ON FUNCTION public.create_business(text, text, text, text) TO authenticated;
 REVOKE ALL ON FUNCTION public.join_business(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.join_business(text) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.get_inventory_summary(p_tenant_id uuid)
+RETURNS TABLE (
+  product_id uuid,
+  item_name text,
+  total_stock numeric,
+  total_sold numeric,
+  available_stock numeric,
+  available_base_quantity numeric,
+  status text
+)
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public
+AS $$
+BEGIN
+  IF auth.uid() IS NULL OR public.current_tenant_id() IS DISTINCT FROM p_tenant_id THEN
+    RAISE EXCEPTION 'Access denied';
+  END IF;
+
+  RETURN QUERY
+  WITH stock_totals AS (
+    SELECT
+      sr.product_id,
+      COALESCE(SUM(sr.base_quantity), 0) AS total_stock
+    FROM public.stock_records sr
+    WHERE sr.tenant_id = p_tenant_id
+    GROUP BY sr.product_id
+  ),
+  sales_totals AS (
+    SELECT
+      s.product_id,
+      COALESCE(SUM(s.base_quantity), 0) AS total_sold
+    FROM public.sales s
+    WHERE s.tenant_id = p_tenant_id
+    GROUP BY s.product_id
+  )
+  SELECT
+    p.id AS product_id,
+    p.name AS item_name,
+    COALESCE(st.total_stock, 0)::numeric AS total_stock,
+    COALESCE(sa.total_sold, 0)::numeric AS total_sold,
+    GREATEST(COALESCE(st.total_stock, 0) - COALESCE(sa.total_sold, 0), 0)::numeric AS available_stock,
+    GREATEST(COALESCE(st.total_stock, 0) - COALESCE(sa.total_sold, 0), 0)::numeric AS available_base_quantity,
+    CASE
+      WHEN COALESCE(st.total_stock, 0) = 0 AND COALESCE(sa.total_sold, 0) = 0 THEN 'out_of_stock'
+      WHEN COALESCE(st.total_stock, 0) - COALESCE(sa.total_sold, 0) <= 0 THEN 'out_of_stock'
+      WHEN COALESCE(st.total_stock, 0) - COALESCE(sa.total_sold, 0) <= 5 THEN 'low_stock'
+      ELSE 'in_stock'
+    END::text AS status
+  FROM public.products p
+  LEFT JOIN stock_totals st ON st.product_id = p.id
+  LEFT JOIN sales_totals sa ON sa.product_id = p.id
+  WHERE p.tenant_id = p_tenant_id AND p.is_active = true;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.get_inventory_summary(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_inventory_summary(uuid) TO authenticated;

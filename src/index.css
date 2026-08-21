@@ -65,33 +65,33 @@
     --chart-5: 0 72% 51%;
   }
 
-  /* ── Dark mode ────────────────────────────────────────────────── */
+  /* ── Dark mode (Obsidian Slate Studio Theme) ─────────────────── */
   .dark {
-    --background: 20 14% 8%;
-    --foreground: 36 20% 92%;
+    --background: 222 35% 6.5%;
+    --foreground: 210 40% 98%;
 
-    --card: 20 14% 11%;
-    --card-foreground: 36 20% 92%;
+    --card: 221 35% 13%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 20 14% 11%;
-    --popover-foreground: 36 20% 92%;
+    --popover: 221 35% 13%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 32 95% 52%;
+    --primary: 38 92% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 20 10% 16%;
-    --secondary-foreground: 36 20% 85%;
+    --secondary: 217 28% 18%;
+    --secondary-foreground: 210 40% 90%;
 
-    --muted: 20 10% 15%;
-    --muted-foreground: 20 8% 55%;
+    --muted: 217 28% 18%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 20 10% 16%;
-    --accent-foreground: 36 20% 85%;
+    --accent: 217 28% 20%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 343 89% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 71% 45%;
+    --success: 160 84% 39%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
@@ -100,29 +100,30 @@
     --info: 217 91% 60%;
     --info-foreground: 0 0% 100%;
 
-    --border: 20 10% 18%;
-    --input: 20 10% 18%;
-    --ring: 32 95% 52%;
+    --border: 217 28% 22%;
+    --input: 217 28% 22%;
+    --ring: 38 92% 50%;
 
-    --chart-1: 32 95% 52%;
-    --chart-2: 142 71% 45%;
+    --chart-1: 38 92% 50%;
+    --chart-2: 160 84% 39%;
     --chart-3: 217 91% 60%;
     --chart-4: 280 65% 60%;
-    --chart-5: 0 72% 51%;
+    --chart-5: 343 89% 60%;
 
-    --sidebar-background: 20 14% 9%;
-    --sidebar-foreground: 20 8% 65%;
-    --sidebar-primary: 32 95% 52%;
+    --sidebar-background: 222 35% 6.5%;
+    --sidebar-foreground: 215 20% 65%;
+    --sidebar-primary: 38 92% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 20 10% 15%;
-    --sidebar-accent-foreground: 36 20% 85%;
-    --sidebar-border: 20 10% 16%;
-    --sidebar-ring: 32 95% 52%;
+    --sidebar-accent: 217 28% 18%;
+    --sidebar-accent-foreground: 210 40% 90%;
+    --sidebar-border: 217 28% 22%;
+    --sidebar-ring: 38 92% 50%;
   }
 
   .theme {
-    --font-heading: var(--font-sans);
+    --font-heading: 'Outfit', 'Inter', system-ui, sans-serif;
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
   }
 
   * {
@@ -132,10 +133,32 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  .font-tabular {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
   }
 
   html {
     @apply font-sans;
+    touch-action: manipulation;
+  }
+}
+
+/* Fix for iOS Safari auto-zoom on input focus */
+@media (max-width: 768px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px !important;
   }
 }
 
