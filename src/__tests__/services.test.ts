@@ -22,13 +22,13 @@ vi.stubGlobal('localStorage', {
 
 const { AnalyticsService } = await import('@/services/analytics.service')
 const { DEFAULT_PERMS, ADMIN_PERMS } = await import('@/lib/types')
-const { calculateInventorySummaryFromRecords } = await import('@/services/stock.service')
+const { calculateInventorySummaryFromRecords, StockService } = await import('@/services/stock.service')
+const { supabase } = await import('@/integrations/supabase/client')
 const { SalesService } = await import('@/services/sales.service')
 const { insertSale } = await import('@/lib/tenant-queries')
 
 describe('AnalyticsService Computations', () => {
   it('correctly aggregates sales summary metrics', async () => {
-    // Mock data testing calculation logic
     const sales = [
       { id: '1', item_name: 'Feeds (50kg)', quantity: 2, unit_price: 15000, total_amount: 30000, sale_date: '2026-08-10' },
       { id: '2', item_name: 'Feeds (50kg)', quantity: 1, unit_price: 15000, total_amount: 15000, sale_date: '2026-08-10' },
@@ -97,6 +97,34 @@ describe('Inventory stock logic', () => {
 
     expect(summary.eggs.availableBaseQuantity).toBe(30)
     expect(summary.eggs.status).toBe('in_stock')
+  })
+
+  it('maps the authoritative database RPC response without a client-side fallback', async () => {
+    vi.mocked(supabase.rpc).mockResolvedValueOnce({
+      data: [{
+        product_id: 'booster-id',
+        item_name: 'Booster',
+        total_stock: 30,
+        total_sold: 31,
+        available_stock: 0,
+        available_base_quantity: 0,
+        status: 'out_of_stock',
+      }],
+      error: null,
+    } as never)
+
+    const summary = await StockService.getInventorySummary('tenant-1')
+
+    expect(summary['booster-id'].availableStock).toBe(0)
+    expect(summary.Booster.availableBaseQuantity).toBe(0)
+    expect(summary.Booster.status).toBe('out_of_stock')
+    expect(supabase.rpc).toHaveBeenCalledWith('get_inventory_summary', { p_tenant_id: 'tenant-1' })
+  })
+
+  it('surfaces an inventory RPC error instead of falling back to client calculations', async () => {
+    vi.mocked(supabase.rpc).mockResolvedValueOnce({ data: null, error: { message: 'RPC unavailable' } } as never)
+
+    await expect(StockService.getInventorySummary('tenant-1')).rejects.toThrow('Unable to load inventory summary: RPC unavailable')
   })
 })
 
