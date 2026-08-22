@@ -333,39 +333,42 @@ BEGIN
   END IF;
 
   RETURN QUERY
-  WITH stock_totals AS (
-    SELECT
-      sr.product_id,
-      COALESCE(SUM(sr.base_quantity), 0) AS total_stock
-    FROM public.stock_records sr
-    WHERE sr.tenant_id = p_tenant_id
-    GROUP BY sr.product_id
-  ),
-  sales_totals AS (
-    SELECT
-      s.product_id,
-      COALESCE(SUM(s.base_quantity), 0) AS total_sold
-    FROM public.sales s
-    WHERE s.tenant_id = p_tenant_id
-    GROUP BY s.product_id
-  )
   SELECT
     p.id AS product_id,
     p.name AS item_name,
-    COALESCE(st.total_stock, 0)::numeric AS total_stock,
-    COALESCE(sa.total_sold, 0)::numeric AS total_sold,
-    GREATEST(COALESCE(st.total_stock, 0) - COALESCE(sa.total_sold, 0), 0)::numeric AS available_stock,
-    GREATEST(COALESCE(st.total_stock, 0) - COALESCE(sa.total_sold, 0), 0)::numeric AS available_base_quantity,
+    inv.tot_stock::numeric AS total_stock,
+    inv.tot_sold::numeric AS total_sold,
+    GREATEST(inv.tot_stock - inv.tot_sold, 0)::numeric AS available_stock,
+    GREATEST(inv.tot_stock - inv.tot_sold, 0)::numeric AS available_base_quantity,
     CASE
-      WHEN COALESCE(st.total_stock, 0) = 0 AND COALESCE(sa.total_sold, 0) = 0 THEN 'out_of_stock'
-      WHEN COALESCE(st.total_stock, 0) - COALESCE(sa.total_sold, 0) <= 0 THEN 'out_of_stock'
-      WHEN COALESCE(st.total_stock, 0) - COALESCE(sa.total_sold, 0) <= 5 THEN 'low_stock'
+      WHEN (inv.tot_stock - inv.tot_sold) <= 0 THEN 'out_of_stock'
+      WHEN (inv.tot_stock - inv.tot_sold) <= 5 THEN 'low_stock'
       ELSE 'in_stock'
     END::text AS status
   FROM public.products p
-  LEFT JOIN stock_totals st ON st.product_id = p.id
-  LEFT JOIN sales_totals sa ON sa.product_id = p.id
-  WHERE p.tenant_id = p_tenant_id AND p.is_active = true;
+  CROSS JOIN LATERAL (
+    SELECT
+      COALESCE((
+        SELECT SUM(COALESCE(sr.base_quantity, sr.quantity, 0))
+        FROM public.stock_records sr
+        WHERE (sr.tenant_id = p_tenant_id OR sr.tenant_id IS NULL)
+          AND (
+            sr.product_id = p.id 
+            OR LOWER(TRIM(sr.item_name)) = LOWER(TRIM(p.name))
+          )
+      ), 0) AS tot_stock,
+      COALESCE((
+        SELECT SUM(COALESCE(s.base_quantity, s.quantity, 0))
+        FROM public.sales s
+        WHERE (s.tenant_id = p_tenant_id OR s.tenant_id IS NULL)
+          AND (
+            s.product_id = p.id 
+            OR LOWER(TRIM(s.item_name)) = LOWER(TRIM(p.name))
+          )
+      ), 0) AS tot_sold
+  ) inv
+  WHERE p.tenant_id = p_tenant_id AND p.is_active = true
+  ORDER BY p.name;
 END;
 $$;
 

@@ -138,8 +138,7 @@ export class StockService {
     if (!rpcErr && Array.isArray(rpcData)) {
       const summary: Record<string, InventorySummary> = {}
       ;(rpcData as any[]).forEach(row => {
-        const key = row.product_id || row.item_name
-        summary[key] = {
+        const item: InventorySummary = {
           productId: row.product_id,
           itemName: row.item_name,
           totalStock: Number(row.total_stock || 0),
@@ -148,20 +147,41 @@ export class StockService {
           availableBaseQuantity: Number(row.available_base_quantity || 0),
           status: row.status as 'in_stock' | 'low_stock' | 'out_of_stock',
         }
+        const primaryKey = row.product_id || row.item_name
+        if (!primaryKey) return
+
+        summary[primaryKey] = item
+
+        const aliases = new Set<string>()
+        if (row.item_name) {
+          aliases.add(row.item_name)
+          aliases.add(row.item_name.trim().toLowerCase())
+        }
+        if (row.product_id) {
+          aliases.add(row.product_id)
+        }
+        aliases.delete(primaryKey)
+
+        aliases.forEach(alias => {
+          if (!Object.prototype.hasOwnProperty.call(summary, alias)) {
+            Object.defineProperty(summary, alias, {
+              value: item,
+              enumerable: false,
+              writable: true,
+              configurable: true,
+            })
+          }
+        })
       })
       return summary
     }
 
-    // Fallback client-side calculation if RPC is unavailable
-    const [{ data: stockData, error: stockErr }, { data: salesData, error: salesErr }] = await Promise.all([
-      supabase.from('stock_records').select('product_id, item_name, quantity, base_quantity').eq('tenant_id', tenantId).limit(5000),
-      supabase.from('sales').select('product_id, item_name, quantity, base_quantity').eq('tenant_id', tenantId).limit(5000),
-    ])
+    if (rpcErr) {
+      console.error('[StockService.getInventorySummary] RPC error:', rpcErr)
+      throw new Error(`Failed to load authoritative inventory: ${rpcErr.message}`)
+    }
 
-    if (stockErr) throw new Error(stockErr.message)
-    if (salesErr) throw new Error(salesErr.message)
-
-    return calculateInventorySummaryFromRecords(stockData || [], salesData || [])
+    return {}
   }
 
   static async getProductInventorySummary(tenantId: string): Promise<Record<string, InventorySummary>> {

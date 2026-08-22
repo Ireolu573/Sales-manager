@@ -76,9 +76,9 @@ export function SaleForm({ userId, tenantId }: Props) {
 
   const selectedProduct = useMemo(() => products.find(p => p.id === productId), [products, productId])
   const selectedProductInventory = productId
-    ? (inventorySummary[productId] || (selectedProduct ? inventorySummary[selectedProduct.name] : undefined))
+    ? (inventorySummary[productId] || (selectedProduct ? (inventorySummary[selectedProduct.name] || inventorySummary[selectedProduct.name.trim().toLowerCase()]) : undefined))
     : undefined
-  const selectedProductAvailable = selectedProductInventory?.availableStock ?? 0
+  const selectedProductAvailable = selectedProductInventory?.availableBaseQuantity ?? selectedProductInventory?.availableStock ?? 0
   const isLowStock = selectedProductInventory ? selectedProductInventory.status === 'low_stock' : false
   const isOutOfStock = selectedProductInventory ? selectedProductInventory.status === 'out_of_stock' : true
   const numericQuantity = Number(quantity) * (selectedUnit?.base_unit_quantity || 1) || 0
@@ -91,8 +91,8 @@ export function SaleForm({ userId, tenantId }: Props) {
       return totals
     }, {})).filter(([pId, required]) => {
       const prod = products.find(p => p.id === pId)
-      const inv = inventorySummary[pId] || (prod ? inventorySummary[prod.name] : undefined)
-      return required > (inv?.availableBaseQuantity ?? 0)
+      const inv = inventorySummary[pId] || (prod ? (inventorySummary[prod.name] || inventorySummary[prod.name.trim().toLowerCase()]) : undefined)
+      return required > (inv?.availableBaseQuantity ?? inv?.availableStock ?? 0)
     }),
     [inventorySummary, lineItems, products]
   )

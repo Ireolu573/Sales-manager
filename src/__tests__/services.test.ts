@@ -20,7 +20,6 @@ vi.stubGlobal('localStorage', {
   clear: () => undefined,
 })
 
-const { AnalyticsService } = await import('@/services/analytics.service')
 const { DEFAULT_PERMS, ADMIN_PERMS } = await import('@/lib/types')
 const { calculateInventorySummaryFromRecords } = await import('@/services/stock.service')
 const { SalesService } = await import('@/services/sales.service')
@@ -97,6 +96,33 @@ describe('Inventory stock logic', () => {
 
     expect(summary.eggs.availableBaseQuantity).toBe(30)
     expect(summary.eggs.status).toBe('in_stock')
+  })
+
+  it('maps getInventorySummary RPC response with unique keys and non-enumerable aliases', async () => {
+    const { StockService } = await import('@/services/stock.service')
+    const { supabase } = await import('@/integrations/supabase/client')
+
+    vi.spyOn(supabase, 'rpc').mockResolvedValueOnce({
+      data: [
+        {
+          product_id: 'prod-70dd',
+          item_name: 'Booster',
+          total_stock: '30',
+          total_sold: '31',
+          available_stock: '0',
+          available_base_quantity: '0',
+          status: 'out_of_stock',
+        },
+      ],
+      error: null,
+    } as any)
+
+    const summary = await StockService.getInventorySummary('tenant-1')
+    expect(Object.keys(summary)).toEqual(['prod-70dd'])
+    expect(Object.values(summary).length).toBe(1)
+    expect(summary['prod-70dd']?.availableStock).toBe(0)
+    expect(summary['Booster']?.availableStock).toBe(0)
+    expect(summary['booster']?.availableStock).toBe(0)
   })
 })
 
