@@ -20,7 +20,7 @@ import { SkeletonPage } from '@/components/ui/loading-skeletons'
 
 const SaleForm = lazy(() => import('@/components/SaleForm'))
 const SalesTable = lazy(() => import('@/components/SalesTable'))
-const StockForm = lazy(() => import('@/components/StockForm'))
+const StockForm = lazy(() => import('@/features/inventory/components/StockForm'))
 const CreditManager = lazy(() => import('@/components/CreditManager'))
 const Analytics = lazy(() => import('@/components/Analytics'))
 const Leaderboard = lazy(() => import('@/components/Leaderboard'))
