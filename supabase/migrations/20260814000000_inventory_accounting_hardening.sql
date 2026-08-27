@@ -97,9 +97,9 @@ CREATE OR REPLACE FUNCTION public.record_sales_transaction(
   p_notes text DEFAULT NULL,
   p_allow_override boolean DEFAULT false,
   p_override_reason text DEFAULT NULL,
-  p_transaction_id uuid DEFAULT NULL
+  p_transaction_id text DEFAULT NULL
 )
-RETURNS TABLE(id uuid, transaction_id uuid, total_amount numeric)
+RETURNS TABLE(id uuid, transaction_id text, total_amount numeric)
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
 AS $$
 #variable_conflict use_column
@@ -112,7 +112,7 @@ DECLARE
   v_available_cost numeric;
   v_unit_cost numeric;
   v_cogs numeric;
-  v_transaction_id uuid := COALESCE(p_transaction_id, gen_random_uuid());
+  v_transaction_id text := COALESCE(p_transaction_id, 'TXN-' || gen_random_uuid()::text);
   v_sale_id uuid;
   v_total numeric;
 BEGIN

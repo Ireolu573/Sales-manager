@@ -1,23 +1,40 @@
 import { StatCard } from '@/components/ui/StatCard'
 import { TrendingUp, Package, Banknote, ShoppingCart, TrendingDown } from 'lucide-react'
 
-interface AnalyticsCardsProps {
+interface AnalyticsCardsBaseProps {
   totalRevenue: number
   totalQty: number
   totalStockCost: number
-  estimatedProfit: number
   outstandingCredit: number
   isLoading?: boolean
 }
+
+type AnalyticsCardsProps = AnalyticsCardsBaseProps & (
+  | {
+      grossProfit: number
+      grossMargin: number
+      estimatedProfit?: never
+    }
+  | {
+      estimatedProfit: number
+      grossProfit?: never
+      grossMargin?: never
+    }
+)
 
 export default function AnalyticsCards({
   totalRevenue,
   totalQty,
   totalStockCost,
   estimatedProfit,
+  grossProfit,
+  grossMargin,
   outstandingCredit,
   isLoading
 }: AnalyticsCardsProps) {
+  const profit = grossProfit ?? estimatedProfit
+  const profitTitle = grossProfit === undefined ? 'Est. Profit' : 'Gross Profit'
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -40,10 +57,11 @@ export default function AnalyticsCards({
           isLoading={isLoading}
         />
         <StatCard 
-          title="Est. Profit" 
-          value={`₦${Math.abs(estimatedProfit).toLocaleString()}`} 
-          icon={estimatedProfit >= 0 ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+          title={profitTitle}
+          value={`₦${Math.abs(profit).toLocaleString()}`}
+          icon={profit >= 0 ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
           isLoading={isLoading}
+          trend={grossMargin === undefined ? undefined : `${grossMargin.toFixed(1)}% margin`}
         />
       </div>
 

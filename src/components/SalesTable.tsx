@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Trash2, Search, FileText, TrendingUp, ChevronDown, ChevronUp, Calendar, X, Banknote, Landmark, CreditCard, FileClock, type LucideIcon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { SalesService } from '@/services/sales.service'
 
 interface Props {
   userId: string
@@ -100,14 +101,16 @@ export default function SalesTable({ userId, tenantId, isAdmin }: Props) {
 
   const handleDelete = async (id: string) => {
     setDeletingId(id)
-    const { error } = await supabase.from('sales').delete().eq('id', id)
-    setDeletingId(null)
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' })
-    } else {
+    try {
+      await SalesService.deleteSale(id)
       queryClient.invalidateQueries({ queryKey: ['sales', tenantId] })
+      queryClient.invalidateQueries({ queryKey: ['inventorySummary', tenantId] })
       setExpandedId(null)
       toast({ title: 'Sale deleted' })
+    } catch (err: any) {
+      toast({ title: 'Error deleting sale', description: err.message, variant: 'destructive' })
+    } finally {
+      setDeletingId(null)
     }
   }
 

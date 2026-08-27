@@ -7,10 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -70,8 +90,60 @@ export type Database = {
           },
         ]
       }
+      credit_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          note: string | null
+          payment_method: string
+          received_at: string
+          received_by: string
+          sale_id: string
+          tenant_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          payment_method?: string
+          received_at?: string
+          received_by: string
+          sale_id: string
+          tenant_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          payment_method?: string
+          received_at?: string
+          received_by?: string
+          sale_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_payments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_payments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_units: {
         Row: {
+          base_unit_quantity: number
           created_at: string | null
           id: string
           product_id: string | null
@@ -80,6 +152,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          base_unit_quantity?: number
           created_at?: string | null
           id?: string
           product_id?: string | null
@@ -88,6 +161,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          base_unit_quantity?: number
           created_at?: string | null
           id?: string
           product_id?: string | null
@@ -160,7 +234,7 @@ export type Database = {
           clerk_user_id?: string | null
           created_at?: string | null
           email?: string | null
-          id?: string
+          id: string
           is_admin?: boolean | null
           permissions?: Json | null
           tenant_id?: string | null
@@ -186,12 +260,16 @@ export type Database = {
       }
       sales: {
         Row: {
+          base_quantity: number | null
           clerk_user_id: string | null
+          cogs_amount: number
           created_at: string | null
           customer_name: string | null
           id: string
+          inventory_override: boolean
           item_name: string
           notes: string | null
+          override_reason: string | null
           paid_at: string | null
           paid_via: string | null
           payment_method: string | null
@@ -204,15 +282,19 @@ export type Database = {
           unit_label: string | null
           unit_price: number
           updated_at: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
+          base_quantity?: number | null
           clerk_user_id?: string | null
+          cogs_amount?: number
           created_at?: string | null
           customer_name?: string | null
           id?: string
+          inventory_override?: boolean
           item_name: string
           notes?: string | null
+          override_reason?: string | null
           paid_at?: string | null
           paid_via?: string | null
           payment_method?: string | null
@@ -225,15 +307,19 @@ export type Database = {
           unit_label?: string | null
           unit_price: number
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
+          base_quantity?: number | null
           clerk_user_id?: string | null
+          cogs_amount?: number
           created_at?: string | null
           customer_name?: string | null
           id?: string
+          inventory_override?: boolean
           item_name?: string
           notes?: string | null
+          override_reason?: string | null
           paid_at?: string | null
           paid_via?: string | null
           payment_method?: string | null
@@ -246,7 +332,7 @@ export type Database = {
           unit_label?: string | null
           unit_price?: number
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -267,6 +353,8 @@ export type Database = {
       }
       stock_records: {
         Row: {
+          base_cost: number | null
+          base_quantity: number | null
           clerk_user_id: string | null
           cost_price: number
           created_at: string | null
@@ -283,6 +371,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          base_cost?: number | null
+          base_quantity?: number | null
           clerk_user_id?: string | null
           cost_price: number
           created_at?: string | null
@@ -299,6 +389,8 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          base_cost?: number | null
+          base_quantity?: number | null
           clerk_user_id?: string | null
           cost_price?: number
           created_at?: string | null
@@ -370,275 +462,81 @@ export type Database = {
         }
         Relationships: []
       }
-      wrappers_fdw_stats: {
-        Row: {
-          bytes_in: number | null
-          bytes_out: number | null
-          create_times: number | null
-          created_at: string
-          fdw_name: string
-          metadata: Json | null
-          rows_in: number | null
-          rows_out: number | null
-          updated_at: string
-        }
-        Insert: {
-          bytes_in?: number | null
-          bytes_out?: number | null
-          create_times?: number | null
-          created_at?: string
-          fdw_name: string
-          metadata?: Json | null
-          rows_in?: number | null
-          rows_out?: number | null
-          updated_at?: string
-        }
-        Update: {
-          bytes_in?: number | null
-          bytes_out?: number | null
-          create_times?: number | null
-          created_at?: string
-          fdw_name?: string
-          metadata?: Json | null
-          rows_in?: number | null
-          rows_out?: number | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      airtable_fdw_handler: { Args: never; Returns: unknown }
-      airtable_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
+      create_business: {
+        Args: {
+          p_app_name: string
+          p_brand_color: string
+          p_logo_emoji: string
+          p_name: string
+        }
+        Returns: string
       }
-      airtable_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
+      current_tenant_id: { Args: never; Returns: string }
+      delete_sales_transaction: {
+        Args: { p_sale_id: string }
         Returns: undefined
       }
-      auth0_fdw_handler: { Args: never; Returns: unknown }
-      auth0_fdw_meta: {
-        Args: never
+      get_inventory_summary: {
+        Args: { p_tenant_id: string }
         Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
+          available_base_quantity: number
+          available_stock: number
+          item_name: string
+          product_id: string
+          status: string
+          total_sold: number
+          total_stock: number
         }[]
       }
-      auth0_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      big_query_fdw_handler: { Args: never; Returns: unknown }
-      big_query_fdw_meta: {
-        Args: never
+      is_tenant_admin: { Args: never; Returns: boolean }
+      join_business: { Args: { p_invite_code: string }; Returns: string }
+      record_credit_payment: {
+        Args: {
+          p_amount: number
+          p_note?: string
+          p_payment_method: string
+          p_sale_id: string
+        }
         Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
+          amount: number
+          created_at: string
+          id: string
+          note: string | null
+          payment_method: string
+          received_at: string
+          received_by: string
+          sale_id: string
+          tenant_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_payments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-      big_query_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      click_house_fdw_handler: { Args: never; Returns: unknown }
-      click_house_fdw_meta: {
-        Args: never
+      record_sales_transaction: {
+        Args: {
+          p_allow_override?: boolean
+          p_customer_name?: string
+          p_items: Json
+          p_notes?: string
+          p_override_reason?: string
+          p_payment_method?: string
+          p_sale_date?: string
+          p_tenant_id: string
+          p_transaction_id?: string
+        }
         Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
+          id: string
+          total_amount: number
+          transaction_id: string
         }[]
-      }
-      click_house_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      cognito_fdw_handler: { Args: never; Returns: unknown }
-      cognito_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      cognito_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      duckdb_fdw_handler: { Args: never; Returns: unknown }
-      duckdb_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      duckdb_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      firebase_fdw_handler: { Args: never; Returns: unknown }
-      firebase_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      firebase_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      hello_world_fdw_handler: { Args: never; Returns: unknown }
-      hello_world_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      hello_world_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      iceberg_fdw_handler: { Args: never; Returns: unknown }
-      iceberg_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      iceberg_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      logflare_fdw_handler: { Args: never; Returns: unknown }
-      logflare_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      logflare_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      metadata_filter: { Args: { _left: Json; _right: Json }; Returns: boolean }
-      mssql_fdw_handler: { Args: never; Returns: unknown }
-      mssql_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      mssql_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      redis_fdw_handler: { Args: never; Returns: unknown }
-      redis_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      redis_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      s3_fdw_handler: { Args: never; Returns: unknown }
-      s3_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      s3_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      s3_vectors_fdw_handler: { Args: never; Returns: unknown }
-      s3_vectors_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      s3_vectors_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      s3vec_distance: { Args: { s3vec: unknown }; Returns: number }
-      s3vec_in: { Args: { input: unknown }; Returns: unknown }
-      s3vec_knn: { Args: { _left: unknown; _right: unknown }; Returns: boolean }
-      s3vec_out: { Args: { input: unknown }; Returns: unknown }
-      stripe_fdw_handler: { Args: never; Returns: unknown }
-      stripe_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      stripe_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
-      }
-      wasm_fdw_handler: { Args: never; Returns: unknown }
-      wasm_fdw_meta: {
-        Args: never
-        Returns: {
-          author: string
-          name: string
-          version: string
-          website: string
-        }[]
-      }
-      wasm_fdw_validator: {
-        Args: { catalog: unknown; options: string[] }
-        Returns: undefined
       }
     }
     Enums: {
@@ -768,6 +666,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

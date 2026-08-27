@@ -126,7 +126,11 @@ export class SalesService {
   }
 
   static async deleteSale(saleId: string): Promise<void> {
-    throw this.directWriteDisabledError()
+    const { error } = await supabase.rpc('delete_sales_transaction' as never, {
+      p_sale_id: saleId,
+    } as never)
+
+    if (error) throw new Error(error.message)
   }
 
   static async markCreditAsPaid(saleId: string, paidVia: string): Promise<Sale> {
