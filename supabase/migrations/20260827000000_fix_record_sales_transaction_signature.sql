@@ -63,20 +63,20 @@ BEGIN
     v_requested_base := (v_item->>'quantity')::numeric * v_unit.base_unit_quantity;
 
     SELECT COALESCE(SUM(COALESCE(sr.base_quantity, sr.quantity, 0)), 0) INTO v_available_base
-      FROM public.stock_records sr 
+      FROM public.stock_records sr
       WHERE (sr.tenant_id = p_tenant_id OR sr.tenant_id IS NULL)
         AND (
-          sr.product_id = v_product.id 
+          sr.product_id = v_product.id
           OR LOWER(TRIM(sr.item_name)) = LOWER(TRIM(v_product.name))
           OR sr.item_name ILIKE '%' || v_product.name || '%'
         );
 
     v_available_base := v_available_base - COALESCE((
-      SELECT SUM(COALESCE(s.base_quantity, s.quantity, 0)) 
-      FROM public.sales s 
+      SELECT SUM(COALESCE(s.base_quantity, s.quantity, 0))
+      FROM public.sales s
       WHERE (s.tenant_id = p_tenant_id OR s.tenant_id IS NULL)
         AND (
-          s.product_id = v_product.id 
+          s.product_id = v_product.id
           OR LOWER(TRIM(s.item_name)) = LOWER(TRIM(v_product.name))
           OR s.item_name ILIKE '%' || v_product.name || '%'
         )
@@ -87,20 +87,20 @@ BEGIN
     END IF;
 
     SELECT COALESCE(SUM(COALESCE(sr.base_cost, sr.total_cost, 0)), 0) INTO v_available_cost
-      FROM public.stock_records sr 
+      FROM public.stock_records sr
       WHERE (sr.tenant_id = p_tenant_id OR sr.tenant_id IS NULL)
         AND (
-          sr.product_id = v_product.id 
+          sr.product_id = v_product.id
           OR LOWER(TRIM(sr.item_name)) = LOWER(TRIM(v_product.name))
           OR sr.item_name ILIKE '%' || v_product.name || '%'
         );
 
     v_available_cost := v_available_cost - COALESCE((
-      SELECT SUM(COALESCE(s.cogs_amount, 0)) 
-      FROM public.sales s 
+      SELECT SUM(COALESCE(s.cogs_amount, 0))
+      FROM public.sales s
       WHERE (s.tenant_id = p_tenant_id OR s.tenant_id IS NULL)
         AND (
-          s.product_id = v_product.id 
+          s.product_id = v_product.id
           OR LOWER(TRIM(s.item_name)) = LOWER(TRIM(v_product.name))
           OR s.item_name ILIKE '%' || v_product.name || '%'
         )
