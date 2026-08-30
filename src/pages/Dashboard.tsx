@@ -1,6 +1,6 @@
-import { useState, lazy, Suspense, useEffect, useCallback, useMemo } from 'react'
+import { useState, lazy, Suspense, useEffect, useCallback } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
-import { useStock } from '@/hooks/useStock'
 import type { Tab, Permissions } from '@/lib/types'
 import { supabase } from '@/integrations/supabase/client'
 import AuthPage from '@/components/AuthPage'
@@ -20,10 +20,10 @@ import { SkeletonPage } from '@/components/ui/loading-skeletons'
 
 const SaleForm = lazy(() => import('@/components/SaleForm'))
 const SalesTable = lazy(() => import('@/components/SalesTable'))
-const StockForm = lazy(() => import('@/features/inventory/components/StockForm'))
+const StockForm = lazy(() => import('@/components/StockForm'))
 const CreditManager = lazy(() => import('@/components/CreditManager'))
 const Analytics = lazy(() => import('@/components/Analytics'))
-const Leaderboard = lazy(() => import('@/components/Leaderboard'))
+const InventoryOverview = lazy(() => import('@/components/InventoryOverview'))
 
 const NAV_TABS = [
   { id: 'record' as Tab, label: 'Record', icon: NotebookPen, perm: 'can_record_sales' },
@@ -31,8 +31,15 @@ const NAV_TABS = [
   { id: 'stock' as Tab, label: 'Stock', icon: Package, perm: 'can_view_stock' },
   { id: 'analytics' as Tab, label: 'Analytics', icon: BarChart3, perm: 'can_view_analytics' },
   { id: 'credit' as Tab, label: 'Credit', icon: CreditCard, perm: 'can_manage_credit' },
-  { id: 'leaderboard' as Tab, label: 'Board', icon: Trophy, perm: 'can_view_analytics' },
+  { id: 'leaderboard' as Tab, label: 'Inventory', icon: Trophy, perm: 'can_view_analytics' },
 ]
+
+const VALID_TABS: Tab[] = NAV_TABS.map(tab => tab.id)
+
+const resolveTabFromSearch = (search: string): Tab => {
+  const tabParam = new URLSearchParams(search).get('tab')
+  return tabParam && VALID_TABS.includes(tabParam as Tab) ? (tabParam as Tab) : 'record'
+}
 
 function hexToHsl(hex: string): string | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
@@ -72,17 +79,14 @@ function applyBrandColor(hex: string) {
 export default function Dashboard() {
   const { user, isAdmin, loading, permissions, company, tenantId, showBusinessRegistration, setShowBusinessRegistration, refreshProfile, setCompany } = useAuth()
   const { toast } = useToast()
-  const { inventorySummary: dashboardInventorySummary } = useStock(tenantId ?? '')
-
-  const lowStockItems = useMemo(
-    () => Object.values(dashboardInventorySummary).filter(item => item.status !== 'in_stock'),
-    [dashboardInventorySummary]
-  )
-  const lowStockCount = lowStockItems.length
-  const outOfStockCount = lowStockItems.filter(item => item.status === 'out_of_stock').length
   const queryClient = useQueryClient()
+  const location = useLocation()
+  const navigate = useNavigate()
 
-  const [tab, setTab] = useState<Tab>('record')
+  const [tab, setTab] = useState<Tab>(() => {
+    if (typeof window === 'undefined') return 'record'
+    return resolveTabFromSearch(window.location.search)
+  })
   const [animKey, setAnimKey] = useState(0)
   const [showDC, setShowDC] = useState(false)
   const [showAccount, setShowAccount] = useState(false)
@@ -140,7 +144,7 @@ export default function Dashboard() {
   }, [handleOnline])
 
   // 🌙 Toggle dark mode and persist to localStorage
-  function toggleTheme() {
+  const toggleTheme = () => {
     const next = !isDark
     setIsDark(next)
     if (next) {
@@ -164,11 +168,36 @@ export default function Dashboard() {
   // switchTab is a plain function (not a hook) but useKeyboardShortcuts IS a
   // hook, so it — and everything it depends on — must live above the guards.
 
+  const syncTabToUrl = useCallback((nextTab: Tab) => {
+    const params = new URLSearchParams(location.search)
+
+    if (nextTab === 'record') {
+      params.delete('tab')
+    } else {
+      params.set('tab', nextTab)
+    }
+
+    const nextSearch = params.toString()
+    const target = nextSearch ? `/?${nextSearch}` : '/'
+    const currentSearch = location.search || ''
+
+    if (currentSearch === (nextSearch ? `?${nextSearch}` : '')) return
+    navigate(target)
+  }, [location.search, navigate])
+
   const switchTab = (newTab: Tab) => {
     if (newTab === tab) return
     setTab(newTab)
     setAnimKey(k => k + 1)
+    syncTabToUrl(newTab)
   }
+
+  useEffect(() => {
+    const nextTab = resolveTabFromSearch(location.search)
+    if (nextTab !== tab) {
+      setTab(nextTab)
+    }
+  }, [location.search, tab])
 
   const { showHelp, setShowHelp } = useKeyboardShortcuts({
     onTabSwitch: switchTab,
@@ -218,18 +247,18 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-card/95 border-b border-border sticky top-0 z-20 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-card/80">
-        <div className="max-w-2xl mx-auto px-3 py-2.5 flex items-center justify-between gap-2 sm:px-4 sm:py-3">
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            <span className="text-xl shrink-0">{company.logo_emoji}</span>
-            <div className="min-w-0 flex-1">
-              <div className="font-bold text-foreground text-[11px] leading-tight tracking-wide uppercase break-words sm:text-sm">{company.company_name}</div>
-              <div className="text-[10px] text-muted-foreground leading-tight sm:text-xs">{company.app_name}</div>
+      <header className="bg-card border-b border-border sticky top-0 z-20 shadow-sm">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="text-xl">{company.logo_emoji}</span>
+            <div>
+              <div className="font-bold text-foreground text-sm leading-tight">{company.company_name}</div>
+              <div className="text-xs text-muted-foreground leading-tight">{company.app_name}</div>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2">
             {/* 📶 Wi-Fi indicator — shows queue count when offline */}
             <div className="relative">
               {online
@@ -264,21 +293,10 @@ export default function Dashboard() {
             </p>
           </div>
         )}
-
-        {lowStockCount > 0 && (
-          <div className="bg-amber-500/10 border-t border-amber-200 px-4 py-2 text-sm text-amber-900">
-            <span className="font-semibold">
-              {outOfStockCount > 0 ? `${outOfStockCount} item${outOfStockCount > 1 ? 's' : ''} out of stock` : `${lowStockCount} low-stock item${lowStockCount > 1 ? 's' : ''}`}
-            </span>
-            <span className="ml-2 text-amber-800">
-              {outOfStockCount > 0 ? `${lowStockCount - outOfStockCount} low stock remaining` : 'Replenish inventory in Stock.'}
-            </span>
-          </div>
-        )}
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-4xl lg:max-w-5xl w-full mx-auto px-3 py-4 pb-32 sm:px-6 sm:py-6">
+      <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-5 pb-24 overflow-y-auto">
         <div key={animKey} className="slide-up">
           <Suspense fallback={<SkeletonPage />}>
             {tab === 'record' && permissions.can_record_sales && tenantId && (
@@ -297,28 +315,31 @@ export default function Dashboard() {
               <CreditManager isAdmin={isAdmin} userId={user.id} tenantId={tenantId} />
             )}
             {tab === 'leaderboard' && permissions.can_view_analytics && tenantId && (
-              <Leaderboard tenantId={tenantId} isAdmin={isAdmin} />
+              <InventoryOverview
+                tenantId={tenantId}
+                isAdmin={isAdmin}
+                onOpenSettings={isAdmin ? () => setShowDC(true) : undefined}
+                onSwitchTab={switchTab}
+              />
             )}
           </Suspense>
         </div>
       </main>
 
-      {/* Floating Counter Dock Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-card/95 border-t border-border/80 z-20 shadow-[0_-8px_24px_-6px_rgba(0,0,0,0.3)] backdrop-blur-md supports-[backdrop-filter]:bg-card/85">
-        <div className="max-w-3xl mx-auto px-2 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex flex-nowrap justify-around gap-1 overflow-x-auto scrollbar-hide">
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-20 shadow-[0_-4px_16px_-4px_hsl(var(--foreground)/0.06)]">
+        <div className="max-w-2xl mx-auto px-2 py-1.5 flex justify-around">
           {visibleTabs.map(t => (
             <button
               key={t.id}
               onClick={() => switchTab(t.id)}
-              className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-xl transition-all duration-200 min-w-[4rem] flex-1 active:scale-95 touch-manipulation ${
-                tab === t.id
-                  ? 'text-primary bg-primary/10 font-semibold shadow-xs scale-102'
-                  : 'text-muted-foreground opacity-70 hover:opacity-100 hover:bg-secondary/40'
+              className={`flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl transition-all duration-200 min-w-0 flex-1 active:scale-95 ${
+                tab === t.id ? 'text-primary scale-105' : 'text-muted-foreground opacity-60 hover:opacity-80'
               }`}
             >
-              <t.icon size={20} strokeWidth={tab === t.id ? 2.5 : 1.75} />
-              <span className="text-[11px] font-medium tracking-tight truncate">{t.label}</span>
-              {tab === t.id && <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />}
+              <t.icon size={20} strokeWidth={tab === t.id ? 2.25 : 2} />
+              <span className="text-xs font-medium truncate">{t.label}</span>
+              {tab === t.id && <div className="w-1 h-1 rounded-full bg-primary" />}
             </button>
           ))}
         </div>
@@ -331,7 +352,7 @@ export default function Dashboard() {
           company={company}
           onClose={() => setShowDC(false)}
           onCompanyUpdated={handleCompanyUpdated}
-          onProductsChanged={() => { }}
+          onProductsChanged={() => {}}
         />
       )}
 
