@@ -7,6 +7,7 @@ import { CreditCard, CheckCircle2, AlertCircle, Search, ChevronDown, ChevronUp, 
 import { useToast } from '@/hooks/use-toast'
 import { SkeletonRowList } from '@/components/ui/loading-skeletons'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { SalesService } from '@/services/sales.service'
 
 interface Props {
@@ -32,6 +33,7 @@ export default function CreditManager({ isAdmin, tenantId }: Props) {
   const [filter, setFilter] = useState<'all' | 'owing'>('owing')
   const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null)
   const [phoneNumbers, setPhoneNumbers] = useState<Record<string, string>>({})
+  const [reminderMessage, setReminderMessage] = useState('Hello {name}, this is a friendly reminder about your outstanding balance of {balance} at our shop. Please let us know when you can make payment. Thank you.')
 
   const fetchCredits = async () => {
     setLoading(true)
@@ -112,7 +114,7 @@ export default function CreditManager({ isAdmin, tenantId }: Props) {
       toast({ title: 'Enter the customer’s WhatsApp number', description: 'Include the country code, for example 2348012345678.', variant: 'destructive' })
       return
     }
-    const message = `Hello ${customer.name}, this is a friendly reminder about your outstanding balance of ${money(customer.balance)} at our shop. Please let us know when you can make payment. Thank you.`
+    const message = reminderMessage.replaceAll('{name}', customer.name).replaceAll('{balance}', money(customer.balance))
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer')
   }
 
@@ -157,6 +159,11 @@ export default function CreditManager({ isAdmin, tenantId }: Props) {
                   </button>
                   {expanded && (
                     <div className="space-y-4 border-t border-border bg-muted/20 p-4 sm:p-5">
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-foreground" htmlFor={`reminder-${customer.name}`}>Reminder message</label>
+                        <Textarea id={`reminder-${customer.name}`} value={reminderMessage} onChange={event => setReminderMessage(event.target.value)} rows={3} />
+                        <p className="text-[11px] text-muted-foreground">Use {'{name}'} for the customer’s name and {'{balance}'} for the amount owed.</p>
+                      </div>
                       <div className="flex flex-col gap-2 sm:flex-row">
                         <Input aria-label={`WhatsApp number for ${customer.name}`} value={phoneNumbers[customer.name] || ''} onChange={event => setPhoneNumbers(prev => ({ ...prev, [customer.name]: event.target.value }))} placeholder="WhatsApp number with country code"/>
                         <Button onClick={() => sendReminder(customer)} disabled={customer.balance <= 0} className="shrink-0 gap-2"><MessageCircle className="h-4 w-4"/> Send WhatsApp reminder</Button>
