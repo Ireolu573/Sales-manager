@@ -61,7 +61,12 @@ RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS $$
+AS $
+DECLARE
+  v_allow_credit boolean;
+  v_credit_limit numeric;
+  v_outstanding numeric;
+  v_new_amount numeric;
 BEGIN
   IF NEW.customer_id IS NOT NULL THEN
     IF NOT EXISTS (
@@ -77,13 +82,46 @@ BEGIN
       AND lower(trim(c.name)) = lower(trim(NEW.customer_name))
     LIMIT 1;
   END IF;
+
+  -- Credit rules are enforced in the database, not only in the browser.
+  IF NEW.payment_method = 'credit' THEN
+    IF NEW.customer_id IS NULL THEN
+      RAISE EXCEPTION 'Add this customer to the customer directory before recording a credit sale';
+    END IF;
+
+    SELECT c.allow_credit, c.credit_limit
+      INTO v_allow_credit, v_credit_limit
+    FROM public.customers c
+    WHERE c.id = NEW.customer_id AND c.tenant_id = NEW.tenant_id;
+
+    IF NOT FOUND OR NOT COALESCE(v_allow_credit, false) THEN
+      RAISE EXCEPTION 'Credit purchases are not enabled for this customer';
+    END IF;
+
+    SELECT COALESCE(SUM(GREATEST(
+      s.total_amount - COALESCE((
+        SELECT SUM(cp.amount) FROM public.credit_payments cp WHERE cp.sale_id = s.id
+      ), 0), 0
+    )), 0)
+    INTO v_outstanding
+    FROM public.sales s
+    WHERE s.tenant_id = NEW.tenant_id
+      AND s.customer_id = NEW.customer_id
+      AND s.payment_method = 'credit';
+
+    v_new_amount := COALESCE(NEW.quantity, 0) * COALESCE(NEW.unit_price, 0);
+    IF v_credit_limit IS NOT NULL AND v_outstanding + v_new_amount > v_credit_limit THEN
+      RAISE EXCEPTION 'This sale would exceed the customer credit limit of %', v_credit_limit;
+    END IF;
+  END IF;
+
   RETURN NEW;
 END;
-$$;
+$;
 
 DROP TRIGGER IF EXISTS sales_link_customer ON public.sales;
 CREATE TRIGGER sales_link_customer
-  BEFORE INSERT OR UPDATE OF customer_id, customer_name, tenant_id
+  BEFORE INSERT OR UPDATE OF customer_id, customer_name, tenant_id, payment_method, quantity, unit_price
   ON public.sales
   FOR EACH ROW EXECUTE FUNCTION public.link_sale_to_customer();
 
