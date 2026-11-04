@@ -26,7 +26,7 @@ const preferenceItems = [
 ]
 
 export default function SettingsWorkspace({ company, isDark, fullName, email, phone, role, onToggleTheme, onOpenBusinessSettings, onOpenAccount }: Props) {
-  const initials = (fullName || company.company_name || 'A').trim().split(/\\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join('')
+  const initials = (fullName || company.company_name || 'A').trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join('')
 
   const SettingRow = ({ label, description, icon: Icon, onClick }: { label: string; description: string; icon: typeof Store; onClick: () => void }) => (
     <button type="button" onClick={onClick} className="group flex w-full items-center gap-3 border-b border-[#E2E8F0] px-4 py-4 text-left last:border-0 hover:bg-[#F8FAFC] sm:px-5">
