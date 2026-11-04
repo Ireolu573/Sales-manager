@@ -511,6 +511,17 @@ export default function Dashboard() {
             {isDark ? 'Switch to light mode' : 'Switch to dark mode'}
           </Button>
 
+          {permissions.can_view_analytics && (
+            <Button
+              variant="ghost"
+              className="justify-start gap-3 h-11 text-foreground"
+              onClick={() => { setShowMenu(false); switchTab('analytics') }}
+            >
+              <BarChart3 size={16} />
+              Reports
+            </Button>
+          )}
+
           {isAdmin && (
             <Button
               variant="ghost"
