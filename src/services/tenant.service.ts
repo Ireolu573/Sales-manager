@@ -28,7 +28,7 @@ export class TenantService {
   static async getProducts(tenantId: string): Promise<Product[]> {
     const { data, error } = await supabase
       .from('products')
-      .select('id, name, is_active, product_units(id, unit_label, unit_price, base_unit_quantity)')
+      .select('id, name, category, low_stock_threshold, is_active, product_units(id, unit_label, unit_price, base_unit_quantity)')
       .eq('tenant_id', tenantId)
       .eq('is_active', true)
       .order('name')
