@@ -35,8 +35,8 @@ const NAV_TABS = [
   { id: 'record' as Tab, label: 'Record', icon: NotebookPen, perm: 'can_record_sales' },
   { id: 'history' as Tab, label: 'History', icon: History, perm: 'can_view_history' },
   { id: 'stock' as Tab, label: 'Inventory', icon: Package, perm: 'can_view_stock' },
-  { id: 'analytics' as Tab, label: 'Reports', icon: BarChart3, perm: 'can_view_analytics' },
   { id: 'credit' as Tab, label: 'Customers', icon: CreditCard, perm: 'can_manage_credit' },
+  { id: 'analytics' as Tab, label: 'Reports', icon: BarChart3, perm: 'can_view_analytics' },
   { id: 'settings' as Tab, label: 'Settings', icon: Settings, perm: 'can_view_stock' },
 ]
 
@@ -269,8 +269,8 @@ export default function Dashboard() {
         <div className="flex h-20 items-center gap-3 border-b border-border px-6">
           <AgriLedgerLogo size={42} />
           <div className="min-w-0">
-            <p className="truncate text-base font-bold tracking-tight text-foreground">{company.company_name}</p>
-            <p className="truncate text-xs text-muted-foreground">Sales & inventory</p>
+            <p className="truncate text-base font-bold tracking-tight text-foreground">AgriLedger</p>
+            <p className="truncate text-xs text-muted-foreground">{company.company_name}</p>
           </div>
         </div>
         <div className="px-4 pt-7 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Workspace</div>
