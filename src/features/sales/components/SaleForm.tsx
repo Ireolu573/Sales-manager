@@ -98,6 +98,7 @@ export function SaleForm({ userId, tenantId }: Props) {
   )
 
   const [savedCustomers, setSavedCustomers] = useState<string[]>([])
+  const [directoryCustomers, setDirectoryCustomers] = useState<string[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const customerRef = useRef<HTMLDivElement>(null)
 
@@ -107,8 +108,10 @@ export function SaleForm({ userId, tenantId }: Props) {
       supabase.from('customers').select('name').eq('tenant_id', tenantId).order('name'),
       supabase.from('sales').select('customer_name').eq('tenant_id', tenantId).not('customer_name', 'is', null).order('created_at', { ascending: false }).limit(100),
     ]).then(([directory, sales]) => {
+      const directoryNames = (directory.data || []).map(row => row.name)
+      setDirectoryCustomers(directoryNames)
       const names = [
-        ...(directory.data || []).map(row => row.name),
+        ...directoryNames,
         ...(sales.data || []).map(row => row.customer_name || ''),
       ].filter(Boolean)
       setSavedCustomers(Array.from(new Set(names.map(name => name.trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b)))
@@ -159,6 +162,18 @@ export function SaleForm({ userId, tenantId }: Props) {
     setLoading(true)
 
     try {
+      if (paymentMethod === 'credit') {
+        if (!customerName.trim()) {
+          toast({ title: 'Choose a customer for this credit sale', description: 'Credit sales must be linked to a saved customer.', variant: 'destructive' })
+          setLoading(false)
+          return
+        }
+        if (!directoryCustomers.some(name => name.trim().toLowerCase() === customerName.trim().toLowerCase())) {
+          toast({ title: 'Customer is not in the directory', description: 'Add this customer under Customers & credit before recording a credit sale.', variant: 'destructive' })
+          setLoading(false)
+          return
+        }
+      }
       let receiptItems: ReceiptData['items'] = []
       if (mode === 'single') {
         if (!selectedProduct || !selectedUnit || !quantity || !unitPrice) {
@@ -425,6 +440,7 @@ export function SaleForm({ userId, tenantId }: Props) {
 
               <div className="space-y-2 relative" ref={customerRef}>
                 <Label className="text-sm font-semibold tracking-tight">Customer Name (Optional)</Label>
+                {paymentMethod === 'credit' && <p className="text-xs text-muted-foreground">Credit sales require a customer saved in Customers &amp; credit. Their credit permission and limit are checked before the sale is recorded.</p>}
                 <div className="relative">
                   <Input
                     placeholder="Enter customer name"
