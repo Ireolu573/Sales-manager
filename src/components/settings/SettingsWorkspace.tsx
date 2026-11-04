@@ -22,7 +22,6 @@ interface Props {
 
 type Section = 'overview' | 'shop' | 'units' | 'alerts' | 'notifications' | 'reminder' | 'language'
 type Preferences = {
-  currency: string
   unit: string
   lowStockDefault: string
   stockNotifications: boolean
@@ -33,7 +32,6 @@ type Preferences = {
 
 const STORAGE_KEY = 'agriledger-settings-preferences'
 const DEFAULTS: Preferences = {
-  currency: 'NGN',
   unit: 'bag',
   lowStockDefault: '5',
   stockNotifications: true,
@@ -103,18 +101,14 @@ export default function SettingsWorkspace({ company, tenantId, onCompanyUpdated,
         {section === 'shop' && <BrandSettingsForm tenantId={tenantId} company={company} onCompanyUpdated={onCompanyUpdated} />}
         {section === 'units' && (
           <section className="space-y-4 rounded-xl border border-[#CBD5E1] bg-white p-4 sm:p-6">
-            <div><h2 className="font-semibold text-[#0F172A]">Display preferences</h2><p className="mt-1 text-sm text-[#64748B]">Choose the defaults used when displaying quantities and money in this browser.</p></div>
-            <label className="block space-y-1.5 text-sm font-medium text-[#0F172A]">Currency
-              <select value={preferences.currency} onChange={e => update('currency', e.target.value)} className="h-10 w-full rounded-md border border-[#CBD5E1] bg-white px-3">
-                <option value="NGN">Nigerian Naira (₦)</option><option value="USD">US Dollar ($)</option><option value="GHS">Ghanaian Cedi (GH₵)</option>
-              </select>
-            </label>
+            <div><h2 className="font-semibold text-[#0F172A]">Display preferences</h2><p className="mt-1 text-sm text-[#64748B]">Choose the default selling unit for new products. The shop currently records all transactions in Nigerian Naira.</p></div>
+            <div className="space-y-1.5 text-sm"><span className="font-medium text-[#0F172A]">Shop currency</span><p className="rounded-md border border-[#CBD5E1] bg-[#F8FAFC] px-3 py-2.5 text-[#475569]">Nigerian Naira (₦) · NGN</p></div>
             <label className="block space-y-1.5 text-sm font-medium text-[#0F172A]">Default selling unit
               <select value={preferences.unit} onChange={e => update('unit', e.target.value)} className="h-10 w-full rounded-md border border-[#CBD5E1] bg-white px-3">
                 <option value="bag">Bag</option><option value="kg">Kilogram (kg)</option><option value="piece">Piece</option><option value="crate">Crate</option><option value="litre">Litre</option>
               </select>
             </label>
-            <p className="text-xs text-[#64748B]">These preferences are saved in this browser. Existing transaction values and the shop’s accounting currency are not converted.</p>
+            <p className="text-xs text-[#64748B]">The default unit is saved in this browser and applied when you add a product. Currency is currently fixed to NGN; no currency conversion is performed.</p>
             <Button onClick={save} className="gap-2"><Save size={15}/> Save preferences</Button>{saved && <span className="ml-2 text-xs font-medium text-[#166534]">Saved on this device</span>}
           </section>
         )}
