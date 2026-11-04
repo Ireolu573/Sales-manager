@@ -79,6 +79,8 @@ export default function StockForm({ userId, tenantId, isAdmin, initialProductId 
       unit_label: selectedUnit?.unit_label || null,
       quantity: Number(quantity),
       cost_price: Number(costPrice),
+      base_quantity: Number(quantity) * (selectedUnit?.base_unit_quantity || 1),
+      base_cost: Number(quantity) * Number(costPrice),
       stock_date: stockDate,
       notes: notes || null,
     }, tenantId, userId)
