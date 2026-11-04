@@ -10,10 +10,13 @@ import { KeyRound, Mail, Eye, EyeOff, Unlink, AlertTriangle } from 'lucide-react
 
 interface Props {
   email: string
+  fullName?: string
+  phone?: string
+  role?: string
   onClose: () => void
 }
 
-export default function AccountModal({ email, onClose }: Props) {
+export default function AccountModal({ email, fullName = '', phone = '', role = 'Staff', onClose }: Props) {
   const { toast } = useToast()
 
   // Password change state
@@ -25,6 +28,23 @@ export default function AccountModal({ email, onClose }: Props) {
   // Email change state
   const [newEmail, setNewEmail] = useState('')
   const [savingEmail, setSavingEmail] = useState(false)
+  const [profileName, setProfileName] = useState(fullName)
+  const [profilePhone, setProfilePhone] = useState(phone)
+  const [savingProfile, setSavingProfile] = useState(false)
+
+  const handleProfileSave = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSavingProfile(true)
+    const { error } = await supabase.auth.updateUser({
+      data: { full_name: profileName.trim(), phone: profilePhone.trim() },
+    })
+    setSavingProfile(false)
+    if (error) {
+      toast({ title: 'Could not update profile', description: error.message, variant: 'destructive' })
+      return
+    }
+    toast({ title: 'Profile updated' })
+  }
 
   // Google identity state
   const [isGoogleUser, setIsGoogleUser] = useState(false)
