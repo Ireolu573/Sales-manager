@@ -265,7 +265,7 @@ export default function Dashboard() {
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Desktop navigation — mobile uses the bottom navigation below. */}
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 flex-col border-r border-border bg-card">
+      <aside className="hidden min-[900px]:flex fixed inset-y-0 left-0 z-30 w-60 flex-col border-r border-border bg-card">
         <div className="flex h-20 items-center gap-3 border-b border-border px-6">
           <AgriLedgerLogo size={42} />
           <div className="min-w-0">
@@ -302,8 +302,8 @@ export default function Dashboard() {
       </aside>
 
       {/* Header */}
-      <header className="bg-card/95 backdrop-blur border-b border-border sticky top-0 z-20 shadow-sm lg:ml-64">
-        <div className="mx-auto max-w-none px-4 py-3 lg:px-8 flex items-center justify-between">
+      <header className="bg-card/95 backdrop-blur border-b border-border sticky top-0 z-20 shadow-sm min-[900px]:ml-60">
+        <div className="mx-auto max-w-none px-4 py-3 min-[900px]:px-8 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <AgriLedgerLogo size={30} />
             <div>
@@ -312,7 +312,7 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="hidden lg:flex items-center gap-2 pr-3">
+            <div className="hidden min-[900px]:flex items-center gap-2 pr-3">
               <Button variant="outline" onClick={() => switchTab('stock')} className="h-9 gap-2 rounded-lg">
                 <Package size={15} /> Add stock
               </Button>
@@ -357,7 +357,7 @@ export default function Dashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 w-full max-w-none mx-auto px-4 py-5 pb-24 overflow-y-auto lg:ml-64 lg:px-8 lg:py-8 lg:pb-10">
+      <main className="flex-1 w-full max-w-none mx-auto px-4 py-5 pb-24 overflow-y-auto min-[900px]:ml-60 min-[900px]:px-8 min-[900px]:py-8 min-[900px]:pb-10">
         <div key={animKey} className="slide-up">
           <Suspense fallback={<SkeletonPage />}>
             {showAccount ? (
@@ -434,8 +434,8 @@ export default function Dashboard() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-20 shadow-[0_-4px_16px_-4px_hsl(var(--foreground)/0.06)] lg:hidden">
-        <div className="max-w-2xl mx-auto px-2 py-1.5 flex justify-around lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-20 shadow-[0_-4px_16px_-4px_hsl(var(--foreground)/0.06)] min-[900px]:hidden">
+        <div className="max-w-2xl mx-auto px-2 py-1.5 flex justify-around min-[900px]:hidden">
           {visibleTabs.filter(t => ['home','history','stock','credit'].includes(t.id)).map(t => (
             <button
               key={t.id}
