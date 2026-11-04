@@ -103,19 +103,16 @@ export function SaleForm({ userId, tenantId }: Props) {
 
   useEffect(() => {
     getProductsForTenant(tenantId).then(({ data }) => { if (data) setProducts(data) })
-    supabase
-      .from('sales')
-      .select('customer_name')
-      .eq('tenant_id', tenantId)
-      .not('customer_name', 'is', null)
-      .order('created_at', { ascending: false })
-      .limit(100)
-      .then(({ data }) => {
-        if (data) {
-          const names = Array.from(new Set(data.map(d => d.customer_name).filter(Boolean))) as string[]
-          setSavedCustomers(names)
-        }
-      })
+    Promise.all([
+      supabase.from('customers').select('name').eq('tenant_id', tenantId).order('name'),
+      supabase.from('sales').select('customer_name').eq('tenant_id', tenantId).not('customer_name', 'is', null).order('created_at', { ascending: false }).limit(100),
+    ]).then(([directory, sales]) => {
+      const names = [
+        ...(directory.data || []).map(row => row.name),
+        ...(sales.data || []).map(row => row.customer_name || ''),
+      ].filter(Boolean)
+      setSavedCustomers(Array.from(new Set(names.map(name => name.trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b)))
+    })
   }, [tenantId])
 
   const handleProductSelect = (id: string) => {
