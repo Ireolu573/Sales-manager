@@ -364,7 +364,7 @@ export default function Dashboard() {
             )}
             {tab === 'stock' && (permissions.can_view_stock || permissions.can_add_stock) && tenantId && (
               inventoryScreen === 'add' ? (
-                <AddProductScreen tenantId={tenantId} onBack={() => setInventoryScreen('overview')} onSaved={() => {
+                <AddProductScreen tenantId={tenantId} userId={user.id} onBack={() => setInventoryScreen('overview')} onSaved={() => {
                   queryClient.invalidateQueries({ queryKey: ['inventorySummary', tenantId] })
                 }} />
               ) : inventoryScreen === 'history' ? (
