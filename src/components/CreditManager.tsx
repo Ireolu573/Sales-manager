@@ -23,7 +23,7 @@ type CustomerCredit = { id: string | null; name: string; phone: string; address:
 const money = (amount: number) => '₦' + amount.toLocaleString('en-NG', { maximumFractionDigits: 2 })
 const dateLabel = (value?: string | null) => value ? new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Date unavailable'
 
-export default function CreditManager({ isAdmin, tenantId }: Props) {
+export default function CreditManager({ isAdmin, userId, tenantId }: Props) {
   const { toast } = useToast()
   const [credits, setCredits] = useState<Sale[]>([])
   const [savedCustomers, setSavedCustomers] = useState<CustomerRecord[]>([])
@@ -170,7 +170,7 @@ export default function CreditManager({ isAdmin, tenantId }: Props) {
         const existing = (existingCustomers || []).find(customer => customer.name.trim().toLowerCase() === name.toLowerCase())
         const { error } = existing
           ? await supabase.from('customers').update(values).eq('id', existing.id).eq('tenant_id', tenantId)
-          : await supabase.from('customers').insert({ ...values, tenant_id: tenantId })
+          : await supabase.from('customers').insert({ ...values, tenant_id: tenantId, created_by: userId })
         if (error) throw error
       }
       toast({ title: customerForm.id ? 'Customer details updated' : 'Customer added' })
