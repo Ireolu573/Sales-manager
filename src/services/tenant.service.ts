@@ -41,7 +41,7 @@ export class TenantService {
     name: string,
     tenantId: string,
     units: { unit_label: string; unit_price: number; base_unit_quantity?: number }[],
-    details: { category: string; low_stock_threshold: number; opening_stock?: { quantity: number; cost_price: number; unit_label: string; base_unit_quantity: number; stock_date: string; user_id: string } },
+    details: { category: string; low_stock_threshold: number; opening_stock?: { quantity: number; cost_price: number; unit_label: string; base_unit_quantity: number; stock_date: string; user_id: string } } = { category: 'other', low_stock_threshold: 5 },
   ): Promise<Product> {
     const { data: product, error: prodErr } = await supabase
       .from('products')
