@@ -32,10 +32,9 @@ const NAV_TABS = [
   { id: 'home' as Tab, label: 'Dashboard', icon: BarChart3, perm: 'can_view_stock' },
   { id: 'record' as Tab, label: 'Record', icon: NotebookPen, perm: 'can_record_sales' },
   { id: 'history' as Tab, label: 'History', icon: History, perm: 'can_view_history' },
-  { id: 'stock' as Tab, label: 'Stock', icon: Package, perm: 'can_view_stock' },
-  { id: 'analytics' as Tab, label: 'Analytics', icon: BarChart3, perm: 'can_view_analytics' },
-  { id: 'credit' as Tab, label: 'Credit', icon: CreditCard, perm: 'can_manage_credit' },
-  { id: 'leaderboard' as Tab, label: 'Inventory', icon: Trophy, perm: 'can_view_analytics' },
+  { id: 'stock' as Tab, label: 'Inventory', icon: Package, perm: 'can_view_stock' },
+  { id: 'analytics' as Tab, label: 'Reports', icon: BarChart3, perm: 'can_view_analytics' },
+  { id: 'credit' as Tab, label: 'Customers', icon: CreditCard, perm: 'can_manage_credit' },
   { id: 'settings' as Tab, label: 'Settings', icon: Settings, perm: 'can_view_stock' },
 ]
 
@@ -274,11 +273,10 @@ export default function Dashboard() {
               aria-current={tab === t.id ? 'page' : undefined}
             >
               <t.icon size={18} strokeWidth={tab === t.id ? 2.3 : 1.9} />
-              <span>{t.label === 'Record' ? 'New sale' : t.label === 'History' ? 'Sales history' : t.label === 'Leaderboard' ? 'Inventory' : t.label === 'Credit' ? 'Customers' : t.label === 'Analytics' ? 'Reports' : t.label}</span>
+              <span>{t.label === 'Record' ? 'New sale' : t.label === 'History' ? 'Sales history' : t.label}</span>
               {tab === t.id && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />}
             </button>
           ))}
-          {isAdmin && <button onClick={() => setShowDC(true)} className="mt-2 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"><Settings size={18}/>Settings</button>}
         </nav>
         <div className="border-t border-border p-4">
           <div className="flex items-center gap-2 rounded-xl bg-muted/70 p-3">
