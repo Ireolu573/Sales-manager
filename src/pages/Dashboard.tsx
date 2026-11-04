@@ -72,8 +72,7 @@ function applyBrandColor(hex: string) {
   const hsl = hexToHsl(hex)
   if (!hsl) return
   _brandColorHsl = hsl
-  document.documentElement.style.setProperty('--primary', hsl)
-  document.documentElement.style.setProperty('--ring', hsl)
+  document.documentElement.style.setProperty('--brand-accent', hsl)
 }
 
 export default function Dashboard() {
@@ -158,8 +157,7 @@ export default function Dashboard() {
     // the class change so this is a no-op if color hasn't changed, but
     // it guarantees the primary token is correct in both modes.
     if (_brandColorHsl) {
-      document.documentElement.style.setProperty('--primary', _brandColorHsl)
-      document.documentElement.style.setProperty('--ring', _brandColorHsl)
+      document.documentElement.style.setProperty('--brand-accent', _brandColorHsl)
     }
   }
 
