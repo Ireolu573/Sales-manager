@@ -17,21 +17,30 @@ import {
   RotateCcw,
   Settings2,
   Plus,
+  Search,
+  CalendarClock,
+  Eye,
 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 
 interface Props {
   tenantId: string
   isAdmin?: boolean
   onOpenSettings?: () => void
   onSwitchTab?: (tab: 'stock' | 'record' | 'history' | 'analytics' | 'credit' | 'leaderboard') => void
+  onRestockProduct?: (productId: string) => void
+  onAddProduct?: () => void
+  onViewHistory?: () => void
+  onViewProductDetails: (item: any) => void
 }
 
 type StatusFilter = 'all' | 'out_of_stock' | 'low_stock' | 'in_stock'
 
-export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTab }: Props) {
+export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTab, onRestockProduct, onAddProduct, onViewHistory, onViewProductDetails }: Props) {
   const { inventorySummary, isLoading } = useStock(tenantId)
   const [unitsMap, setUnitsMap] = useState<Record<string, string>>({})
   const [activeFilter, setActiveFilter] = useState<StatusFilter>('all')
+  const [search, setSearch] = useState('')
   const [showAll, setShowAll] = useState(false)
   const navigate = useNavigate()
 
@@ -39,7 +48,14 @@ export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTa
     setShowAll(false)
   }, [activeFilter])
 
-  const entries = useMemo(() => Object.values(inventorySummary || {}), [inventorySummary])
+  const entries = useMemo(() => {
+    const unique = new Map<string, (typeof inventorySummary)[string]>()
+    Object.values(inventorySummary || {}).forEach(item => {
+      const key = item.productId || item.itemName.trim().toLowerCase()
+      if (!unique.has(key)) unique.set(key, item)
+    })
+    return Array.from(unique.values())
+  }, [inventorySummary])
 
   const handleGoToStock = () => {
     if (onSwitchTab) {
@@ -88,15 +104,19 @@ export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTa
     if (activeFilter !== 'all') {
       list = list.filter((e: any) => e.status === activeFilter)
     }
+    const term = search.trim().toLowerCase()
+    if (term) list = list.filter((e: any) => e.itemName.toLowerCase().includes(term))
 
     return list.sort((a: any, b: any) => {
       const byStatus = (order[a.status] ?? 3) - (order[b.status] ?? 3)
       if (byStatus !== 0) return byStatus
       return (a.itemName || '').localeCompare(b.itemName || '')
     })
-  }, [entries, activeFilter])
+  }, [entries, activeFilter, search])
 
   const visibleItems = showAll ? filteredAndSorted : filteredAndSorted.slice(0, 8)
+
+
 
   return (
     <div className="space-y-4">
@@ -112,14 +132,11 @@ export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTa
           </div>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2 text-xs font-medium h-9 border-border/70 hover:bg-accent hover:border-border transition-all duration-200"
-          onClick={handleGoToStock}
-        >
-          View Inventory <ArrowRight className="w-3.5 h-3.5" />
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {onViewHistory && <Button variant="outline" size="sm" className="h-9 gap-2" onClick={onViewHistory}><CalendarClock className="h-3.5 w-3.5" />Stock history</Button>}
+          {onAddProduct && <Button size="sm" className="h-9 gap-2" onClick={onAddProduct}><Plus className="h-3.5 w-3.5" />Add product</Button>}
+          <Button variant="outline" size="sm" className="h-9 gap-2 text-xs font-medium" onClick={handleGoToStock}>View Inventory <ArrowRight className="w-3.5 h-3.5" /></Button>
+        </div>
       </div>
 
       {/* Interactive Summary KPI Cards */}
@@ -207,6 +224,17 @@ export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTa
             </CardContent>
           </Card>
         </button>
+      </div>
+
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={event => setSearch(event.target.value)}
+          placeholder="Search feeds, chicks, drugs..."
+          aria-label="Search inventory"
+          className="h-11 rounded-xl border-border bg-card pl-9"
+        />
       </div>
 
       {/* Product List Header & Filter Indicator */}
@@ -350,6 +378,13 @@ export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTa
                     </div>
                   </div>
 
+                  {/* Product details action */}
+                  <div className="flex justify-end pt-0.5">
+                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => onViewProductDetails(row)}>
+                      <Eye className="mr-1 h-3 w-3" /> Details
+                    </Button>
+                  </div>
+
                   {/* Restock Button: shown on out_of_stock and low_stock products */}
                   {(isOut || isLow) && (
                     <div className="pt-0.5 flex justify-end">
@@ -392,6 +427,7 @@ export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTa
           )}
         </div>
       )}
+
     </div>
   )
 }

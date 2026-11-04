@@ -1,4 +1,4 @@
-export type Tab = 'record' | 'history' | 'stock' | 'credit' | 'analytics' | 'leaderboard'
+export type Tab = 'home' | 'record' | 'history' | 'stock' | 'credit' | 'analytics' | 'leaderboard' | 'settings'
 export type PaymentMethod = 'cash' | 'transfer' | 'credit' | 'pos'
 
 export interface Permissions {
@@ -32,6 +32,8 @@ export interface ProductUnit {
 export interface Product {
   id: string
   name: string
+  category?: string
+  low_stock_threshold?: number
   product_units: ProductUnit[]
   is_active?: boolean | null
 }

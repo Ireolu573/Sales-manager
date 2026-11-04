@@ -7,8 +7,8 @@ import AuthPage from '@/components/AuthPage'
 import AgriLedgerLogo from '@/components/brand/AgriLedgerLogo'
 import OnboardingWizard from '@/components/onboarding/OnboardingWizard'
 import DomainController from '@/components/DomainController'
-import AccountModal from '@/components/AccountModal'
-import { Menu, Settings, Wifi, WifiOff, LogOut, UserCircle, Sun, Moon, NotebookPen, History, Package, BarChart3, CreditCard, Trophy } from 'lucide-react'
+import AccountPage from '@/components/AccountPage'
+import { Menu, Settings, Wifi, WifiOff, LogOut, UserCircle, Sun, Moon, NotebookPen, History, Package, BarChart3, CreditCard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { useQueryClient } from '@tanstack/react-query'
@@ -19,27 +19,33 @@ import KeyboardShortcutsHelp from '@/components/KeyboardShortcutsHelp'
 import { Keyboard } from 'lucide-react'
 import { SkeletonPage } from '@/components/ui/loading-skeletons'
 
+const SettingsWorkspace = lazy(() => import('@/components/settings/SettingsWorkspace'))
+const DashboardOverview = lazy(() => import('@/components/dashboard/DashboardOverview'))
 const SaleForm = lazy(() => import('@/components/SaleForm'))
 const SalesTable = lazy(() => import('@/components/SalesTable'))
 const StockForm = lazy(() => import('@/components/StockForm'))
 const CreditManager = lazy(() => import('@/components/CreditManager'))
 const Analytics = lazy(() => import('@/components/Analytics'))
 const InventoryOverview = lazy(() => import('@/components/InventoryOverview'))
+const AddProductScreen = lazy(() => import('@/components/inventory/AddProductScreen'))
+const StockHistoryScreen = lazy(() => import('@/components/inventory/StockHistoryScreen'))
+const ProductDetailsScreen = lazy(() => import('@/components/inventory/ProductDetailsScreen'))
 
 const NAV_TABS = [
+  { id: 'home' as Tab, label: 'Dashboard', icon: BarChart3, perm: 'can_view_stock' },
   { id: 'record' as Tab, label: 'Record', icon: NotebookPen, perm: 'can_record_sales' },
   { id: 'history' as Tab, label: 'History', icon: History, perm: 'can_view_history' },
-  { id: 'stock' as Tab, label: 'Stock', icon: Package, perm: 'can_view_stock' },
-  { id: 'analytics' as Tab, label: 'Analytics', icon: BarChart3, perm: 'can_view_analytics' },
-  { id: 'credit' as Tab, label: 'Credit', icon: CreditCard, perm: 'can_manage_credit' },
-  { id: 'leaderboard' as Tab, label: 'Inventory', icon: Trophy, perm: 'can_view_analytics' },
+  { id: 'stock' as Tab, label: 'Inventory', icon: Package, perm: 'can_view_stock' },
+  { id: 'credit' as Tab, label: 'Customers', icon: CreditCard, perm: 'can_manage_credit' },
+  { id: 'analytics' as Tab, label: 'Reports', icon: BarChart3, perm: 'can_view_analytics' },
+  { id: 'settings' as Tab, label: 'Settings', icon: Settings, perm: 'can_view_stock' },
 ]
 
 const VALID_TABS: Tab[] = NAV_TABS.map(tab => tab.id)
 
 const resolveTabFromSearch = (search: string): Tab => {
   const tabParam = new URLSearchParams(search).get('tab')
-  return tabParam && VALID_TABS.includes(tabParam as Tab) ? (tabParam as Tab) : 'record'
+  return tabParam && VALID_TABS.includes(tabParam as Tab) ? (tabParam as Tab) : 'home'
 }
 
 function hexToHsl(hex: string): string | null {
@@ -84,11 +90,14 @@ export default function Dashboard() {
   const navigate = useNavigate()
 
   const [tab, setTab] = useState<Tab>(() => {
-    if (typeof window === 'undefined') return 'record'
+    if (typeof window === 'undefined') return 'home'
     return resolveTabFromSearch(window.location.search)
   })
   const [animKey, setAnimKey] = useState(0)
   const [showDC, setShowDC] = useState(false)
+  const [selectedStockProductId, setSelectedStockProductId] = useState<string | null>(null)
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null)
+  const [inventoryScreen, setInventoryScreen] = useState<'overview' | 'add' | 'history' | 'product'>('overview')
   const [showAccount, setShowAccount] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [online, setOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true)
@@ -185,7 +194,18 @@ export default function Dashboard() {
   }, [location.search, navigate])
 
   const switchTab = (newTab: Tab) => {
-    if (newTab === tab) return
+    // Main navigation always returns nested workspaces to their landing screen.
+    // This lets users leave Add Product / Stock History without using device Back.
+    setInventoryScreen('overview')
+    setSelectedStockProductId(null)
+    setSelectedProduct(null)
+    setShowAccount(false)
+    setShowDC(false)
+    setShowMenu(false)
+    if (newTab === tab) {
+      setAnimKey(k => k + 1)
+      return
+    }
     setTab(newTab)
     setAnimKey(k => k + 1)
     syncTabToUrl(newTab)
@@ -214,7 +234,7 @@ export default function Dashboard() {
     }
   }, [])
 
-  const visibleTabs = NAV_TABS.filter(t => permissions[t.perm as keyof Permissions])
+  const visibleTabs = NAV_TABS.filter(t => t.id === 'home' || permissions[t.perm as keyof Permissions])
   const handleCompanyUpdated = (c: typeof company) => {
     setCompany(c)
     if (c?.brand_color) applyBrandColor(c.brand_color)
@@ -248,17 +268,17 @@ export default function Dashboard() {
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Desktop navigation — mobile uses the bottom navigation below. */}
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 flex-col border-r border-border bg-card">
+      <aside className="hidden min-[900px]:flex fixed inset-y-0 left-0 z-30 w-60 flex-col border-r border-border bg-card">
         <div className="flex h-20 items-center gap-3 border-b border-border px-6">
           <AgriLedgerLogo size={42} />
           <div className="min-w-0">
-            <p className="truncate text-base font-bold tracking-tight text-foreground">{company.company_name}</p>
-            <p className="truncate text-xs text-muted-foreground">Sales & inventory</p>
+            <p className="truncate text-base font-bold tracking-tight text-foreground">AgriLedger</p>
+            <p className="truncate text-xs text-muted-foreground">{company.company_name}</p>
           </div>
         </div>
         <div className="px-4 pt-7 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Workspace</div>
         <nav className="flex-1 space-y-1 px-3">
-          {visibleTabs.map(t => (
+          {visibleTabs.filter(t => ['home','record','history','stock','credit','analytics','settings'].includes(t.id) && (t.id !== 'settings' || isAdmin)).map(t => (
             <button
               key={t.id}
               onClick={() => switchTab(t.id)}
@@ -270,7 +290,7 @@ export default function Dashboard() {
               aria-current={tab === t.id ? 'page' : undefined}
             >
               <t.icon size={18} strokeWidth={tab === t.id ? 2.3 : 1.9} />
-              <span>{t.label === 'Record' ? 'Record sale' : t.label === 'Leaderboard' ? 'Inventory overview' : t.label}</span>
+              <span>{t.label === 'Record' ? 'New sale' : t.label === 'History' ? 'Sales history' : t.label}</span>
               {tab === t.id && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />}
             </button>
           ))}
@@ -285,8 +305,8 @@ export default function Dashboard() {
       </aside>
 
       {/* Header */}
-      <header className="bg-card/95 backdrop-blur border-b border-border sticky top-0 z-20 shadow-sm lg:ml-64">
-        <div className="mx-auto max-w-none px-4 py-3 lg:px-8 flex items-center justify-between">
+      <header className="bg-card/95 backdrop-blur border-b border-border sticky top-0 z-20 shadow-sm min-[900px]:ml-60">
+        <div className="mx-auto max-w-none px-4 py-3 min-[900px]:px-8 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <AgriLedgerLogo size={30} />
             <div>
@@ -295,7 +315,7 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="hidden lg:flex items-center gap-2 pr-3">
+            <div className="hidden min-[900px]:flex items-center gap-2 pr-3">
               <Button variant="outline" onClick={() => switchTab('stock')} className="h-9 gap-2 rounded-lg">
                 <Package size={15} /> Add stock
               </Button>
@@ -315,6 +335,16 @@ export default function Dashboard() {
                 </span>
               )}
             </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => switchTab('record')}
+              className="h-8 gap-1.5 px-2.5 text-xs min-[900px]:hidden"
+              aria-label="Record a new sale"
+            >
+              <NotebookPen size={15} /> Sale
+            </Button>
 
             {/* ☰ Hamburger — opens the menu pane with theme, settings, account, sign out */}
             <Button
@@ -340,9 +370,37 @@ export default function Dashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 w-full max-w-none mx-auto px-4 py-5 pb-24 overflow-y-auto lg:ml-64 lg:px-8 lg:py-8 lg:pb-10">
+      <main className="flex-1 w-full max-w-none mx-auto px-4 py-5 pb-24 overflow-y-auto min-[900px]:ml-60 min-[900px]:px-8 min-[900px]:py-8 min-[900px]:pb-10">
         <div key={animKey} className="slide-up">
           <Suspense fallback={<SkeletonPage />}>
+            {showAccount ? (
+              <AccountPage
+                email={user.email || ''}
+                fullName={String(user.user_metadata?.full_name || user.user_metadata?.name || '')}
+                phone={String(user.user_metadata?.phone || '')}
+                role={isAdmin ? 'Owner' : 'Staff'}
+                onClose={() => setShowAccount(false)}
+              />
+            ) : (
+              <>
+            {tab === 'settings' && isAdmin && company && (
+              <SettingsWorkspace
+                company={company}
+                tenantId={tenantId || ''}
+                onCompanyUpdated={setCompany}
+                isDark={isDark}
+                fullName={String(user.user_metadata?.full_name || user.user_metadata?.name || '')}
+                email={user.email || ''}
+                phone={String(user.user_metadata?.phone || '')}
+                role={isAdmin ? 'Owner' : 'Staff'}
+                onToggleTheme={toggleTheme}
+                onOpenAccount={() => setShowAccount(true)}
+                onOpenInventory={() => { setSelectedProduct(null); setInventoryScreen('overview'); switchTab('stock') }}
+              />
+            )}
+            {tab === 'home' && tenantId && (
+              <DashboardOverview tenantId={tenantId} userId={user.id} isAdmin={isAdmin} onSwitchTab={switchTab} />
+            )}
             {tab === 'record' && permissions.can_record_sales && tenantId && (
               <SaleForm userId={user.id} tenantId={tenantId} />
             )}
@@ -350,7 +408,42 @@ export default function Dashboard() {
               <SalesTable userId={user.id} tenantId={tenantId} isAdmin={isAdmin} />
             )}
             {tab === 'stock' && (permissions.can_view_stock || permissions.can_add_stock) && tenantId && (
-              <StockForm userId={user.id} tenantId={tenantId} isAdmin={isAdmin || permissions.can_add_stock} />
+              inventoryScreen === 'product' && selectedProduct ? (
+                <ProductDetailsScreen
+                  tenantId={tenantId}
+                  item={selectedProduct}
+                  onBack={() => { setSelectedProduct(null); setInventoryScreen('overview') }}
+                  onRestock={productId => { setSelectedStockProductId(productId); setSelectedProduct(null); setInventoryScreen('overview') }}
+                />
+              ) : inventoryScreen === 'add' ? (
+                <AddProductScreen tenantId={tenantId} userId={user.id} onBack={() => setInventoryScreen('overview')} onSaved={() => {
+                  queryClient.invalidateQueries({ queryKey: ['inventorySummary', tenantId] })
+                }} />
+              ) : inventoryScreen === 'history' ? (
+                <StockHistoryScreen tenantId={tenantId} onBack={() => setInventoryScreen('overview')} />
+              ) : (
+                <div className="space-y-7">
+                  <InventoryOverview
+                    tenantId={tenantId}
+                    isAdmin={isAdmin}
+                    onOpenSettings={isAdmin ? () => setShowDC(true) : undefined}
+                    onSwitchTab={switchTab}
+                    onAddProduct={isAdmin ? () => setInventoryScreen('add') : undefined}
+                    onViewHistory={() => setInventoryScreen('history')}
+                    onViewProductDetails={item => { setSelectedProduct(item); setInventoryScreen('product') }}
+                    onRestockProduct={productId => { setSelectedStockProductId(productId); setInventoryScreen('overview') }}
+                  />
+                  {(isAdmin || permissions.can_add_stock) && (
+                    <section className="border-t border-border pt-6">
+                      <div className="mb-4">
+                        <h2 className="text-base font-bold text-foreground">Record a stock purchase</h2>
+                        <p className="text-sm text-muted-foreground">Add received stock and keep a record of its cost.</p>
+                      </div>
+                      <StockForm userId={user.id} tenantId={tenantId} isAdmin={isAdmin || permissions.can_add_stock} initialProductId={selectedStockProductId} />
+                    </section>
+                  )}
+                </div>
+              )
             )}
             {tab === 'analytics' && permissions.can_view_analytics && tenantId && (
               <Analytics userId={user.id} tenantId={tenantId} isAdmin={isAdmin} />
@@ -364,16 +457,20 @@ export default function Dashboard() {
                 isAdmin={isAdmin}
                 onOpenSettings={isAdmin ? () => setShowDC(true) : undefined}
                 onSwitchTab={switchTab}
+                onViewProductDetails={item => { setSelectedProduct(item); setInventoryScreen('product'); setTab('stock'); syncTabToUrl('stock') }}
               />
+            )}
+
+              </>
             )}
           </Suspense>
         </div>
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-20 shadow-[0_-4px_16px_-4px_hsl(var(--foreground)/0.06)]">
-        <div className="max-w-2xl mx-auto px-2 py-1.5 flex justify-around lg:hidden">
-          {visibleTabs.map(t => (
+      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-20 shadow-[0_-4px_16px_-4px_hsl(var(--foreground)/0.06)] min-[900px]:hidden">
+        <div className="max-w-2xl mx-auto px-2 py-1.5 flex justify-around min-[900px]:hidden">
+          {visibleTabs.filter(t => ['home','history','stock','credit'].includes(t.id)).map(t => (
             <button
               key={t.id}
               onClick={() => switchTab(t.id)}
@@ -382,7 +479,7 @@ export default function Dashboard() {
               }`}
             >
               <t.icon size={20} strokeWidth={tab === t.id ? 2.25 : 2} />
-              <span className="text-xs font-medium truncate">{t.label}</span>
+              <span className="text-xs font-medium truncate">{t.id === 'home' ? 'Home' : t.id === 'history' ? 'Sales' : t.id === 'stock' ? 'Stock' : 'Customers'}</span>
               {tab === t.id && <div className="w-1 h-1 rounded-full bg-primary" />}
             </button>
           ))}
@@ -397,13 +494,6 @@ export default function Dashboard() {
           onClose={() => setShowDC(false)}
           onCompanyUpdated={handleCompanyUpdated}
           onProductsChanged={() => {}}
-        />
-      )}
-
-      {showAccount && (
-        <AccountModal
-          email={user.email || ''}
-          onClose={() => setShowAccount(false)}
         />
       )}
 
@@ -435,11 +525,22 @@ export default function Dashboard() {
             {isDark ? 'Switch to light mode' : 'Switch to dark mode'}
           </Button>
 
+          {permissions.can_view_analytics && (
+            <Button
+              variant="ghost"
+              className="justify-start gap-3 h-11 text-foreground"
+              onClick={() => { setShowMenu(false); switchTab('analytics') }}
+            >
+              <BarChart3 size={16} />
+              Reports
+            </Button>
+          )}
+
           {isAdmin && (
             <Button
               variant="ghost"
               className="justify-start gap-3 h-11 text-foreground"
-              onClick={() => { setShowMenu(false); setShowDC(true) }}
+              onClick={() => { setShowMenu(false); switchTab('settings') }}
             >
               <Settings size={16} />
               Settings
