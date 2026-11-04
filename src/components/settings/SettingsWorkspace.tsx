@@ -2,23 +2,25 @@ import { useEffect, useState } from 'react'
 import { Building2, Bell, MessageSquareText, Languages, Moon, Sun, ChevronRight, Store, Ruler, AlertTriangle, KeyRound, ArrowLeft, Save, Package } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { BrandSettingsForm } from '@/features/tenant/components/BrandSettingsForm'
 import { Textarea } from '@/components/ui/textarea'
 import type { CompanySettings } from '@/lib/types'
 
 interface Props {
   company: CompanySettings
+  tenantId: string
+  onCompanyUpdated: (company: CompanySettings) => void
   isDark: boolean
   fullName: string
   email: string
   phone: string
   role: string
   onToggleTheme: () => void
-  onOpenBusinessSettings: () => void
   onOpenAccount: () => void
   onOpenInventory: () => void
 }
 
-type Section = 'overview' | 'units' | 'alerts' | 'notifications' | 'reminder' | 'language'
+type Section = 'overview' | 'shop' | 'units' | 'alerts' | 'notifications' | 'reminder' | 'language'
 type Preferences = {
   currency: string
   unit: string
@@ -51,7 +53,7 @@ const preferenceItems = [
   { label: 'Language', description: 'Application language', icon: Languages, section: 'language' },
 ] as const
 
-export default function SettingsWorkspace({ company, isDark, fullName, email, phone, role, onToggleTheme, onOpenBusinessSettings, onOpenAccount, onOpenInventory }: Props) {
+export default function SettingsWorkspace({ company, tenantId, onCompanyUpdated, isDark, fullName, email, phone, role, onToggleTheme, onOpenAccount, onOpenInventory }: Props) {
   const [section, setSection] = useState<Section>('overview')
   const [preferences, setPreferences] = useState<Preferences>(DEFAULTS)
   const [saved, setSaved] = useState(false)
@@ -83,6 +85,7 @@ export default function SettingsWorkspace({ company, isDark, fullName, email, ph
   )
 
   const pageTitle: Record<Exclude<Section, 'overview'>, string> = {
+    shop: 'Shop details',
     units: 'Units and currency',
     alerts: 'Low stock alerts',
     notifications: 'Notifications',
@@ -97,6 +100,7 @@ export default function SettingsWorkspace({ company, isDark, fullName, email, ph
           <Button variant="outline" size="icon" onClick={() => setSection('overview')} aria-label="Back to settings"><ArrowLeft size={17}/></Button>
           <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#16A34A]">Settings</p><h1 className="text-2xl font-bold text-[#0F172A]">{pageTitle[section]}</h1></div>
         </header>
+        {section === 'shop' && <BrandSettingsForm tenantId={tenantId} company={company} onCompanyUpdated={onCompanyUpdated} />}
         {section === 'units' && (
           <section className="space-y-4 rounded-xl border border-[#CBD5E1] bg-white p-4 sm:p-6">
             <div><h2 className="font-semibold text-[#0F172A]">Display preferences</h2><p className="mt-1 text-sm text-[#64748B]">Choose the defaults used when displaying quantities and money in this browser.</p></div>
@@ -161,7 +165,7 @@ export default function SettingsWorkspace({ company, isDark, fullName, email, ph
         <section className="overflow-hidden rounded-xl border border-[#CBD5E1] bg-white">
           <div className="flex items-center gap-3 border-b border-[#E2E8F0] p-4 sm:p-5"><span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#F0FDF4] text-[#166534]"><Building2 size={19}/></span><div className="min-w-0"><h2 className="text-sm font-bold text-[#0F172A]">Shop</h2><p className="truncate text-xs text-[#64748B]">{company.company_name}</p></div></div>
           <div className="px-4 pt-4 text-[10px] font-bold uppercase tracking-[0.16em] text-[#64748B]">Shop settings</div>
-          {shopItems.map(item => <SettingRow key={item.label} {...item} onClick={item.section === 'shop' ? onOpenBusinessSettings : () => setSection(item.section)}/>)}
+          {shopItems.map(item => <SettingRow key={item.label} {...item} onClick={() => setSection(item.section)}/>)}
           <div className="border-t border-[#E2E8F0] px-4 pt-4 text-[10px] font-bold uppercase tracking-[0.16em] text-[#64748B]">Preferences</div>
           {preferenceItems.map(item => <SettingRow key={item.label} {...item} onClick={() => setSection(item.section)}/>)}
           <div className="flex items-center gap-3 border-t border-[#E2E8F0] p-4 sm:px-5"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F1F5F9] text-[#475569]">{isDark ? <Sun size={17}/> : <Moon size={17}/>}</span><span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-[#0F172A]">Appearance</span><span className="block text-xs text-[#64748B]">{isDark ? 'Dark theme enabled' : 'Light theme enabled'}</span></span><Button variant="outline" size="sm" onClick={onToggleTheme}>{isDark ? 'Light mode' : 'Dark mode'}</Button></div>
