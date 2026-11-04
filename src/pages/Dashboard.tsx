@@ -333,6 +333,16 @@ export default function Dashboard() {
               )}
             </div>
 
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => switchTab('record')}
+              className="h-8 gap-1.5 px-2.5 text-xs min-[900px]:hidden"
+              aria-label="Record a new sale"
+            >
+              <NotebookPen size={15} /> Sale
+            </Button>
+
             {/* ☰ Hamburger — opens the menu pane with theme, settings, account, sign out */}
             <Button
               variant="ghost"
