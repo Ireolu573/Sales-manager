@@ -29,6 +29,7 @@ const Analytics = lazy(() => import('@/components/Analytics'))
 const InventoryOverview = lazy(() => import('@/components/InventoryOverview'))
 const AddProductScreen = lazy(() => import('@/components/inventory/AddProductScreen'))
 const StockHistoryScreen = lazy(() => import('@/components/inventory/StockHistoryScreen'))
+const ProductDetailsScreen = lazy(() => import('@/components/inventory/ProductDetailsScreen'))
 
 const NAV_TABS = [
   { id: 'home' as Tab, label: 'Dashboard', icon: BarChart3, perm: 'can_view_stock' },
@@ -95,7 +96,8 @@ export default function Dashboard() {
   const [animKey, setAnimKey] = useState(0)
   const [showDC, setShowDC] = useState(false)
   const [selectedStockProductId, setSelectedStockProductId] = useState<string | null>(null)
-  const [inventoryScreen, setInventoryScreen] = useState<'overview' | 'add' | 'history'>('overview')
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null)
+  const [inventoryScreen, setInventoryScreen] = useState<'overview' | 'add' | 'history' | 'product'>('overview')
   const [showAccount, setShowAccount] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [online, setOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true)
@@ -196,6 +198,7 @@ export default function Dashboard() {
     // This lets users leave Add Product / Stock History without using device Back.
     setInventoryScreen('overview')
     setSelectedStockProductId(null)
+    setSelectedProduct(null)
     setShowAccount(false)
     setShowDC(false)
     setShowMenu(false)
@@ -403,7 +406,14 @@ export default function Dashboard() {
               <SalesTable userId={user.id} tenantId={tenantId} isAdmin={isAdmin} />
             )}
             {tab === 'stock' && (permissions.can_view_stock || permissions.can_add_stock) && tenantId && (
-              inventoryScreen === 'add' ? (
+              inventoryScreen === 'product' && selectedProduct ? (
+                <ProductDetailsScreen
+                  tenantId={tenantId}
+                  item={selectedProduct}
+                  onBack={() => { setSelectedProduct(null); setInventoryScreen('overview') }}
+                  onRestock={productId => { setSelectedStockProductId(productId); setSelectedProduct(null); setInventoryScreen('overview') }}
+                />
+              ) : inventoryScreen === 'add' ? (
                 <AddProductScreen tenantId={tenantId} userId={user.id} onBack={() => setInventoryScreen('overview')} onSaved={() => {
                   queryClient.invalidateQueries({ queryKey: ['inventorySummary', tenantId] })
                 }} />
@@ -418,6 +428,7 @@ export default function Dashboard() {
                     onSwitchTab={switchTab}
                     onAddProduct={isAdmin ? () => setInventoryScreen('add') : undefined}
                     onViewHistory={() => setInventoryScreen('history')}
+                    onViewProductDetails={item => { setSelectedProduct(item); setInventoryScreen('product') }}
                     onRestockProduct={productId => { setSelectedStockProductId(productId); setInventoryScreen('overview') }}
                   />
                   {(isAdmin || permissions.can_add_stock) && (
@@ -444,6 +455,7 @@ export default function Dashboard() {
                 isAdmin={isAdmin}
                 onOpenSettings={isAdmin ? () => setShowDC(true) : undefined}
                 onSwitchTab={switchTab}
+                onViewProductDetails={item => { setSelectedProduct(item); setInventoryScreen('product'); setTab('stock'); syncTabToUrl('stock') }}
               />
             )}
 
