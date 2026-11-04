@@ -260,7 +260,7 @@ export default function Dashboard() {
         </div>
         <div className="px-4 pt-7 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Workspace</div>
         <nav className="flex-1 space-y-1 px-3">
-          {visibleTabs.filter(t => ['home','history','stock','credit'].includes(t.id)).map(t => (
+          {visibleTabs.filter(t => ['home','record','history','stock','credit','analytics'].includes(t.id)).map(t => (
             <button
               key={t.id}
               onClick={() => switchTab(t.id)}
@@ -377,9 +377,9 @@ export default function Dashboard() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-20 shadow-[0_-4px_16px_-4px_hsl(var(--foreground)/0.06)]">
+      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-20 shadow-[0_-4px_16px_-4px_hsl(var(--foreground)/0.06)] lg:hidden">
         <div className="max-w-2xl mx-auto px-2 py-1.5 flex justify-around lg:hidden">
-          {visibleTabs.map(t => (
+          {visibleTabs.filter(t => ['home','record','stock','credit'].includes(t.id)).map(t => (
             <button
               key={t.id}
               onClick={() => switchTab(t.id)}
@@ -388,7 +388,7 @@ export default function Dashboard() {
               }`}
             >
               <t.icon size={20} strokeWidth={tab === t.id ? 2.25 : 2} />
-              <span className="text-xs font-medium truncate">{t.label}</span>
+              <span className="text-xs font-medium truncate">{t.id === 'home' ? 'Home' : t.id === 'record' ? 'Sales' : t.id === 'stock' ? 'Stock' : 'Customers'}</span>
               {tab === t.id && <div className="w-1 h-1 rounded-full bg-primary" />}
             </button>
           ))}
