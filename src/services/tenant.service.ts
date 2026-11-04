@@ -75,7 +75,7 @@ export class TenantService {
           unit_label: opening.unit_label,
           stock_date: opening.stock_date,
           base_quantity: opening.quantity * opening.base_unit_quantity,
-          base_cost: opening.cost_price / opening.base_unit_quantity,
+          base_cost: opening.quantity * opening.cost_price,
           notes: 'Opening stock',
         })
         if (stockErr) throw new Error(stockErr.message)
