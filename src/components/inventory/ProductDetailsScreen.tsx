@@ -31,7 +31,7 @@ interface Props {
 }
 
 export default function ProductDetailsScreen({ tenantId, item, onBack, onRestock }: Props) {
-  const [product, setProduct] = useState<{ category: string; low_stock_threshold: number; unit_label: string | null; unit_price: number | null } | null>(null)
+  const [product, setProduct] = useState<{ category: string; low_stock_threshold: number; unit_label: string | null; unit_price: number | null; base_unit_quantity: number } | null>(null)
   const [movements, setMovements] = useState<Movement[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -57,6 +57,7 @@ export default function ProductDetailsScreen({ tenantId, item, onBack, onRestock
           low_stock_threshold: productResult.data.low_stock_threshold,
           unit_label: primaryUnit?.unit_label || null,
           unit_price: primaryUnit?.unit_price ?? null,
+          base_unit_quantity: Number(primaryUnit?.base_unit_quantity || 1),
         })
       }
       const received: Movement[] = (stockResult.data || []).map(row => ({
@@ -77,6 +78,7 @@ export default function ProductDetailsScreen({ tenantId, item, onBack, onRestock
   }, [tenantId, item.productId])
 
   const statusLabel = item.status === 'out_of_stock' ? 'Out of stock' : item.status === 'low_stock' ? 'Low stock' : 'In stock'
+  const toSellingUnit = (quantity: number) => quantity / Math.max(1, product?.base_unit_quantity || 1)
   const statusVariant = item.status === 'out_of_stock' ? 'destructive' : 'secondary'
 
   return (
@@ -99,10 +101,10 @@ export default function ProductDetailsScreen({ tenantId, item, onBack, onRestock
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Available stock</p><p className="mt-1 text-2xl font-bold tabular-nums">{Number(item.availableStock || 0).toLocaleString()} <span className="text-sm font-medium text-muted-foreground">{product?.unit_label || 'units'}</span></p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Total received</p><p className="mt-1 text-2xl font-bold tabular-nums">{Number(item.totalStock || 0).toLocaleString()}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Total sold</p><p className="mt-1 text-2xl font-bold tabular-nums">{Number(item.totalSold || 0).toLocaleString()}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Low-stock alert</p><p className="mt-1 text-2xl font-bold tabular-nums">{product?.low_stock_threshold ?? '—'}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Available stock</p><p className="mt-1 text-2xl font-bold tabular-nums">{toSellingUnit(Number(item.availableStock || 0)).toLocaleString(undefined, { maximumFractionDigits: 2 })} <span className="text-sm font-medium text-muted-foreground">{product?.unit_label || 'base units'}</span></p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Total received</p><p className="mt-1 text-2xl font-bold tabular-nums">{toSellingUnit(Number(item.totalStock || 0)).toLocaleString(undefined, { maximumFractionDigits: 2 })} <span className="text-sm font-medium text-muted-foreground">{product?.unit_label || 'base units'}</span></p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Total sold</p><p className="mt-1 text-2xl font-bold tabular-nums">{toSellingUnit(Number(item.totalSold || 0)).toLocaleString(undefined, { maximumFractionDigits: 2 })} <span className="text-sm font-medium text-muted-foreground">{product?.unit_label || 'base units'}</span></p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Low-stock alert</p><p className="mt-1 text-2xl font-bold tabular-nums">{product?.low_stock_threshold ?? '—'}</p><p className="text-xs text-muted-foreground">Base stock units</p></CardContent></Card>
       </div>
 
       <Card><CardContent className="grid gap-4 p-4 sm:grid-cols-2">
