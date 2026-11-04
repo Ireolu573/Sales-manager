@@ -59,9 +59,9 @@ WHERE s.customer_id IS NULL
 CREATE OR REPLACE FUNCTION public.link_sale_to_customer()
 RETURNS trigger
 LANGUAGE plpgsql
-SECURITY DEFINER
+SECURITY INVOKER
 SET search_path = public
-AS $
+AS $$
 DECLARE
   v_allow_credit boolean;
   v_credit_limit numeric;
@@ -122,8 +122,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$;
-
+$$;
 DROP TRIGGER IF EXISTS sales_link_customer ON public.sales;
 CREATE TRIGGER sales_link_customer
   BEFORE INSERT OR UPDATE OF customer_id, customer_name, tenant_id, payment_method, quantity, unit_price
