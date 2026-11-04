@@ -33,7 +33,13 @@ export default function CreditManager({ isAdmin, tenantId }: Props) {
   const [filter, setFilter] = useState<'all' | 'owing'>('owing')
   const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null)
   const [phoneNumbers, setPhoneNumbers] = useState<Record<string, string>>({})
-  const [reminderMessage, setReminderMessage] = useState('Hello {name}, this is a friendly reminder about your outstanding balance of {balance} at our shop. Please let us know when you can make payment. Thank you.')
+  const [reminderMessage, setReminderMessage] = useState(() => {
+    const fallback = 'Hello {name}, this is a friendly reminder about your outstanding balance of {balance} at our shop. Please let us know when you can make payment. Thank you.'
+    try {
+      const saved = window.localStorage.getItem('agriledger-settings-preferences')
+      return saved ? (JSON.parse(saved)?.reminderMessage || fallback) : fallback
+    } catch { return fallback }
+  })
 
   const fetchCredits = async () => {
     setLoading(true)
