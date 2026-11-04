@@ -107,7 +107,7 @@ export default function CreditManager({ isAdmin, userId, tenantId }: Props) {
   }, [credits, payments, savedCustomers])
 
   const filteredCustomers = customers.filter(customer => {
-    const matchesSearch = customer.name.toLowerCase().includes(search.trim().toLowerCase())
+    const matchesSearch = [customer.name, customer.phone, customer.address].join(' ').toLowerCase().includes(search.trim().toLowerCase())
     return matchesSearch && (filter === 'all' || customer.balance > 0)
   })
   const totalOutstanding = customers.reduce((sum, customer) => sum + customer.balance, 0)
