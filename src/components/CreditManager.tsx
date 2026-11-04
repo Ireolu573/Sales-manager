@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '@/integrations/supabase/client'
-import { getCreditSalesForTenant } from '@/lib/tenant-queries'
 import type { Sale } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -38,7 +37,7 @@ export default function CreditManager({ isAdmin, tenantId }: Props) {
     setLoading(true)
     try {
       const [{ data, error }, { data: paymentRows, error: paymentError }] = await Promise.all([
-        getCreditSalesForTenant(tenantId),
+        supabase.from('sales').select('*').eq('tenant_id', tenantId).eq('payment_method', 'credit').order('sale_date', { ascending: false }),
         supabase.from('credit_payments').select('id, sale_id, amount, received_at, payment_method, note').eq('tenant_id', tenantId).order('received_at', { ascending: false }),
       ])
       if (error) throw error
