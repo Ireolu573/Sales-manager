@@ -1,3 +1,4 @@
+import AgriLedgerLogo from '@/components/brand/AgriLedgerLogo'
 import { useState } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { Card, CardContent } from '@/components/ui/card'
@@ -38,9 +39,9 @@ export default function OnboardingWizard({ userId, email, tenantId, company, onC
   const [step, setStep] = useState(tenantId ? (company.onboarding_step || 2) : 1)
   const [localTenantId, setLocalTenantId] = useState<string | null>(tenantId)
   const [companyName, setCompanyName] = useState(company.company_name || '')
-  const [appName, setAppName] = useState(company.app_name || 'Sales Manager')
+  const [appName, setAppName] = useState('AgriLedger')
   const [brandColor, setBrandColor] = useState(company.brand_color || '#16A34A')
-  const [logoEmoji, setLogoEmoji] = useState(company.logo_emoji || '🏢')
+  const [logoEmoji, setLogoEmoji] = useState(company.logo_emoji || '🌱')
 
   const [mode, setMode] = useState<'create' | 'join'>('create')
   const [joinCode, setJoinCode] = useState('')
@@ -132,7 +133,7 @@ export default function OnboardingWizard({ userId, email, tenantId, company, onC
         <div className="w-full max-w-md">
           <div className="text-center mb-8 slide-up">
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <Building2 className="w-8 h-8 text-primary" />
+              <AgriLedgerLogo size={44} />
             </div>
             <h1 className="text-2xl font-bold text-foreground">Welcome!</h1>
             <p className="text-muted-foreground text-sm mt-1">Set up your business to get started</p>
@@ -167,7 +168,7 @@ export default function OnboardingWizard({ userId, email, tenantId, company, onC
                   </div>
                   <div className="space-y-2">
                     <Label>App Name</Label>
-                    <Input value={appName} onChange={e => setAppName(e.target.value)} placeholder="Sales Manager" />
+                    <Input value={appName} onChange={e => setAppName(e.target.value)} placeholder="AgriLedger" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
