@@ -107,7 +107,7 @@ export default function CreditManager({ isAdmin, tenantId }: Props) {
 
   const sendReminder = (customer: CustomerCredit) => {
     const rawPhone = (phoneNumbers[customer.name] || '').trim()
-    const phone = rawPhone.replace(/[^\\d+]/g, '').replace(/^\\+/, '')
+    const phone = rawPhone.replace(/[^\d+]/g, '').replace(/^\+/, '')
     if (phone.length < 10) {
       toast({ title: 'Enter the customer’s WhatsApp number', description: 'Include the country code, for example 2348012345678.', variant: 'destructive' })
       return
@@ -150,7 +150,7 @@ export default function CreditManager({ isAdmin, tenantId }: Props) {
               <Card key={customer.name} className="overflow-hidden border-border/70">
                 <CardContent className="p-0">
                   <button type="button" onClick={() => setExpandedCustomer(expanded ? null : customer.name)} className="flex w-full items-center gap-3 p-4 text-left hover:bg-muted/40 sm:p-5">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">{customer.name.split(/\\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase()}</span>
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">{customer.name.split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase()}</span>
                     <span className="min-w-0 flex-1"><span className="block truncate font-semibold text-foreground">{customer.name}</span><span className="mt-0.5 block text-xs text-muted-foreground">{customer.sales.length} credit {customer.sales.length === 1 ? 'sale' : 'sales'} · Last sale {dateLabel(customer.lastActivity)}</span></span>
                     <span className="text-right"><span className="block text-sm font-bold text-warning">{money(customer.balance)}</span><span className="block text-[11px] text-muted-foreground">{customer.balance > 0 ? 'Outstanding' : 'Settled'}</span></span>
                     {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground"/> : <ChevronDown className="h-4 w-4 text-muted-foreground"/>}
