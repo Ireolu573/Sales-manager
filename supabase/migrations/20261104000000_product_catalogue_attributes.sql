@@ -46,13 +46,13 @@ BEGIN
       COALESCE((
         SELECT SUM(COALESCE(sr.base_quantity, sr.quantity, 0))
         FROM public.stock_records sr
-        WHERE sr.tenant_id = p_tenant_id
+        WHERE (sr.tenant_id = p_tenant_id OR sr.tenant_id IS NULL)
           AND (sr.product_id = p.id OR LOWER(TRIM(sr.item_name)) = LOWER(TRIM(p.name)))
       ), 0) AS tot_stock,
       COALESCE((
         SELECT SUM(COALESCE(s.base_quantity, s.quantity, 0))
         FROM public.sales s
-        WHERE s.tenant_id = p_tenant_id
+        WHERE (s.tenant_id = p_tenant_id OR s.tenant_id IS NULL)
           AND (s.product_id = p.id OR LOWER(TRIM(s.item_name)) = LOWER(TRIM(p.name)))
       ), 0) AS tot_sold
   ) inv
