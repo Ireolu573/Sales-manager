@@ -29,11 +29,12 @@ interface Props {
   isAdmin?: boolean
   onOpenSettings?: () => void
   onSwitchTab?: (tab: 'stock' | 'record' | 'history' | 'analytics' | 'credit' | 'leaderboard') => void
+  onRestockProduct?: (productId: string) => void
 }
 
 type StatusFilter = 'all' | 'out_of_stock' | 'low_stock' | 'in_stock'
 
-export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTab }: Props) {
+export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTab, onRestockProduct }: Props) {
   const { inventorySummary, isLoading } = useStock(tenantId)
   const [unitsMap, setUnitsMap] = useState<Record<string, string>>({})
   const [activeFilter, setActiveFilter] = useState<StatusFilter>('all')
@@ -469,7 +470,7 @@ export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTa
               </div>
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <Button variant="outline" onClick={() => setSelectedItem(null)}>Close</Button>
-                <Button onClick={() => { setSelectedItem(null); handleGoToStock() }}><RotateCcw className="mr-2 h-4 w-4" /> Record restock</Button>
+                <Button onClick={() => { const productId = selectedItem.productId; setSelectedItem(null); if (productId && onRestockProduct) onRestockProduct(productId); else handleGoToStock() }}><RotateCcw className="mr-2 h-4 w-4" /> Record restock</Button>
               </div>
             </>
           )}
