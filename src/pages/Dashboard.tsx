@@ -394,6 +394,7 @@ export default function Dashboard() {
                 onToggleTheme={toggleTheme}
                 onOpenBusinessSettings={() => setShowDC(true)}
                 onOpenAccount={() => setShowAccount(true)}
+                onOpenInventory={() => { setSelectedProduct(null); setInventoryScreen('overview'); switchTab('stock') }}
               />
             )}
             {tab === 'home' && tenantId && (
