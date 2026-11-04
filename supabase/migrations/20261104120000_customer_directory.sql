@@ -88,7 +88,15 @@ BEGIN
   END IF;
 
   -- Credit rules are enforced in the database, not only in the browser.
-  IF NEW.payment_method = 'credit' THEN
+  IF NEW.payment_method = 'credit'
+     AND (TG_OP = 'INSERT' OR (
+       TG_OP = 'UPDATE'
+       AND (
+         NEW.payment_method IS DISTINCT FROM OLD.payment_method
+         OR NEW.quantity IS DISTINCT FROM OLD.quantity
+         OR NEW.unit_price IS DISTINCT FROM OLD.unit_price
+       )
+     )) THEN
     IF NEW.customer_id IS NULL THEN
       RAISE EXCEPTION 'Add this customer to the customer directory before recording a credit sale';
     END IF;
