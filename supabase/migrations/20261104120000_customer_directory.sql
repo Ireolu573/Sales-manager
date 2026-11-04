@@ -89,3 +89,20 @@ CREATE TRIGGER sales_link_customer
 
 COMMENT ON TABLE public.customers IS 'Saved customer contact and credit settings, isolated by tenant.';
 COMMENT ON COLUMN public.customers.credit_limit IS 'Optional maximum outstanding credit in the tenant currency; NULL means no configured limit.';
+
+
+CREATE OR REPLACE FUNCTION public.set_customer_updated_at()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  NEW.updated_at := now();
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS customers_set_updated_at ON public.customers;
+CREATE TRIGGER customers_set_updated_at
+  BEFORE UPDATE ON public.customers
+  FOR EACH ROW EXECUTE FUNCTION public.set_customer_updated_at();
