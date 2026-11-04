@@ -346,7 +346,10 @@ export default function Dashboard() {
       <main className="flex-1 w-full max-w-none mx-auto px-4 py-5 pb-24 overflow-y-auto lg:ml-64 lg:px-8 lg:py-8 lg:pb-10">
         <div key={animKey} className="slide-up">
           <Suspense fallback={<SkeletonPage />}>
-            {tab === 'settings' && isAdmin && company && (\n              <SettingsWorkspace company={company} isDark={isDark} onToggleTheme={toggleTheme} onOpenBusinessSettings={() => setShowDC(true)} onOpenAccount={() => setShowAccount(true)} />\n            )}\n            {tab === 'home' && tenantId && (
+            {tab === 'settings' && isAdmin && company && (
+              <SettingsWorkspace company={company} isDark={isDark} onToggleTheme={toggleTheme} onOpenBusinessSettings={() => setShowDC(true)} onOpenAccount={() => setShowAccount(true)} />
+            )}
+            {tab === 'home' && tenantId && (
               <DashboardOverview tenantId={tenantId} userId={user.id} isAdmin={isAdmin} onSwitchTab={switchTab} />
             )}
             {tab === 'record' && permissions.can_record_sales && tenantId && (
