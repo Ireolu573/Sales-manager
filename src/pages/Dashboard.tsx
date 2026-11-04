@@ -19,6 +19,7 @@ import KeyboardShortcutsHelp from '@/components/KeyboardShortcutsHelp'
 import { Keyboard } from 'lucide-react'
 import { SkeletonPage } from '@/components/ui/loading-skeletons'
 
+const SettingsWorkspace = lazy(() => import('@/components/settings/SettingsWorkspace'))
 const DashboardOverview = lazy(() => import('@/components/dashboard/DashboardOverview'))
 const SaleForm = lazy(() => import('@/components/SaleForm'))
 const SalesTable = lazy(() => import('@/components/SalesTable'))
@@ -35,6 +36,7 @@ const NAV_TABS = [
   { id: 'analytics' as Tab, label: 'Analytics', icon: BarChart3, perm: 'can_view_analytics' },
   { id: 'credit' as Tab, label: 'Credit', icon: CreditCard, perm: 'can_manage_credit' },
   { id: 'leaderboard' as Tab, label: 'Inventory', icon: Trophy, perm: 'can_view_analytics' },
+  { id: 'settings' as Tab, label: 'Settings', icon: Settings, perm: 'can_view_stock' },
 ]
 
 const VALID_TABS: Tab[] = NAV_TABS.map(tab => tab.id)
@@ -260,7 +262,7 @@ export default function Dashboard() {
         </div>
         <div className="px-4 pt-7 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Workspace</div>
         <nav className="flex-1 space-y-1 px-3">
-          {visibleTabs.filter(t => ['home','record','history','stock','credit','analytics'].includes(t.id)).map(t => (
+          {visibleTabs.filter(t => ['home','record','history','stock','credit','analytics','settings'].includes(t.id)).map(t => (
             <button
               key={t.id}
               onClick={() => switchTab(t.id)}
@@ -346,7 +348,7 @@ export default function Dashboard() {
       <main className="flex-1 w-full max-w-none mx-auto px-4 py-5 pb-24 overflow-y-auto lg:ml-64 lg:px-8 lg:py-8 lg:pb-10">
         <div key={animKey} className="slide-up">
           <Suspense fallback={<SkeletonPage />}>
-            {tab === 'home' && tenantId && (
+            {tab === 'settings' && isAdmin && company && (\n              <SettingsWorkspace company={company} isDark={isDark} onToggleTheme={toggleTheme} onOpenBusinessSettings={() => setShowDC(true)} onOpenAccount={() => setShowAccount(true)} />\n            )}\n            {tab === 'home' && tenantId && (
               <DashboardOverview tenantId={tenantId} userId={user.id} isAdmin={isAdmin} onSwitchTab={switchTab} />
             )}
             {tab === 'record' && permissions.can_record_sales && tenantId && (
@@ -445,7 +447,7 @@ export default function Dashboard() {
             <Button
               variant="ghost"
               className="justify-start gap-3 h-11 text-foreground"
-              onClick={() => { setShowMenu(false); setShowDC(true) }}
+              onClick={() => { setShowMenu(false); switchTab('settings') }}
             >
               <Settings size={16} />
               Settings
