@@ -18,8 +18,11 @@ import {
   Settings2,
   Plus,
   Search,
+  CalendarClock,
+  Eye,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 
 interface Props {
   tenantId: string
@@ -35,6 +38,9 @@ export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTa
   const [unitsMap, setUnitsMap] = useState<Record<string, string>>({})
   const [activeFilter, setActiveFilter] = useState<StatusFilter>('all')
   const [search, setSearch] = useState('')
+  const [selectedItem, setSelectedItem] = useState<any | null>(null)
+  const [movements, setMovements] = useState<Array<{ id: string; kind: 'Restocked' | 'Sold'; quantity: number; unit: string; date: string; detail: string }>>([])
+  const [movementLoading, setMovementLoading] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const navigate = useNavigate()
 
@@ -109,6 +115,23 @@ export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTa
   }, [entries, activeFilter, search])
 
   const visibleItems = showAll ? filteredAndSorted : filteredAndSorted.slice(0, 8)
+
+  useEffect(() => {
+    if (!selectedItem?.productId) { setMovements([]); return }
+    let active = true
+    setMovementLoading(true)
+    Promise.all([
+      supabase.from('stock_records').select('id, quantity, unit_label, stock_date, notes').eq('tenant_id', tenantId).eq('product_id', selectedItem.productId).order('stock_date', { ascending: false }).limit(5),
+      supabase.from('sales').select('id, quantity, unit_label, sale_date, customer_name').eq('tenant_id', tenantId).eq('product_id', selectedItem.productId).order('sale_date', { ascending: false }).limit(5),
+    ]).then(([stockResult, salesResult]) => {
+      if (!active) return
+      const stock = (stockResult.data || []).map(row => ({ id: row.id, kind: 'Restocked' as const, quantity: Number(row.quantity || 0), unit: row.unit_label || 'units', date: row.stock_date, detail: row.notes || 'Stock received' }))
+      const sales = (salesResult.data || []).map(row => ({ id: row.id, kind: 'Sold' as const, quantity: Number(row.quantity || 0), unit: row.unit_label || 'units', date: row.sale_date, detail: row.customer_name || 'Sale recorded' }))
+      setMovements([...stock, ...sales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 6))
+      setMovementLoading(false)
+    }).catch(() => { if (active) setMovementLoading(false) })
+    return () => { active = false }
+  }, [selectedItem, tenantId])
 
   return (
     <div className="space-y-4">
@@ -373,6 +396,13 @@ export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTa
                     </div>
                   </div>
 
+                  {/* Product details action */}
+                  <div className="flex justify-end pt-0.5">
+                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setSelectedItem(row)}>
+                      <Eye className="mr-1 h-3 w-3" /> Details
+                    </Button>
+                  </div>
+
                   {/* Restock Button: shown on out_of_stock and low_stock products */}
                   {(isOut || isLow) && (
                     <div className="pt-0.5 flex justify-end">
@@ -415,6 +445,36 @@ export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTa
           )}
         </div>
       )}
+      <Dialog open={Boolean(selectedItem)} onOpenChange={open => { if (!open) setSelectedItem(null) }}>
+        <DialogContent className="max-h-[88vh] w-[calc(100%-1rem)] overflow-y-auto rounded-2xl sm:max-w-lg">
+          {selectedItem && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold">{selectedItem.itemName}</DialogTitle>
+                <DialogDescription>Current stock position and recent inventory activity</DialogDescription>
+              </DialogHeader>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-xl bg-muted/60 p-3"><p className="text-xs text-muted-foreground">Available</p><p className="mt-1 text-lg font-bold">{Number(selectedItem.availableStock || 0).toLocaleString()}</p></div>
+                <div className="rounded-xl bg-muted/60 p-3"><p className="text-xs text-muted-foreground">Received</p><p className="mt-1 text-lg font-bold">{Number(selectedItem.totalStock || 0).toLocaleString()}</p></div>
+                <div className="rounded-xl bg-muted/60 p-3"><p className="text-xs text-muted-foreground">Sold</p><p className="mt-1 text-lg font-bold">{Number(selectedItem.totalSold || 0).toLocaleString()}</p></div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between"><h3 className="font-semibold">Recent movement</h3><CalendarClock className="h-4 w-4 text-muted-foreground" /></div>
+                {movementLoading ? <p className="py-5 text-center text-sm text-muted-foreground">Loading activity…</p> : movements.length ? movements.map(movement => (
+                  <div key={movement.id} className="flex items-center justify-between gap-3 border-b border-border pb-3 last:border-0">
+                    <div className="min-w-0"><p className="text-sm font-medium">{movement.kind} · {movement.detail}</p><p className="text-xs text-muted-foreground">{new Date(movement.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p></div>
+                    <p className="shrink-0 text-sm font-semibold">{movement.kind === 'Sold' ? '−' : '+'}{movement.quantity} {movement.unit}</p>
+                  </div>
+                )) : <p className="py-4 text-sm text-muted-foreground">No recent movement found for this product.</p>}
+              </div>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button variant="outline" onClick={() => setSelectedItem(null)}>Close</Button>
+                <Button onClick={() => { setSelectedItem(null); handleGoToStock() }}><RotateCcw className="mr-2 h-4 w-4" /> Record restock</Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
