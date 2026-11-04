@@ -261,7 +261,7 @@ export default function Dashboard() {
         </div>
         <div className="px-4 pt-7 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Workspace</div>
         <nav className="flex-1 space-y-1 px-3">
-          {visibleTabs.filter(t => ['home','record','history','stock','credit','analytics','settings'].includes(t.id)).map(t => (
+          {visibleTabs.filter(t => ['home','record','history','stock','credit','analytics','settings'].includes(t.id) && (t.id !== 'settings' || isAdmin)).map(t => (
             <button
               key={t.id}
               onClick={() => switchTab(t.id)}
