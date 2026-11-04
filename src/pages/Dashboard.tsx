@@ -359,7 +359,23 @@ export default function Dashboard() {
               <SalesTable userId={user.id} tenantId={tenantId} isAdmin={isAdmin} />
             )}
             {tab === 'stock' && (permissions.can_view_stock || permissions.can_add_stock) && tenantId && (
-              <StockForm userId={user.id} tenantId={tenantId} isAdmin={isAdmin || permissions.can_add_stock} />
+              <div className="space-y-7">
+                <InventoryOverview
+                  tenantId={tenantId}
+                  isAdmin={isAdmin}
+                  onOpenSettings={isAdmin ? () => setShowDC(true) : undefined}
+                  onSwitchTab={switchTab}
+                />
+                {(isAdmin || permissions.can_add_stock) && (
+                  <section className="border-t border-border pt-6">
+                    <div className="mb-4">
+                      <h2 className="text-base font-bold text-foreground">Record a stock purchase</h2>
+                      <p className="text-sm text-muted-foreground">Add received stock and keep a record of its cost.</p>
+                    </div>
+                    <StockForm userId={user.id} tenantId={tenantId} isAdmin={isAdmin || permissions.can_add_stock} />
+                  </section>
+                )}
+              </div>
             )}
             {tab === 'analytics' && permissions.can_view_analytics && tenantId && (
               <Analytics userId={user.id} tenantId={tenantId} isAdmin={isAdmin} />
