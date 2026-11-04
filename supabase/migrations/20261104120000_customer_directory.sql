@@ -96,7 +96,8 @@ BEGIN
     SELECT c.allow_credit, c.credit_limit
       INTO v_allow_credit, v_credit_limit
     FROM public.customers c
-    WHERE c.id = NEW.customer_id AND c.tenant_id = NEW.tenant_id;
+    WHERE c.id = NEW.customer_id AND c.tenant_id = NEW.tenant_id
+    FOR UPDATE;
 
     IF NOT FOUND OR NOT COALESCE(v_allow_credit, false) THEN
       RAISE EXCEPTION 'Credit purchases are not enabled for this customer';
