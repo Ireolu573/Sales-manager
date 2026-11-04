@@ -371,7 +371,17 @@ export default function Dashboard() {
             ) : (
               <>
             {tab === 'settings' && isAdmin && company && (
-              <SettingsWorkspace company={company} isDark={isDark} onToggleTheme={toggleTheme} onOpenBusinessSettings={() => setShowDC(true)} onOpenAccount={() => setShowAccount(true)} />
+              <SettingsWorkspace
+                company={company}
+                isDark={isDark}
+                fullName={String(user.user_metadata?.full_name || user.user_metadata?.name || '')}
+                email={user.email || ''}
+                phone={String(user.user_metadata?.phone || '')}
+                role={isAdmin ? 'Owner' : 'Staff'}
+                onToggleTheme={toggleTheme}
+                onOpenBusinessSettings={() => setShowDC(true)}
+                onOpenAccount={() => setShowAccount(true)}
+              />
             )}
             {tab === 'home' && tenantId && (
               <DashboardOverview tenantId={tenantId} userId={user.id} isAdmin={isAdmin} onSwitchTab={switchTab} />
