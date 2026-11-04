@@ -30,11 +30,13 @@ interface Props {
   onOpenSettings?: () => void
   onSwitchTab?: (tab: 'stock' | 'record' | 'history' | 'analytics' | 'credit' | 'leaderboard') => void
   onRestockProduct?: (productId: string) => void
+  onAddProduct?: () => void
+  onViewHistory?: () => void
 }
 
 type StatusFilter = 'all' | 'out_of_stock' | 'low_stock' | 'in_stock'
 
-export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTab, onRestockProduct }: Props) {
+export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTab, onRestockProduct, onAddProduct, onViewHistory }: Props) {
   const { inventorySummary, isLoading } = useStock(tenantId)
   const [unitsMap, setUnitsMap] = useState<Record<string, string>>({})
   const [activeFilter, setActiveFilter] = useState<StatusFilter>('all')
@@ -148,14 +150,11 @@ export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTa
           </div>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2 text-xs font-medium h-9 border-border/70 hover:bg-accent hover:border-border transition-all duration-200"
-          onClick={handleGoToStock}
-        >
-          View Inventory <ArrowRight className="w-3.5 h-3.5" />
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {onViewHistory && <Button variant="outline" size="sm" className="h-9 gap-2" onClick={onViewHistory}><CalendarClock className="h-3.5 w-3.5" />Stock history</Button>}
+          {onAddProduct && <Button size="sm" className="h-9 gap-2" onClick={onAddProduct}><Plus className="h-3.5 w-3.5" />Add product</Button>}
+          <Button variant="outline" size="sm" className="h-9 gap-2 text-xs font-medium" onClick={handleGoToStock}>View Inventory <ArrowRight className="w-3.5 h-3.5" /></Button>
+        </div>
       </div>
 
       {/* Interactive Summary KPI Cards */}
