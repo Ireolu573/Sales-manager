@@ -217,7 +217,7 @@ export default function Dashboard() {
     }
   }, [])
 
-  const visibleTabs = NAV_TABS.filter(t => permissions[t.perm as keyof Permissions])
+  const visibleTabs = NAV_TABS.filter(t => t.id === 'home' || permissions[t.perm as keyof Permissions])
   const handleCompanyUpdated = (c: typeof company) => {
     setCompany(c)
     if (c?.brand_color) applyBrandColor(c.brand_color)
