@@ -19,6 +19,7 @@ import KeyboardShortcutsHelp from '@/components/KeyboardShortcutsHelp'
 import { Keyboard } from 'lucide-react'
 import { SkeletonPage } from '@/components/ui/loading-skeletons'
 
+const DashboardOverview = lazy(() => import('@/components/dashboard/DashboardOverview'))
 const SaleForm = lazy(() => import('@/components/SaleForm'))
 const SalesTable = lazy(() => import('@/components/SalesTable'))
 const StockForm = lazy(() => import('@/components/StockForm'))
@@ -27,6 +28,7 @@ const Analytics = lazy(() => import('@/components/Analytics'))
 const InventoryOverview = lazy(() => import('@/components/InventoryOverview'))
 
 const NAV_TABS = [
+  { id: 'home' as Tab, label: 'Dashboard', icon: BarChart3, perm: 'can_view_stock' },
   { id: 'record' as Tab, label: 'Record', icon: NotebookPen, perm: 'can_record_sales' },
   { id: 'history' as Tab, label: 'History', icon: History, perm: 'can_view_history' },
   { id: 'stock' as Tab, label: 'Stock', icon: Package, perm: 'can_view_stock' },
@@ -39,7 +41,7 @@ const VALID_TABS: Tab[] = NAV_TABS.map(tab => tab.id)
 
 const resolveTabFromSearch = (search: string): Tab => {
   const tabParam = new URLSearchParams(search).get('tab')
-  return tabParam && VALID_TABS.includes(tabParam as Tab) ? (tabParam as Tab) : 'record'
+  return tabParam && VALID_TABS.includes(tabParam as Tab) ? (tabParam as Tab) : 'home'
 }
 
 function hexToHsl(hex: string): string | null {
@@ -84,7 +86,7 @@ export default function Dashboard() {
   const navigate = useNavigate()
 
   const [tab, setTab] = useState<Tab>(() => {
-    if (typeof window === 'undefined') return 'record'
+    if (typeof window === 'undefined') return 'home'
     return resolveTabFromSearch(window.location.search)
   })
   const [animKey, setAnimKey] = useState(0)
@@ -258,7 +260,7 @@ export default function Dashboard() {
         </div>
         <div className="px-4 pt-7 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Workspace</div>
         <nav className="flex-1 space-y-1 px-3">
-          {visibleTabs.map(t => (
+          {visibleTabs.filter(t => ['home','history','stock','credit'].includes(t.id)).map(t => (
             <button
               key={t.id}
               onClick={() => switchTab(t.id)}
@@ -270,10 +272,11 @@ export default function Dashboard() {
               aria-current={tab === t.id ? 'page' : undefined}
             >
               <t.icon size={18} strokeWidth={tab === t.id ? 2.3 : 1.9} />
-              <span>{t.label === 'Record' ? 'Record sale' : t.label === 'Leaderboard' ? 'Inventory overview' : t.label}</span>
+              <span>{t.label === 'Record' ? 'New sale' : t.label === 'History' ? 'Sales history' : t.label === 'Leaderboard' ? 'Inventory' : t.label === 'Credit' ? 'Customers' : t.label === 'Analytics' ? 'Reports' : t.label}</span>
               {tab === t.id && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />}
             </button>
           ))}
+          {isAdmin && <button onClick={() => setShowDC(true)} className="mt-2 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"><Settings size={18}/>Settings</button>}
         </nav>
         <div className="border-t border-border p-4">
           <div className="flex items-center gap-2 rounded-xl bg-muted/70 p-3">
@@ -343,6 +346,9 @@ export default function Dashboard() {
       <main className="flex-1 w-full max-w-none mx-auto px-4 py-5 pb-24 overflow-y-auto lg:ml-64 lg:px-8 lg:py-8 lg:pb-10">
         <div key={animKey} className="slide-up">
           <Suspense fallback={<SkeletonPage />}>
+            {tab === 'home' && tenantId && (
+              <DashboardOverview tenantId={tenantId} userId={user.id} isAdmin={isAdmin} onSwitchTab={switchTab} />
+            )}
             {tab === 'record' && permissions.can_record_sales && tenantId && (
               <SaleForm userId={user.id} tenantId={tenantId} />
             )}
