@@ -181,9 +181,11 @@ export type Database = {
       }
       products: {
         Row: {
+          category: string
           created_at: string | null
           id: string
           is_active: boolean | null
+          low_stock_threshold: number
           name: string
           tenant_id: string | null
           unit_label: string | null
@@ -191,9 +193,11 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          category?: string
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          low_stock_threshold?: number
           name: string
           tenant_id?: string | null
           unit_label?: string | null
@@ -201,9 +205,11 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          category?: string
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          low_stock_threshold?: number
           name?: string
           tenant_id?: string | null
           unit_label?: string | null
