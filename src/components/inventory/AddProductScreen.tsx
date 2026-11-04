@@ -10,6 +10,12 @@ import { useToast } from '@/hooks/use-toast'
 interface Props { tenantId: string; userId: string; onBack: () => void; onSaved: () => void }
 type UnitDraft = { unit_label: string; unit_price: string; base_unit_quantity: string }
 const blankUnit = (): UnitDraft => ({ unit_label: 'bag', unit_price: '', base_unit_quantity: '1' })
+const readPreference = (key: string, fallback: string) => {
+  try {
+    const preferences = JSON.parse(window.localStorage.getItem('agriledger-settings-preferences') || '{}')
+    return typeof preferences[key] === 'string' ? preferences[key] : fallback
+  } catch { return fallback }
+}
 const unitOptions = ['bag', 'kg', 'paint', 'sachet', 'small', 'medium', 'large', 'bird', 'pack', 'crate', 'bottle', 'litre', 'unit']
 const categories = [{ value: 'feeds', label: 'Feeds' }, { value: 'livestock', label: 'Livestock' }, { value: 'drugs', label: 'Drugs' }, { value: 'other', label: 'Other' }]
 
@@ -17,10 +23,10 @@ export default function AddProductScreen({ tenantId, userId, onBack, onSaved }: 
   const { toast } = useToast()
   const [name, setName] = useState('')
   const [category, setCategory] = useState('feeds')
-  const [units, setUnits] = useState<UnitDraft[]>([blankUnit()])
+  const [units, setUnits] = useState<UnitDraft[]>(() => [{ ...blankUnit(), unit_label: readPreference('unit', 'bag') }])
   const [costPrice, setCostPrice] = useState('')
   const [openingQuantity, setOpeningQuantity] = useState('')
-  const [lowStockThreshold, setLowStockThreshold] = useState('5')
+  const [lowStockThreshold, setLowStockThreshold] = useState(() => readPreference('lowStockDefault', '5'))
   const [saving, setSaving] = useState(false)
   const [stockDate] = useState(new Date().toISOString().slice(0, 10))
 
