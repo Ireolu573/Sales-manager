@@ -76,7 +76,7 @@
     --popover: 221 35% 13%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 38 92% 50%;
+    --primary: 142 70% 45%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 217 28% 18%;
@@ -102,9 +102,9 @@
 
     --border: 217 28% 22%;
     --input: 217 28% 22%;
-    --ring: 38 92% 50%;
+    --ring: 142 70% 45%;
 
-    --chart-1: 38 92% 50%;
+    --chart-1: 142 70% 45%;
     --chart-2: 160 84% 39%;
     --chart-3: 217 91% 60%;
     --chart-4: 280 65% 60%;
@@ -112,12 +112,12 @@
 
     --sidebar-background: 222 35% 6.5%;
     --sidebar-foreground: 215 20% 65%;
-    --sidebar-primary: 38 92% 50%;
+    --sidebar-primary: 142 70% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 217 28% 18%;
     --sidebar-accent-foreground: 210 40% 90%;
     --sidebar-border: 217 28% 22%;
-    --sidebar-ring: 38 92% 50%;
+    --sidebar-ring: 142 70% 45%;
   }
 
   .theme {
