@@ -9,8 +9,8 @@
 @layer base {
   /* ── Light mode (default) ─────────────────────────────────────── */
   :root {
-    --background: 36 20% 97%;
-    --foreground: 20 14% 10%;
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
     --card-foreground: 20 14% 10%;
@@ -19,22 +19,22 @@
     --popover-foreground: 20 14% 10%;
 
     /* primary is overridden at runtime by applyBrandColor() — this is the fallback */
-    --primary: 32 95% 52%;
+    --primary: 142 76% 36%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 36 20% 93%;
-    --secondary-foreground: 20 14% 20%;
+    --secondary: 210 32% 94%;
+    --secondary-foreground: 222 35% 20%;
 
-    --muted: 36 20% 93%;
-    --muted-foreground: 20 8% 48%;
+    --muted: 210 32% 94%;
+    --muted-foreground: 215 16% 40%;
 
-    --accent: 36 20% 93%;
-    --accent-foreground: 20 14% 20%;
+    --accent: 142 40% 94%;
+    --accent-foreground: 222 35% 20%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 71% 45%;
+    --success: 145 76% 26%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
@@ -43,22 +43,22 @@
     --info: 217 91% 60%;
     --info-foreground: 0 0% 100%;
 
-    --border: 36 20% 86%;
-    --input: 36 20% 86%;
-    --ring: 32 95% 52%;
+    --border: 214 32% 83%;
+    --input: 214 32% 83%;
+    --ring: 142 76% 36%;
 
     --radius: 0.625rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 20 14% 30%;
-    --sidebar-primary: 32 95% 52%;
+    --sidebar-primary: 142 76% 36%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 36 20% 93%;
-    --sidebar-accent-foreground: 20 14% 20%;
-    --sidebar-border: 36 20% 88%;
-    --sidebar-ring: 32 95% 52%;
+    --sidebar-accent: 142 40% 94%;
+    --sidebar-accent-foreground: 222 35% 20%;
+    --sidebar-border: 214 32% 83%;
+    --sidebar-ring: 142 76% 36%;
 
-    --chart-1: 32 95% 52%;
+    --chart-1: 142 76% 36%;
     --chart-2: 142 71% 45%;
     --chart-3: 217 91% 60%;
     --chart-4: 280 65% 60%;
