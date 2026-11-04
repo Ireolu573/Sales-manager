@@ -19,10 +19,10 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Sales Manager App',
-        short_name: 'SalesManager',
-        description: 'Manage sales and stock offline',
-        theme_color: '#6b6a83ff',
+        name: 'AgriLedger',
+        short_name: 'AgriLedger',
+        description: 'Farm shop sales, stock and customer credit in one place',
+        theme_color: '#0F172A',
         icons: [
           {
             src: 'pwa-192x192.png',
