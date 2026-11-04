@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import type { Tab, Permissions } from '@/lib/types'
 import { supabase } from '@/integrations/supabase/client'
 import AuthPage from '@/components/AuthPage'
+import AgriLedgerLogo from '@/components/brand/AgriLedgerLogo'
 import OnboardingWizard from '@/components/onboarding/OnboardingWizard'
 import DomainController from '@/components/DomainController'
 import AccountModal from '@/components/AccountModal'
@@ -72,8 +73,7 @@ function applyBrandColor(hex: string) {
   const hsl = hexToHsl(hex)
   if (!hsl) return
   _brandColorHsl = hsl
-  document.documentElement.style.setProperty('--primary', hsl)
-  document.documentElement.style.setProperty('--ring', hsl)
+  document.documentElement.style.setProperty('--brand-accent', hsl)
 }
 
 export default function Dashboard() {
@@ -158,8 +158,7 @@ export default function Dashboard() {
     // the class change so this is a no-op if color hasn't changed, but
     // it guarantees the primary token is correct in both modes.
     if (_brandColorHsl) {
-      document.documentElement.style.setProperty('--primary', _brandColorHsl)
-      document.documentElement.style.setProperty('--ring', _brandColorHsl)
+      document.documentElement.style.setProperty('--brand-accent', _brandColorHsl)
     }
   }
 
@@ -226,7 +225,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-background">
-        <div className="text-4xl">{company.logo_emoji}</div>
+        <AgriLedgerLogo size={52} />
         <div className="w-8 h-8 rounded-full border-4 border-muted animate-spin border-t-primary" />
       </div>
     )
@@ -251,10 +250,10 @@ export default function Dashboard() {
       {/* Desktop navigation — mobile uses the bottom navigation below. */}
       <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 flex-col border-r border-border bg-card">
         <div className="flex h-20 items-center gap-3 border-b border-border px-6">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-2xl">{company.logo_emoji}</span>
+          <AgriLedgerLogo size={42} />
           <div className="min-w-0">
             <p className="truncate text-base font-bold tracking-tight text-foreground">{company.company_name}</p>
-            <p className="truncate text-xs text-muted-foreground">AgriLedger</p>
+            <p className="truncate text-xs text-muted-foreground">Sales & inventory</p>
           </div>
         </div>
         <div className="px-4 pt-7 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Workspace</div>
@@ -289,10 +288,10 @@ export default function Dashboard() {
       <header className="bg-card/95 backdrop-blur border-b border-border sticky top-0 z-20 shadow-sm lg:ml-64">
         <div className="mx-auto max-w-none px-4 py-3 lg:px-8 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <span className="text-xl">{company.logo_emoji}</span>
+            <AgriLedgerLogo size={30} />
             <div>
               <div className="font-bold text-foreground text-sm leading-tight">{company.company_name}</div>
-              <div className="text-xs text-muted-foreground leading-tight">{company.app_name}</div>
+              <div className="text-xs text-muted-foreground leading-tight">AgriLedger</div>
             </div>
           </div>
           <div className="flex items-center gap-2">

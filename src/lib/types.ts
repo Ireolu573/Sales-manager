@@ -96,9 +96,9 @@ export const ADMIN_PERMS: Permissions = {
 export const DEFAULT_COMPANY: CompanySettings = {
   admin_id: '',
   company_name: 'My Business',
-  app_name: 'Sales Manager',
+  app_name: 'AgriLedger',
   brand_color: '#16A34A',
-  logo_emoji: '🏢',
+  logo_emoji: '🌱',
   onboarding_step: 1,
   onboarding_complete: false,
   business_category: null,

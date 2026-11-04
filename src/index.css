@@ -18,8 +18,9 @@
     --popover: 0 0% 100%;
     --popover-foreground: 20 14% 10%;
 
-    /* primary is overridden at runtime by applyBrandColor() — this is the fallback */
-    --primary: 142 76% 36%;
+    /* Figma system: navy is the primary action/text colour; green is the brand accent. */
+    --primary: 222 47% 11%;
+    --brand-accent: 142 76% 36%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 32% 94%;
@@ -45,18 +46,18 @@
 
     --border: 214 32% 83%;
     --input: 214 32% 83%;
-    --ring: 142 76% 36%;
+    --ring: 222 47% 11%;
 
     --radius: 0.625rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 20 14% 30%;
-    --sidebar-primary: 142 76% 36%;
+    --sidebar-primary: 222 47% 11%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 142 40% 94%;
     --sidebar-accent-foreground: 222 35% 20%;
     --sidebar-border: 214 32% 83%;
-    --sidebar-ring: 142 76% 36%;
+    --sidebar-ring: 222 47% 11%;
 
     --chart-1: 142 76% 36%;
     --chart-2: 142 71% 45%;
@@ -76,7 +77,8 @@
     --popover: 221 35% 13%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 142 70% 45%;
+    --primary: 222 47% 11%;
+    --brand-accent: 142 70% 45%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 217 28% 18%;
@@ -102,7 +104,7 @@
 
     --border: 217 28% 22%;
     --input: 217 28% 22%;
-    --ring: 142 70% 45%;
+    --ring: 222 47% 11%;
 
     --chart-1: 142 70% 45%;
     --chart-2: 160 84% 39%;
@@ -112,12 +114,12 @@
 
     --sidebar-background: 222 35% 6.5%;
     --sidebar-foreground: 215 20% 65%;
-    --sidebar-primary: 142 70% 45%;
+    --sidebar-primary: 222 47% 11%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 217 28% 18%;
     --sidebar-accent-foreground: 210 40% 90%;
     --sidebar-border: 217 28% 22%;
-    --sidebar-ring: 142 70% 45%;
+    --sidebar-ring: 222 47% 11%;
   }
 
   .theme {
@@ -138,7 +140,7 @@
   }
 
   h1, h2, h3, .font-display {
-    font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
     letter-spacing: -0.02em;
   }
 

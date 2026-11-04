@@ -1,11 +1,11 @@
 {
-  "name": "Sales Manager",
-  "short_name": "Sales",
-  "description": "Business sales tracking app",
+  "name": "AgriLedger",
+  "short_name": "AgriLedger",
+  "description": "Farm shop sales, stock and customer credit in one place",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#f59e0b",
+  "theme_color": "#0F172A",
   "orientation": "portrait",
   "icons": [
     {
