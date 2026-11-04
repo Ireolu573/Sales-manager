@@ -161,9 +161,16 @@ export default function CreditManager({ isAdmin, tenantId }: Props) {
         name, phone: customerForm.phone.trim() || null, address: customerForm.address.trim() || null,
         credit_limit: creditLimit, allow_credit: customerForm.allowCredit,
       }
-      const result = customerForm.id
-        ? await supabase.from('customers').update(values).eq('id', customerForm.id).eq('tenant_id', tenantId)
-        : await supabase.from('customers').insert({ ...values, tenant_id: tenantId })
+      let result
+      if (customerForm.id) {
+        result = await supabase.from('customers').update(values).eq('id', customerForm.id).eq('tenant_id', tenantId)
+      } else {
+        const { data: existing, error: lookupError } = await supabase.from('customers').select('id').eq('tenant_id', tenantId).ilike('name', name).maybeSingle()
+        if (lookupError) throw lookupError
+        result = existing
+          ? await supabase.from('customers').update(values).eq('id', existing.id).eq('tenant_id', tenantId)
+          : await supabase.from('customers').insert({ ...values, tenant_id: tenantId })
+      }
       if (result.error) throw result.error
       toast({ title: customerForm.id ? 'Customer details updated' : 'Customer added' })
       setShowCustomerForm(false)
