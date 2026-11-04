@@ -17,7 +17,9 @@ import {
   RotateCcw,
   Settings2,
   Plus,
+  Search,
 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 
 interface Props {
   tenantId: string
@@ -32,6 +34,7 @@ export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTa
   const { inventorySummary, isLoading } = useStock(tenantId)
   const [unitsMap, setUnitsMap] = useState<Record<string, string>>({})
   const [activeFilter, setActiveFilter] = useState<StatusFilter>('all')
+  const [search, setSearch] = useState('')
   const [showAll, setShowAll] = useState(false)
   const navigate = useNavigate()
 
@@ -39,7 +42,14 @@ export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTa
     setShowAll(false)
   }, [activeFilter])
 
-  const entries = useMemo(() => Object.values(inventorySummary || {}), [inventorySummary])
+  const entries = useMemo(() => {
+    const unique = new Map<string, (typeof inventorySummary)[string]>()
+    Object.values(inventorySummary || {}).forEach(item => {
+      const key = item.productId || item.itemName.trim().toLowerCase()
+      if (!unique.has(key)) unique.set(key, item)
+    })
+    return Array.from(unique.values())
+  }, [inventorySummary])
 
   const handleGoToStock = () => {
     if (onSwitchTab) {
@@ -88,13 +98,15 @@ export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTa
     if (activeFilter !== 'all') {
       list = list.filter((e: any) => e.status === activeFilter)
     }
+    const term = search.trim().toLowerCase()
+    if (term) list = list.filter((e: any) => e.itemName.toLowerCase().includes(term))
 
     return list.sort((a: any, b: any) => {
       const byStatus = (order[a.status] ?? 3) - (order[b.status] ?? 3)
       if (byStatus !== 0) return byStatus
       return (a.itemName || '').localeCompare(b.itemName || '')
     })
-  }, [entries, activeFilter])
+  }, [entries, activeFilter, search])
 
   const visibleItems = showAll ? filteredAndSorted : filteredAndSorted.slice(0, 8)
 
@@ -207,6 +219,17 @@ export default function InventoryOverview({ tenantId, onOpenSettings, onSwitchTa
             </CardContent>
           </Card>
         </button>
+      </div>
+
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={event => setSearch(event.target.value)}
+          placeholder="Search feeds, chicks, drugs..."
+          aria-label="Search inventory"
+          className="h-11 rounded-xl border-border bg-card pl-9"
+        />
       </div>
 
       {/* Product List Header & Filter Indicator */}
