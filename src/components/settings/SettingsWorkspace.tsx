@@ -1,4 +1,4 @@
-import { Building2, Palette, Package, Users, Bell, ShieldCheck, UserCircle, ChevronRight, Moon, Sun, Settings2 } from 'lucide-react'
+import { Building2, Palette, Package, Users, ShieldCheck, UserCircle, ChevronRight, Moon, Sun } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import type { CompanySettings } from '@/lib/types'
