@@ -32,6 +32,8 @@ export interface ProductUnit {
 export interface Product {
   id: string
   name: string
+  category?: string
+  low_stock_threshold?: number
   product_units: ProductUnit[]
   is_active?: boolean | null
 }
