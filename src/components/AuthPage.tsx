@@ -1,3 +1,4 @@
+import AgriLedgerLogo from '@/components/brand/AgriLedgerLogo'
 import { useState } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { Capacitor } from '@capacitor/core'
@@ -72,9 +73,9 @@ export default function AuthPage({ company }: Props) {
     <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-background to-muted/30">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8 slide-up">
-          <div className="text-5xl mb-3">{company.logo_emoji}</div>
+          <div className="flex justify-center mb-3"><AgriLedgerLogo size={64} /></div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">{company.company_name}</h1>
-          <p className="text-muted-foreground text-sm mt-1">{company.app_name}</p>
+          <p className="text-muted-foreground text-sm mt-1">AgriLedger</p>
         </div>
 
         <Card className="slide-up border-border shadow-xl">
