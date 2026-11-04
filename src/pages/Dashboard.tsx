@@ -27,6 +27,8 @@ const StockForm = lazy(() => import('@/components/StockForm'))
 const CreditManager = lazy(() => import('@/components/CreditManager'))
 const Analytics = lazy(() => import('@/components/Analytics'))
 const InventoryOverview = lazy(() => import('@/components/InventoryOverview'))
+const AddProductScreen = lazy(() => import('@/components/inventory/AddProductScreen'))
+const StockHistoryScreen = lazy(() => import('@/components/inventory/StockHistoryScreen'))
 
 const NAV_TABS = [
   { id: 'home' as Tab, label: 'Dashboard', icon: BarChart3, perm: 'can_view_stock' },
@@ -93,6 +95,7 @@ export default function Dashboard() {
   const [animKey, setAnimKey] = useState(0)
   const [showDC, setShowDC] = useState(false)
   const [selectedStockProductId, setSelectedStockProductId] = useState<string | null>(null)
+  const [inventoryScreen, setInventoryScreen] = useState<'overview' | 'add' | 'history'>('overview')
   const [showAccount, setShowAccount] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [online, setOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true)
@@ -360,24 +363,34 @@ export default function Dashboard() {
               <SalesTable userId={user.id} tenantId={tenantId} isAdmin={isAdmin} />
             )}
             {tab === 'stock' && (permissions.can_view_stock || permissions.can_add_stock) && tenantId && (
-              <div className="space-y-7">
-                <InventoryOverview
-                  tenantId={tenantId}
-                  isAdmin={isAdmin}
-                  onOpenSettings={isAdmin ? () => setShowDC(true) : undefined}
-                  onSwitchTab={switchTab}
-                  onRestockProduct={productId => setSelectedStockProductId(productId)}
-                />
-                {(isAdmin || permissions.can_add_stock) && (
-                  <section className="border-t border-border pt-6">
-                    <div className="mb-4">
-                      <h2 className="text-base font-bold text-foreground">Record a stock purchase</h2>
-                      <p className="text-sm text-muted-foreground">Add received stock and keep a record of its cost.</p>
-                    </div>
-                    <StockForm userId={user.id} tenantId={tenantId} isAdmin={isAdmin || permissions.can_add_stock} initialProductId={selectedStockProductId} />
-                  </section>
-                )}
-              </div>
+              inventoryScreen === 'add' ? (
+                <AddProductScreen tenantId={tenantId} onBack={() => setInventoryScreen('overview')} onSaved={() => {
+                  queryClient.invalidateQueries({ queryKey: ['inventorySummary', tenantId] })
+                }} />
+              ) : inventoryScreen === 'history' ? (
+                <StockHistoryScreen tenantId={tenantId} onBack={() => setInventoryScreen('overview')} />
+              ) : (
+                <div className="space-y-7">
+                  <InventoryOverview
+                    tenantId={tenantId}
+                    isAdmin={isAdmin}
+                    onOpenSettings={isAdmin ? () => setShowDC(true) : undefined}
+                    onSwitchTab={switchTab}
+                    onAddProduct={isAdmin ? () => setInventoryScreen('add') : undefined}
+                    onViewHistory={() => setInventoryScreen('history')}
+                    onRestockProduct={productId => { setSelectedStockProductId(productId); setInventoryScreen('overview') }}
+                  />
+                  {(isAdmin || permissions.can_add_stock) && (
+                    <section className="border-t border-border pt-6">
+                      <div className="mb-4">
+                        <h2 className="text-base font-bold text-foreground">Record a stock purchase</h2>
+                        <p className="text-sm text-muted-foreground">Add received stock and keep a record of its cost.</p>
+                      </div>
+                      <StockForm userId={user.id} tenantId={tenantId} isAdmin={isAdmin || permissions.can_add_stock} initialProductId={selectedStockProductId} />
+                    </section>
+                  )}
+                </div>
+              )
             )}
             {tab === 'analytics' && permissions.can_view_analytics && tenantId && (
               <Analytics userId={user.id} tenantId={tenantId} isAdmin={isAdmin} />
