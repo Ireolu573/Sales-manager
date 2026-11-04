@@ -30,7 +30,7 @@ export default function StockHistoryScreen({ tenantId, onBack }: Props) {
         setError(stock.error?.message || sales.error?.message || 'Unable to load stock history.')
         setLoading(false); return
       }
-      const received: Movement[] = (stock.data || []).map(row => { const detail = row.notes || 'Stock received'; const adjusted = /\\b(adjust|adjusted|adjustment)\\b/i.test(detail); return { id: 'stock-' + row.id, kind: adjusted ? 'Adjusted' as const : 'Restocked' as const, name: row.item_name, quantity: Number(row.quantity || 0), unit: row.unit_label || 'units', date: row.stock_date || row.created_at || new Date(0).toISOString(), detail } })
+      const received: Movement[] = (stock.data || []).map(row => { const detail = row.notes || 'Stock received'; const adjusted = /\b(adjust|adjusted|adjustment)\b/i.test(detail); return { id: 'stock-' + row.id, kind: adjusted ? 'Adjusted' as const : 'Restocked' as const, name: row.item_name, quantity: Number(row.quantity || 0), unit: row.unit_label || 'units', date: row.stock_date || row.created_at || new Date(0).toISOString(), detail } })
       const sold: Movement[] = (sales.data || []).map(row => ({ id: 'sale-' + row.id, kind: 'Sold', name: row.item_name, quantity: Number(row.quantity || 0), unit: row.unit_label || 'units', date: row.sale_date || row.created_at || new Date(0).toISOString(), detail: row.customer_name || 'Sale recorded' }))
       setRows([...received, ...sold].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()))
       setLoading(false)
