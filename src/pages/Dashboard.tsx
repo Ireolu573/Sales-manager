@@ -7,7 +7,7 @@ import AuthPage from '@/components/AuthPage'
 import AgriLedgerLogo from '@/components/brand/AgriLedgerLogo'
 import OnboardingWizard from '@/components/onboarding/OnboardingWizard'
 import DomainController from '@/components/DomainController'
-import AccountModal from '@/components/AccountModal'
+import AccountPage from '@/components/AccountPage'
 import { Menu, Settings, Wifi, WifiOff, LogOut, UserCircle, Sun, Moon, NotebookPen, History, Package, BarChart3, CreditCard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -361,7 +361,7 @@ export default function Dashboard() {
         <div key={animKey} className="slide-up">
           <Suspense fallback={<SkeletonPage />}>
             {showAccount ? (
-              <AccountModal
+              <AccountPage
                 email={user.email || ''}
                 fullName={String(user.user_metadata?.full_name || user.user_metadata?.name || '')}
                 phone={String(user.user_metadata?.phone || '')}
