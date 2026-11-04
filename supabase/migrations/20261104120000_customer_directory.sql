@@ -149,3 +149,34 @@ DROP TRIGGER IF EXISTS customers_set_updated_at ON public.customers;
 CREATE TRIGGER customers_set_updated_at
   BEFORE UPDATE ON public.customers
   FOR EACH ROW EXECUTE FUNCTION public.set_customer_updated_at();
+
+
+-- When a customer is added after earlier sales, link those tenant-owned sales too.
+-- This keeps outstanding-balance and credit-limit calculations complete.
+CREATE OR REPLACE FUNCTION public.link_existing_sales_to_customer()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF auth.uid() IS NULL OR NEW.tenant_id IS DISTINCT FROM public.current_tenant_id() THEN
+    RAISE EXCEPTION 'You cannot link sales outside your business';
+  END IF;
+
+  UPDATE public.sales s
+  SET customer_id = NEW.id
+  WHERE s.tenant_id = NEW.tenant_id
+    AND s.customer_id IS NULL
+    AND lower(trim(s.customer_name)) = lower(trim(NEW.name));
+
+  RETURN NEW;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.link_existing_sales_to_customer() FROM PUBLIC;
+
+DROP TRIGGER IF EXISTS customers_link_existing_sales ON public.customers;
+CREATE TRIGGER customers_link_existing_sales
+  AFTER INSERT OR UPDATE OF name ON public.customers
+  FOR EACH ROW EXECUTE FUNCTION public.link_existing_sales_to_customer();
