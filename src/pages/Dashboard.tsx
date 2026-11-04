@@ -360,6 +360,10 @@ export default function Dashboard() {
       <main className="flex-1 w-full max-w-none mx-auto px-4 py-5 pb-24 overflow-y-auto lg:ml-64 lg:px-8 lg:py-8 lg:pb-10">
         <div key={animKey} className="slide-up">
           <Suspense fallback={<SkeletonPage />}>
+            {showAccount ? (
+              <AccountModal email={user.email || ''} onClose={() => setShowAccount(false)} />
+            ) : (
+              <>
             {tab === 'settings' && isAdmin && company && (
               <SettingsWorkspace company={company} isDark={isDark} onToggleTheme={toggleTheme} onOpenBusinessSettings={() => setShowDC(true)} onOpenAccount={() => setShowAccount(true)} />
             )}
@@ -416,6 +420,9 @@ export default function Dashboard() {
                 onSwitchTab={switchTab}
               />
             )}
+
+              </>
+            )}
           </Suspense>
         </div>
       </main>
@@ -447,13 +454,6 @@ export default function Dashboard() {
           onClose={() => setShowDC(false)}
           onCompanyUpdated={handleCompanyUpdated}
           onProductsChanged={() => {}}
-        />
-      )}
-
-      {showAccount && (
-        <AccountModal
-          email={user.email || ''}
-          onClose={() => setShowAccount(false)}
         />
       )}
 
