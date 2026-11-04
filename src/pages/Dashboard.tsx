@@ -361,7 +361,13 @@ export default function Dashboard() {
         <div key={animKey} className="slide-up">
           <Suspense fallback={<SkeletonPage />}>
             {showAccount ? (
-              <AccountModal email={user.email || ''} onClose={() => setShowAccount(false)} />
+              <AccountModal
+                email={user.email || ''}
+                fullName={String(user.user_metadata?.full_name || user.user_metadata?.name || '')}
+                phone={String(user.user_metadata?.phone || '')}
+                role={isAdmin ? 'Owner' : 'Staff'}
+                onClose={() => setShowAccount(false)}
+              />
             ) : (
               <>
             {tab === 'settings' && isAdmin && company && (
