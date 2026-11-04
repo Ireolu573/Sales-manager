@@ -386,13 +386,14 @@ export default function Dashboard() {
             {tab === 'settings' && isAdmin && company && (
               <SettingsWorkspace
                 company={company}
+                tenantId={tenantId || ''}
+                onCompanyUpdated={setCompany}
                 isDark={isDark}
                 fullName={String(user.user_metadata?.full_name || user.user_metadata?.name || '')}
                 email={user.email || ''}
                 phone={String(user.user_metadata?.phone || '')}
                 role={isAdmin ? 'Owner' : 'Staff'}
                 onToggleTheme={toggleTheme}
-                onOpenBusinessSettings={() => setShowDC(true)}
                 onOpenAccount={() => setShowAccount(true)}
                 onOpenInventory={() => { setSelectedProduct(null); setInventoryScreen('overview'); switchTab('stock') }}
               />
