@@ -68,6 +68,10 @@ DECLARE
   v_outstanding numeric;
   v_new_amount numeric;
 BEGIN
+  IF auth.uid() IS NULL OR NEW.tenant_id IS DISTINCT FROM public.current_tenant_id() THEN
+    RAISE EXCEPTION 'You cannot link customers outside your business';
+  END IF;
+
   IF NEW.customer_id IS NOT NULL THEN
     IF NOT EXISTS (
       SELECT 1 FROM public.customers c
