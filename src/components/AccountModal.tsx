@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ArrowLeft, UserCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
-import { KeyRound, Mail, Eye, EyeOff, Link, Unlink, AlertTriangle } from 'lucide-react'
+import { KeyRound, Mail, Eye, EyeOff, Unlink, AlertTriangle } from 'lucide-react'
 
 interface Props {
   email: string
@@ -135,11 +135,23 @@ export default function AccountModal({ email, onClose }: Props) {
   }
 
   return (
-    <Dialog open onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>My Account</DialogTitle>
-        </DialogHeader>
+    <main className="mx-auto w-full max-w-5xl space-y-6 pb-10">
+      <header className="flex items-center gap-3 border-b border-[#CBD5E1] pb-5">
+        <Button type="button" variant="outline" size="icon" onClick={onClose} aria-label="Back to settings">
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F0FDF4] text-[#166534]">
+          <UserCircle className="h-6 w-6" />
+        </span>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#16A34A]">Account</p>
+          <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">My Account</h1>
+          <p className="text-sm text-[#64748B]">Manage your sign-in methods and personal account security.</p>
+        </div>
+      </header>
+      <div className="grid gap-5 lg:grid-cols-2">
+        <section className="min-w-0 rounded-xl border border-[#CBD5E1] bg-white p-4 shadow-none sm:p-6 space-y-5">
+        <h2 className="text-base font-bold text-[#0F172A]">Account information</h2>
 
         {/* Current account info */}
         <div className="bg-muted/50 rounded-xl px-4 py-3 space-y-1">
@@ -203,6 +215,8 @@ export default function AccountModal({ email, onClose }: Props) {
           </>
         )}
 
+        </section>
+        <section className="min-w-0 rounded-xl border border-[#CBD5E1] bg-white p-4 shadow-none sm:p-6 space-y-5">
         {/* ── CHANGE PASSWORD ── */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
@@ -307,8 +321,8 @@ export default function AccountModal({ email, onClose }: Props) {
             </form>
           )}
         </div>
-
-      </DialogContent>
-    </Dialog>
+        </section>
+      </div>
+    </main>
   )
 }
