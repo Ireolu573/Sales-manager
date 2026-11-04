@@ -92,6 +92,7 @@ export default function Dashboard() {
   })
   const [animKey, setAnimKey] = useState(0)
   const [showDC, setShowDC] = useState(false)
+  const [selectedStockProductId, setSelectedStockProductId] = useState<string | null>(null)
   const [showAccount, setShowAccount] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [online, setOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true)
@@ -365,6 +366,7 @@ export default function Dashboard() {
                   isAdmin={isAdmin}
                   onOpenSettings={isAdmin ? () => setShowDC(true) : undefined}
                   onSwitchTab={switchTab}
+                  onRestockProduct={productId => setSelectedStockProductId(productId)}
                 />
                 {(isAdmin || permissions.can_add_stock) && (
                   <section className="border-t border-border pt-6">
@@ -372,7 +374,7 @@ export default function Dashboard() {
                       <h2 className="text-base font-bold text-foreground">Record a stock purchase</h2>
                       <p className="text-sm text-muted-foreground">Add received stock and keep a record of its cost.</p>
                     </div>
-                    <StockForm userId={user.id} tenantId={tenantId} isAdmin={isAdmin || permissions.can_add_stock} />
+                    <StockForm userId={user.id} tenantId={tenantId} isAdmin={isAdmin || permissions.can_add_stock} initialProductId={selectedStockProductId} />
                   </section>
                 )}
               </div>
