@@ -45,12 +45,20 @@ export default function ProductDetailsScreen({ tenantId, item, onBack, onRestock
         return
       }
       const [productResult, stockResult, salesResult] = await Promise.all([
-        supabase.from('products').select('category, low_stock_threshold, unit_label, unit_price').eq('tenant_id', tenantId).eq('id', item.productId).maybeSingle(),
+        supabase.from('products').select('category, low_stock_threshold, product_units(unit_label, unit_price, base_unit_quantity)').eq('tenant_id', tenantId).eq('id', item.productId).maybeSingle(),
         supabase.from('stock_records').select('id, quantity, unit_label, stock_date, created_at, notes').eq('tenant_id', tenantId).eq('product_id', item.productId).order('stock_date', { ascending: false }).limit(8),
         supabase.from('sales').select('id, quantity, unit_label, sale_date, created_at, customer_name').eq('tenant_id', tenantId).eq('product_id', item.productId).order('sale_date', { ascending: false }).limit(8),
       ])
       if (!active) return
-      if (productResult.data) setProduct(productResult.data)
+      if (productResult.data) {
+        const primaryUnit = productResult.data.product_units?.[0]
+        setProduct({
+          category: productResult.data.category,
+          low_stock_threshold: productResult.data.low_stock_threshold,
+          unit_label: primaryUnit?.unit_label || null,
+          unit_price: primaryUnit?.unit_price ?? null,
+        })
+      }
       const received: Movement[] = (stockResult.data || []).map(row => ({
         id: 'stock-' + row.id, kind: 'Restocked', quantity: Number(row.quantity || 0),
         unit: row.unit_label || 'units', date: row.stock_date || row.created_at || '',
