@@ -16,9 +16,10 @@ interface Props {
   userId: string
   tenantId: string
   isAdmin: boolean
+  initialProductId?: string | null
 }
 
-export default function StockForm({ userId, tenantId, isAdmin }: Props) {
+export default function StockForm({ userId, tenantId, isAdmin, initialProductId }: Props) {
   const { toast } = useToast()
   const [products, setProducts] = useState<Product[]>([])
   const [records, setRecords] = useState<StockRecord[]>([])
@@ -45,9 +46,20 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
   }
 
   useEffect(() => {
-    getProductsForTenant(tenantId).then(({ data }) => { if (data) setProducts(data) })
+    getProductsForTenant(tenantId).then(({ data }) => {
+      if (data) {
+        setProducts(data)
+        if (initialProductId) {
+          const product = data.find(item => item.id === initialProductId)
+          if (product) {
+            setProductId(product.id)
+            setSelectedUnit(product.product_units?.[0] || null)
+          }
+        }
+      }
+    })
     fetchRecords()
-  }, [userId, tenantId])
+  }, [userId, tenantId, initialProductId])
 
   const handleProductChange = (id: string) => {
     setProductId(id)
