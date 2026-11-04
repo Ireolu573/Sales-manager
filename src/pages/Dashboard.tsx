@@ -248,9 +248,46 @@ export default function Dashboard() {
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
+      {/* Desktop navigation — mobile uses the bottom navigation below. */}
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 flex-col border-r border-border bg-card">
+        <div className="flex h-20 items-center gap-3 border-b border-border px-6">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-2xl">{company.logo_emoji}</span>
+          <div className="min-w-0">
+            <p className="truncate text-base font-bold tracking-tight text-foreground">{company.company_name}</p>
+            <p className="truncate text-xs text-muted-foreground">AgriLedger</p>
+          </div>
+        </div>
+        <div className="px-4 pt-7 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Workspace</div>
+        <nav className="flex-1 space-y-1 px-3">
+          {visibleTabs.map(t => (
+            <button
+              key={t.id}
+              onClick={() => switchTab(t.id)}
+              className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium transition-colors ${
+                tab === t.id
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              }`}
+              aria-current={tab === t.id ? 'page' : undefined}
+            >
+              <t.icon size={18} strokeWidth={tab === t.id ? 2.3 : 1.9} />
+              <span>{t.label === 'Record' ? 'Record sale' : t.label === 'Leaderboard' ? 'Inventory overview' : t.label}</span>
+              {tab === t.id && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />}
+            </button>
+          ))}
+        </nav>
+        <div className="border-t border-border p-4">
+          <div className="flex items-center gap-2 rounded-xl bg-muted/70 p-3">
+            <span className={`h-2 w-2 rounded-full ${online ? 'bg-emerald-500' : 'bg-destructive'}`} />
+            <span className="text-xs font-medium text-muted-foreground">{online ? 'Connected' : 'Offline mode'}</span>
+            {!online && queuedCount > 0 && <span className="ml-auto text-xs font-semibold text-destructive">{queuedCount} queued</span>}
+          </div>
+        </div>
+      </aside>
+
       {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-20 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+      <header className="bg-card/95 backdrop-blur border-b border-border sticky top-0 z-20 shadow-sm lg:ml-64">
+        <div className="mx-auto max-w-none px-4 py-3 lg:px-8 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <span className="text-xl">{company.logo_emoji}</span>
             <div>
@@ -259,6 +296,14 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-2 pr-3">
+              <Button variant="outline" onClick={() => switchTab('stock')} className="h-9 gap-2 rounded-lg">
+                <Package size={15} /> Add stock
+              </Button>
+              <Button onClick={() => switchTab('record')} className="h-9 gap-2 rounded-lg shadow-sm">
+                <NotebookPen size={15} /> Record sale
+              </Button>
+            </div>
             {/* 📶 Wi-Fi indicator — shows queue count when offline */}
             <div className="relative">
               {online
@@ -296,7 +341,7 @@ export default function Dashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-5 pb-24 overflow-y-auto">
+      <main className="flex-1 w-full max-w-none mx-auto px-4 py-5 pb-24 overflow-y-auto lg:ml-64 lg:px-8 lg:py-8 lg:pb-10">
         <div key={animKey} className="slide-up">
           <Suspense fallback={<SkeletonPage />}>
             {tab === 'record' && permissions.can_record_sales && tenantId && (
@@ -328,7 +373,7 @@ export default function Dashboard() {
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-20 shadow-[0_-4px_16px_-4px_hsl(var(--foreground)/0.06)]">
-        <div className="max-w-2xl mx-auto px-2 py-1.5 flex justify-around">
+        <div className="max-w-2xl mx-auto px-2 py-1.5 flex justify-around lg:hidden">
           {visibleTabs.map(t => (
             <button
               key={t.id}

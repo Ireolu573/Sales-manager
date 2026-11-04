@@ -39,7 +39,7 @@ export default function OnboardingWizard({ userId, email, tenantId, company, onC
   const [localTenantId, setLocalTenantId] = useState<string | null>(tenantId)
   const [companyName, setCompanyName] = useState(company.company_name || '')
   const [appName, setAppName] = useState(company.app_name || 'Sales Manager')
-  const [brandColor, setBrandColor] = useState(company.brand_color || '#d97706')
+  const [brandColor, setBrandColor] = useState(company.brand_color || '#16A34A')
   const [logoEmoji, setLogoEmoji] = useState(company.logo_emoji || '🏢')
 
   const [mode, setMode] = useState<'create' | 'join'>('create')
