@@ -177,12 +177,12 @@ export default function Dashboard() {
     }
 
     const nextSearch = params.toString()
-    const target = nextSearch ? `/?${nextSearch}` : '/'
+    const target = `${location.pathname}${nextSearch ? `?${nextSearch}` : ''}`
     const currentSearch = location.search || ''
 
     if (currentSearch === (nextSearch ? `?${nextSearch}` : '')) return
     navigate(target)
-  }, [location.search, navigate])
+  }, [location.pathname, location.search, navigate])
 
   const switchTab = (newTab: Tab) => {
     if (newTab === tab) return
@@ -190,6 +190,12 @@ export default function Dashboard() {
     setAnimKey(k => k + 1)
     syncTabToUrl(newTab)
   }
+
+  useEffect(() => {
+    if (user && (location.pathname === '/login' || location.pathname === '/register')) {
+      navigate('/app', { replace: true })
+    }
+  }, [user, location.pathname, navigate])
 
   useEffect(() => {
     const nextTab = resolveTabFromSearch(location.search)
