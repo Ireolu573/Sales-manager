@@ -7,12 +7,13 @@ interface AnalyticsCardsBaseProps {
   totalStockCost: number
   outstandingCredit: number
   isLoading?: boolean
+  profitUnavailable?: boolean
 }
 
 type AnalyticsCardsProps = AnalyticsCardsBaseProps & (
   | {
       grossProfit: number
-      grossMargin: number
+      grossMargin?: number
       estimatedProfit?: never
     }
   | {
@@ -29,6 +30,7 @@ export default function AnalyticsCards({
   estimatedProfit,
   grossProfit,
   grossMargin,
+  profitUnavailable = false,
   outstandingCredit,
   isLoading
 }: AnalyticsCardsProps) {
@@ -58,10 +60,10 @@ export default function AnalyticsCards({
         />
         <StatCard 
           title={profitTitle}
-          value={`₦${Math.abs(profit).toLocaleString()}`}
+          value={profitUnavailable ? 'Not available' : `₦${Math.abs(profit).toLocaleString()}`}
           icon={profit >= 0 ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
           isLoading={isLoading}
-          trend={grossMargin === undefined ? undefined : `${grossMargin.toFixed(1)}% margin`}
+          trend={profitUnavailable || grossMargin === undefined ? undefined : `${grossMargin.toFixed(1)}% margin`}
         />
       </div>
 
