@@ -311,12 +311,16 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-2">
             <div className="hidden lg:flex items-center gap-2 pr-3">
-              <Button variant="outline" onClick={() => switchTab('stock')} className="h-9 gap-2 rounded-lg">
-                <Package size={15} /> Add stock
-              </Button>
-              <Button onClick={() => switchTab('record')} className="h-9 gap-2 rounded-lg shadow-sm">
-                <NotebookPen size={15} /> Record sale
-              </Button>
+              {permissions.can_add_stock && (
+                <Button variant="outline" onClick={() => switchTab('stock')} className="h-9 gap-2 rounded-lg">
+                  <Package size={15} /> Add stock
+                </Button>
+              )}
+              {permissions.can_record_sales && (
+                <Button onClick={() => switchTab('record')} className="h-9 gap-2 rounded-lg shadow-sm">
+                  <NotebookPen size={15} /> Record sale
+                </Button>
+              )}
             </div>
             {/* 📶 Wi-Fi indicator — shows queue count when offline */}
             <div className="relative">
@@ -359,7 +363,7 @@ export default function Dashboard() {
         <div key={animKey} className="slide-up">
           <Suspense fallback={<SkeletonPage />}>
             {tab === 'dashboard' && tenantId && (
-              <DashboardOverview userId={user.id} tenantId={tenantId} isAdmin={isAdmin} onSwitchTab={switchTab} />
+              <DashboardOverview userId={user.id} tenantId={tenantId} permissions={permissions} onSwitchTab={switchTab} />
             )}
             {tab === 'record' && permissions.can_record_sales && tenantId && (
               <SaleForm userId={user.id} tenantId={tenantId} />
