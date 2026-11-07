@@ -429,6 +429,18 @@ export default function Dashboard() {
             <SheetTitle>Menu</SheetTitle>
           </SheetHeader>
 
+          <p className="px-3 pt-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Workspace</p>
+          {[
+            { id: 'history' as Tab, label: 'Sales history', allowed: permissions.can_view_history },
+            { id: 'analytics' as Tab, label: 'Reports', allowed: permissions.can_view_analytics },
+          ].filter(item => item.allowed).map(item => (
+            <Button key={item.id} variant="ghost" className="justify-start gap-3 h-11 text-foreground"
+              onClick={() => { setShowMenu(false); switchTab(item.id) }}>
+              {item.id === 'history' ? <History size={16} /> : <BarChart3 size={16} />}
+              {item.label}
+            </Button>
+          ))}
+
           <Button
             variant="ghost"
             className="justify-start gap-3 h-11 text-foreground"
