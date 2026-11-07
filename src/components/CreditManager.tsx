@@ -76,7 +76,7 @@ export default function CreditManager({ isAdmin, userId, tenantId }: Props) {
           <CreditCard className="w-5 h-5 text-warning" />
         </div>
         <div>
-          <h2 className="font-bold text-foreground text-lg">Credit Manager</h2>
+          <h2 className="font-bold text-foreground text-lg">Customers and credit</h2>
           <p className="text-sm text-muted-foreground">Track outstanding payments</p>
         </div>
       </div>
