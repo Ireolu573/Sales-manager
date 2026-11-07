@@ -1,4 +1,4 @@
-export type Tab = 'record' | 'history' | 'stock' | 'credit' | 'analytics' | 'leaderboard'
+export type Tab = 'dashboard' | 'record' | 'history' | 'stock' | 'credit' | 'analytics' | 'leaderboard'
 export type PaymentMethod = 'cash' | 'transfer' | 'credit' | 'pos'
 
 export interface Permissions {
