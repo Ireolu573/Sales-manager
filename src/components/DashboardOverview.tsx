@@ -38,7 +38,7 @@ export default function DashboardOverview({ userId, tenantId, isAdmin, onSwitchT
     queryFn: async () => {
       const [{ data: creditSales, error: salesError }, { data: payments, error: paymentsError }] = await Promise.all([
         supabase.from('sales').select('id, customer_name, total_amount').eq('tenant_id', tenantId).eq('payment_method', 'credit'),
-        supabase.from('credit_payments').select('sale_id, amount').eq('tenant_id', tenantId),
+        (supabase as any).from('credit_payments').select('sale_id, amount').eq('tenant_id', tenantId),
       ])
       if (salesError) throw salesError
       if (paymentsError) throw paymentsError
