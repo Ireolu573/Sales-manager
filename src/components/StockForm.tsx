@@ -103,7 +103,7 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
           <Package className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h2 className="font-bold text-foreground text-lg">Stock Management</h2>
+          <h2 className="font-bold text-foreground text-lg">Inventory</h2>
           <p className="text-sm text-muted-foreground">Track inventory purchases</p>
         </div>
       </div>
