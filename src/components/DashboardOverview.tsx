@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { useStock } from '@/hooks/useStock'
@@ -68,13 +67,13 @@ export default function DashboardOverview({ userId, tenantId, isAdmin, onSwitchT
   const weekSales = sales.filter(sale => saleTime(sale) >= startOfWeek)
   const todayRevenue = todaySales.reduce((sum, sale) => sum + Number(sale.total_amount), 0)
   const weekRevenue = weekSales.reduce((sum, sale) => sum + Number(sale.total_amount), 0)
-  const weekBars = useMemo(() => Array.from({ length: 7 }, (_, index) => {
+  const weekBars = Array.from({ length: 7 }, (_, index) => {
     const day = new Date(startOfWeek)
     day.setDate(startOfWeek.getDate() + index)
     const amount = weekSales.filter(sale => saleTime(sale).toDateString() === day.toDateString())
       .reduce((sum, sale) => sum + Number(sale.total_amount), 0)
     return { label: day.toLocaleDateString('en-NG', { weekday: 'short' }), amount }
-  }), [sales])
+  })
   const maxBar = Math.max(1, ...weekBars.map(day => day.amount))
   const lowStock = Object.values(inventorySummary).filter(item => item.status !== 'in_stock')
     .sort((a, b) => a.availableBaseQuantity - b.availableBaseQuantity)
