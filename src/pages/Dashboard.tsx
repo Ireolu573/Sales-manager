@@ -27,7 +27,7 @@ const Analytics = lazy(() => import('@/components/Analytics'))
 
 const NAV_TABS = [
   { id: 'dashboard' as Tab, label: 'Dashboard', icon: BarChart3, perm: null },
-  { id: 'record' as Tab, label: 'New sale', icon: NotebookPen, perm: 'can_record_sales' as const },
+  { id: 'dashboard' as Tab, label: 'New sale', icon: NotebookPen, perm: 'can_record_sales' as const },
   { id: 'history' as Tab, label: 'Sales history', icon: History, perm: 'can_view_history' as const },
   { id: 'stock' as Tab, label: 'Inventory', icon: Package, perm: 'can_view_stock' as const },
   { id: 'credit' as Tab, label: 'Customers', icon: CreditCard, perm: 'can_manage_credit' as const },
@@ -343,7 +343,10 @@ export default function Dashboard() {
       <main className="flex-1 w-full max-w-none mx-auto px-4 py-5 pb-24 overflow-y-auto lg:ml-64 lg:px-8 lg:py-8 lg:pb-10">
         <div key={animKey} className="slide-up">
           <Suspense fallback={<SkeletonPage />}>
-            {tab === 'dashboard' && tenantId && (\n              <DashboardOverview userId={user.id} tenantId={tenantId} isAdmin={isAdmin} onSwitchTab={switchTab} />\n            )}\n            {tab === 'record' && permissions.can_record_sales && tenantId && (
+            {tab === 'dashboard' && tenantId && (
+              <DashboardOverview userId={user.id} tenantId={tenantId} isAdmin={isAdmin} onSwitchTab={switchTab} />
+            )}
+            {tab === 'record' && permissions.can_record_sales && tenantId && (
               <SaleForm userId={user.id} tenantId={tenantId} />
             )}
             {tab === 'history' && permissions.can_view_history && tenantId && (
@@ -373,7 +376,7 @@ export default function Dashboard() {
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-20 shadow-[0_-4px_16px_-4px_hsl(var(--foreground)/0.06)]">
         <div className="max-w-2xl mx-auto px-2 py-1.5 flex justify-around lg:hidden">
-          {visibleTabs.map(t => (
+          {mobileTabs.map(t => (
             <button
               key={t.id}
               onClick={() => switchTab(t.id)}
