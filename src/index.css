@@ -241,7 +241,7 @@
 
 
 /* AgriLedger Figma visual system */
-:root {
+:root:not(.dark) {
   --background: 210 40% 98%;
   --foreground: 222 47% 11%;
   --card: 0 0% 100%;
@@ -259,14 +259,14 @@
   --destructive: 0 63% 33%;
   --radius: 0.875rem;
 }
-body { background: #F8FAFC; }
+body { background: hsl(var(--background)); }
 .agriledger-app {
   min-height: 100dvh;
-  background: #F8FAFC;
-  color: #0F172A;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 .agriledger-app aside {
-  background-color: #FFFFFF;
+  background-color: hsl(var(--card));
 }
 .agriledger-app header {
   border-color: #CBD5E1;
@@ -295,7 +295,7 @@ body { background: #F8FAFC; }
   min-height: 44px;
   border-radius: 10px;
   border-color: #CBD5E1;
-  background: #FFFFFF;
+  background: hsl(var(--card));
 }
 .agriledger-app button {
   -webkit-tap-highlight-color: transparent;
@@ -327,7 +327,7 @@ body { background: #F8FAFC; }
 }
 .agriledger-app .fixed.bottom-0 {
   padding-bottom: env(safe-area-inset-bottom);
-  background: rgb(255 255 255 / 0.98);
+  background: hsl(var(--card) / 0.98);
   backdrop-filter: blur(16px);
 }
 .agriledger-app .fixed.bottom-0 button {
