@@ -8,7 +8,7 @@ import AgriLedgerLogo from '@/components/brand/AgriLedgerLogo'
 import OnboardingWizard from '@/components/onboarding/OnboardingWizard'
 import DomainController from '@/components/DomainController'
 import AccountModal from '@/components/AccountModal'
-import { Menu, Settings, Wifi, WifiOff, LogOut, UserCircle, Sun, Moon, NotebookPen, History, Package, BarChart3, CreditCard, Trophy } from 'lucide-react'
+import { Menu, Settings, Wifi, WifiOff, LogOut, UserCircle, Sun, Moon, NotebookPen, History, Package, BarChart3, CreditCard, Keyboard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { useQueryClient } from '@tanstack/react-query'
@@ -16,23 +16,22 @@ import { flushQueue, getQueueLength } from '@/lib/offlineQueue'
 import { useToast } from '@/hooks/use-toast'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import KeyboardShortcutsHelp from '@/components/KeyboardShortcutsHelp'
-import { Keyboard } from 'lucide-react'
 import { SkeletonPage } from '@/components/ui/loading-skeletons'
+import DashboardOverview from '@/components/DashboardOverview'
 
 const SaleForm = lazy(() => import('@/components/SaleForm'))
 const SalesTable = lazy(() => import('@/components/SalesTable'))
 const StockForm = lazy(() => import('@/components/StockForm'))
 const CreditManager = lazy(() => import('@/components/CreditManager'))
 const Analytics = lazy(() => import('@/components/Analytics'))
-const InventoryOverview = lazy(() => import('@/components/InventoryOverview'))
 
 const NAV_TABS = [
-  { id: 'record' as Tab, label: 'Record', icon: NotebookPen, perm: 'can_record_sales' },
-  { id: 'history' as Tab, label: 'History', icon: History, perm: 'can_view_history' },
-  { id: 'stock' as Tab, label: 'Stock', icon: Package, perm: 'can_view_stock' },
-  { id: 'analytics' as Tab, label: 'Analytics', icon: BarChart3, perm: 'can_view_analytics' },
-  { id: 'credit' as Tab, label: 'Credit', icon: CreditCard, perm: 'can_manage_credit' },
-  { id: 'leaderboard' as Tab, label: 'Inventory', icon: Trophy, perm: 'can_view_analytics' },
+  { id: 'dashboard' as Tab, label: 'Dashboard', icon: BarChart3, perm: null },
+  { id: 'record' as Tab, label: 'New sale', icon: NotebookPen, perm: 'can_record_sales' as const },
+  { id: 'history' as Tab, label: 'Sales history', icon: History, perm: 'can_view_history' as const },
+  { id: 'stock' as Tab, label: 'Inventory', icon: Package, perm: 'can_view_stock' as const },
+  { id: 'credit' as Tab, label: 'Customers', icon: CreditCard, perm: 'can_manage_credit' as const },
+  { id: 'analytics' as Tab, label: 'Reports', icon: BarChart3, perm: 'can_view_analytics' as const },
 ]
 
 const VALID_TABS: Tab[] = NAV_TABS.map(tab => tab.id)
@@ -170,7 +169,7 @@ export default function Dashboard() {
   const syncTabToUrl = useCallback((nextTab: Tab) => {
     const params = new URLSearchParams(location.search)
 
-    if (nextTab === 'record') {
+    if (nextTab === 'dashboard') {
       params.delete('tab')
     } else {
       params.set('tab', nextTab)
@@ -214,7 +213,8 @@ export default function Dashboard() {
     }
   }, [])
 
-  const visibleTabs = NAV_TABS.filter(t => permissions[t.perm as keyof Permissions])
+  const visibleTabs = NAV_TABS.filter(t => !t.perm || permissions[t.perm as keyof Permissions])
+  const mobileTabs = visibleTabs.filter(t => ['dashboard', 'record', 'stock', 'credit'].includes(t.id))
   const handleCompanyUpdated = (c: typeof company) => {
     setCompany(c)
     if (c?.brand_color) applyBrandColor(c.brand_color)
@@ -270,7 +270,7 @@ export default function Dashboard() {
               aria-current={tab === t.id ? 'page' : undefined}
             >
               <t.icon size={18} strokeWidth={tab === t.id ? 2.3 : 1.9} />
-              <span>{t.label === 'Record' ? 'Record sale' : t.label === 'Leaderboard' ? 'Inventory overview' : t.label}</span>
+              <span>{t.label}</span>
               {tab === t.id && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />}
             </button>
           ))}
@@ -343,7 +343,7 @@ export default function Dashboard() {
       <main className="flex-1 w-full max-w-none mx-auto px-4 py-5 pb-24 overflow-y-auto lg:ml-64 lg:px-8 lg:py-8 lg:pb-10">
         <div key={animKey} className="slide-up">
           <Suspense fallback={<SkeletonPage />}>
-            {tab === 'record' && permissions.can_record_sales && tenantId && (
+            {tab === 'dashboard' && tenantId && (\n              <DashboardOverview userId={user.id} tenantId={tenantId} isAdmin={isAdmin} onSwitchTab={switchTab} />\n            )}\n            {tab === 'record' && permissions.can_record_sales && tenantId && (
               <SaleForm userId={user.id} tenantId={tenantId} />
             )}
             {tab === 'history' && permissions.can_view_history && tenantId && (
@@ -382,7 +382,7 @@ export default function Dashboard() {
               }`}
             >
               <t.icon size={20} strokeWidth={tab === t.id ? 2.25 : 2} />
-              <span className="text-xs font-medium truncate">{t.label}</span>
+              <span className="text-xs font-medium truncate">{t.id === 'dashboard' ? 'Home' : t.id === 'record' ? 'Sales' : t.id === 'credit' ? 'Customers' : t.label}</span>
               {tab === t.id && <div className="w-1 h-1 rounded-full bg-primary" />}
             </button>
           ))}
