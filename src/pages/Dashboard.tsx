@@ -38,7 +38,7 @@ const VALID_TABS: Tab[] = NAV_TABS.map(tab => tab.id)
 
 const resolveTabFromSearch = (search: string): Tab => {
   const tabParam = new URLSearchParams(search).get('tab')
-  return tabParam && VALID_TABS.includes(tabParam as Tab) ? (tabParam as Tab) : 'record'
+  return tabParam && VALID_TABS.includes(tabParam as Tab) ? (tabParam as Tab) : 'dashboard'
 }
 
 function hexToHsl(hex: string): string | null {
