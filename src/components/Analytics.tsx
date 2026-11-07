@@ -78,7 +78,11 @@ export default function Analytics({ userId, tenantId, isAdmin }: Props) {
   const totalRevenue = monthSales.reduce((sum, s) => sum + Number(s.total_amount), 0)
   const totalQty = monthSales.reduce((sum, s) => sum + Number(s.quantity), 0)
   const totalStockCost = monthStock.reduce((sum, s) => sum + Number(s.total_cost), 0)
-  const estimatedProfit = totalRevenue - totalStockCost
+  const hasCompleteCogs = monthSales.length > 0 && monthSales.every(sale => sale.cogs_amount !== null && sale.cogs_amount !== undefined)
+  const grossProfit = hasCompleteCogs
+    ? monthSales.reduce((sum, sale) => sum + Number(sale.total_amount) - Number(sale.cogs_amount), 0)
+    : 0
+  const grossMargin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0
 
   const cashRevenue = monthSales.filter(s => s.payment_method === 'cash').reduce((s, c) => s + Number(c.total_amount), 0)
   const transferRevenue = monthSales.filter(s => s.payment_method === 'transfer').reduce((s, c) => s + Number(c.total_amount), 0)
@@ -163,7 +167,7 @@ export default function Analytics({ userId, tenantId, isAdmin }: Props) {
           <BarChart3 className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h2 className="font-bold text-foreground text-lg">Analytics</h2>
+          <h2 className="font-bold text-foreground text-lg">Reports</h2>
           <p className="text-sm text-muted-foreground">Business performance insights</p>
         </div>
       </div>
@@ -224,8 +228,8 @@ export default function Analytics({ userId, tenantId, isAdmin }: Props) {
 
       <AnalyticsCards
         totalRevenue={totalRevenue} totalQty={totalQty}
-        totalStockCost={totalStockCost} estimatedProfit={estimatedProfit}
-        outstandingCredit={outstandingCredit}
+        totalStockCost={totalStockCost} grossProfit={grossProfit} grossMargin={grossMargin}
+        profitUnavailable={!hasCompleteCogs} outstandingCredit={outstandingCredit}
       />
 
       <AnalyticsCharts

@@ -255,7 +255,7 @@ export function SaleForm({ userId, tenantId }: Props) {
             <div className="flex flex-col gap-3 border-b pb-4">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-lg md:text-xl font-bold flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5 text-amber-600" /> Record Sales
+                  <ShoppingCart className="h-5 w-5 text-amber-600" /> Record sale
                 </h2>
               </div>
 
