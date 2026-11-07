@@ -27,7 +27,7 @@ const Analytics = lazy(() => import('@/components/Analytics'))
 
 const NAV_TABS = [
   { id: 'dashboard' as Tab, label: 'Dashboard', icon: BarChart3, perm: null },
-  { id: 'dashboard' as Tab, label: 'New sale', icon: NotebookPen, perm: 'can_record_sales' as const },
+  { id: 'record' as Tab, label: 'New sale', icon: NotebookPen, perm: 'can_record_sales' as const },
   { id: 'history' as Tab, label: 'Sales history', icon: History, perm: 'can_view_history' as const },
   { id: 'stock' as Tab, label: 'Inventory', icon: Package, perm: 'can_view_stock' as const },
   { id: 'credit' as Tab, label: 'Customers', icon: CreditCard, perm: 'can_manage_credit' as const },
@@ -83,7 +83,7 @@ export default function Dashboard() {
   const navigate = useNavigate()
 
   const [tab, setTab] = useState<Tab>(() => {
-    if (typeof window === 'undefined') return 'record'
+    if (typeof window === 'undefined') return 'dashboard'
     return resolveTabFromSearch(window.location.search)
   })
   const [animKey, setAnimKey] = useState(0)
@@ -276,7 +276,15 @@ export default function Dashboard() {
           ))}
         </nav>
         <div className="border-t border-border p-4">
-          <div className="flex items-center gap-2 rounded-xl bg-muted/70 p-3">
+          <button
+            type="button"
+            onClick={() => setShowMenu(true)}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <Settings size={18} />
+            <span>Settings</span>
+          </button>
+          <div className="mt-2 flex items-center gap-2 rounded-xl bg-muted/70 p-3">
             <span className={`h-2 w-2 rounded-full ${online ? 'bg-emerald-500' : 'bg-destructive'}`} />
             <span className="text-xs font-medium text-muted-foreground">{online ? 'Connected' : 'Offline mode'}</span>
             {!online && queuedCount > 0 && <span className="ml-auto text-xs font-semibold text-destructive">{queuedCount} queued</span>}
