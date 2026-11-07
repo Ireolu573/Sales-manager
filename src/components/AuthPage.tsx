@@ -101,7 +101,7 @@ export default function AuthPage({ company }: Props) {
       <div className="w-full max-w-md">
         <div className="text-center mb-8 slide-up">
           <div className="flex justify-center mb-3"><AgriLedgerLogo size={64} /></div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">{company.company_name}</h1>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">{mode === 'login' ? 'Welcome back' : 'Create your account'}</h1>
           <p className="text-muted-foreground text-sm mt-1">{mode === 'login' ? 'Log in to manage your stock, sales and customer credit.' : 'Start managing your farm inventory and sales today.'}</p>
         </div>
 
