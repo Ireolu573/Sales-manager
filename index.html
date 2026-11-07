@@ -1,28 +1,709 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<title>AgriLedger | Sales, Stock and Credit for Farm Shops</title>
+<meta name="description" content="Record sales, track stock and manage customer credit for Nigerian farm and feed shops with AgriLedger." />
+<meta name="theme-color" content="#ffffff" />
+</head><body>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Concept: the AgriLedger app's own palette (navy, white, leaf green) as a light, editorial product site.
+   Hero = desktop window + phone + live notification chips. Problem = notebook vs ledger. Platform = tabbed phone showcase. Big-screen band = navy. */
+:root{
+  --navy:#0f172a; --navy2:#1e293b; --bg:#f8fafc; --white:#ffffff; --line:#e2e8f0; --border:#cbd5e1;
+  --muted:#475569; --soft:#64748b; --green:#16a34a; --green-d:#15803d; --leaf:#4ade80; --green-soft:#dcfce7;
+  --ok-bg:#dcfce7; --ok:#166534; --warn-bg:#fef3c7; --warn:#92400e; --bad-bg:#fee2e2; --bad:#991b1b;
+  --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --ui:'Inter','Segoe UI',system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:92px}
+body{background:var(--bg);color:var(--navy);font-family:var(--ui);font-size:17px;line-height:1.6;overflow-x:hidden;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--white)}
+a{color:inherit;text-decoration:none}
+h1,h2,h3,h4,h5{font-family:var(--display);margin:0;letter-spacing:-.02em;text-wrap:balance}
+p{margin:0}
+.wrap{max-width:1240px;margin-inline:auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--green-d)}
+.eyebrow::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--green);transform:rotate(45deg)}
+svg.i{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:56px;padding:0 30px;border-radius:28px;font-weight:600;font-size:16px;border:1px solid transparent;cursor:pointer;font-family:inherit;transition:transform .15s,background .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-1px)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--green);outline-offset:3px}
+.btn-p{background:var(--navy);color:#fff}
+.btn-p:hover{background:var(--navy2);box-shadow:0 10px 24px rgba(15,23,42,.22)}
+.btn-s{background:var(--line);color:var(--navy)}
+.btn-s:hover{background:var(--border)}
+.btn-g{background:var(--green);color:#fff}
+.btn-g:hover{background:var(--green-d)}
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>AgriLedger</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/svg+xml" href="/agriledger-icon.svg">
-  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
-  <link rel="apple-touch-icon" href="/icon-192.png">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="AgriLedger">
-  <meta name="theme-color" content="#0b0f17">
-  <link rel="manifest" href="/manifest.json">
-</head>
+/* header */
+header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+header.site .wrap{display:flex;align-items:center;justify-content:space-between;height:78px;gap:20px}
+.brand{display:flex;align-items:center;gap:11px;font-family:var(--display);font-weight:800;font-size:25px;letter-spacing:-.02em}
+.brand b{color:var(--green)}
+nav.main{display:flex;gap:4px}
+nav.main a{padding:8px 15px;font-weight:600;font-size:15px;color:var(--muted);border-radius:18px}
+nav.main a:hover{background:var(--bg);color:var(--navy)}
+.nav-cta{display:flex;align-items:center;gap:14px}
+.nav-cta .login{font-weight:600;font-size:15px;padding:8px 6px}
+.nav-cta .btn{height:46px;padding:0 24px;font-size:15px}
+.burger{display:none;width:46px;height:46px;border-radius:23px;border:1px solid var(--border);background:var(--white);color:var(--navy);align-items:center;justify-content:center;font-size:22px;cursor:pointer}
+header.site .drawer{display:none}
 
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
-</body>
+/* hero */
+.hero{background:radial-gradient(700px 460px at 85% 20%,rgba(74,222,128,.22),transparent 70%),linear-gradient(var(--white),var(--bg));border-bottom:1px solid var(--line)}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:56px;align-items:center;padding-block:76px 84px}
+.hero h1{font-size:clamp(44px,5.6vw,80px);line-height:1;font-weight:800;margin-top:22px}
+.hero h1 mark{background:none;color:var(--navy);background-image:linear-gradient(transparent 62%,var(--leaf) 62%,var(--leaf) 92%,transparent 92%);padding:0 .04em}
+.hero .lead{margin-top:26px;font-size:19px;color:var(--muted);max-width:30em}
+.hero .cta{display:flex;flex-wrap:wrap;gap:14px;margin-top:34px}
+.checks{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:30px;color:var(--muted);font-weight:500;font-size:15px}
+.checks span{display:inline-flex;align-items:center;gap:8px}
+.checks svg{width:20px;height:20px;padding:3px;border-radius:10px;background:var(--green-soft);color:var(--green-d);stroke-width:3}
+.hs{position:relative;padding-bottom:70px}
+.hs .browser{width:94%}
+.hs .ph{position:absolute;right:-4px;bottom:0;transform:scale(.78);transform-origin:bottom right}
+.chip{position:absolute;z-index:5;background:var(--white);border:1px solid var(--line);border-radius:16px;padding:11px 14px;box-shadow:0 16px 36px rgba(15,23,42,.14);display:flex;align-items:center;gap:11px;font-size:13px;line-height:1.3}
+.chip .d{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex:none}
+.chip b{display:block;font-size:13px}
+.chip span{color:var(--muted);font-size:12px}
+.hs .chip.c1{top:-22px;right:auto;left:30%}
+.chip.c1 .d{background:var(--green-soft);color:var(--green-d)}
+.chip.c2{left:-26px;bottom:20px}
+.chip.c2 .d{background:var(--bad-bg);color:var(--bad)}
 
-</html>
+/* units strip */
+.units{background:var(--navy);color:#fff}
+.units .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px 28px;padding-block:26px}
+.units p{font-weight:600;color:#cbd5e1;font-size:15px}
+.units ul{display:flex;flex-wrap:wrap;gap:10px;list-style:none;margin:0;padding:0}
+.units li{padding:7px 18px;border-radius:20px;border:1px solid #334155;font-weight:600;font-size:14px}
+.units li b{color:var(--leaf);font-weight:700}
+
+/* sections */
+section.band{padding-block:110px}
+.sec-h{max-width:800px;display:flex;flex-direction:column;gap:18px;align-items:flex-start}
+.sec-h h2{font-size:clamp(32px,4.2vw,54px);line-height:1.05;font-weight:800}
+.sec-h p{font-size:18px;color:var(--muted);max-width:38em}
+.center{margin-inline:auto;text-align:center;align-items:center}
+
+/* problem */
+.prob .cmp{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:56px;align-items:stretch}
+.nb{position:relative;background:#fffdf6;border:1px solid #e9e2c6;border-radius:6px 18px 18px 6px;padding:26px 26px 26px 66px;box-shadow:0 18px 40px rgba(15,23,42,.08);transform:rotate(-1.2deg);
+  background-image:repeating-linear-gradient(transparent,transparent 35px,#cfe0ee 35px,#cfe0ee 36px)}
+.nb::before{content:"";position:absolute;left:44px;top:0;bottom:0;width:2px;background:#f0a8a8}
+.nb h5{font-family:'Caveat',cursive;font-size:26px;font-weight:600;color:#1e3a8a;line-height:36px;margin:0}
+.nb p{font-family:'Caveat',cursive;font-size:24px;line-height:36px;color:#1e3a8a;font-weight:500}
+.nb s{color:#7f1d1d;text-decoration-thickness:2px}
+.nb .q{color:#b91c1c}
+.nb .tag{position:absolute;top:-14px;right:22px;background:var(--bad-bg);color:var(--bad);font:700 12px var(--ui);letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;border-radius:12px;transform:rotate(2deg)}
+.lg{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:26px;box-shadow:0 18px 40px rgba(15,23,42,.08);position:relative}
+.lg .tag{position:absolute;top:-14px;right:22px;background:var(--green-soft);color:var(--ok);font:700 12px var(--ui);letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;border-radius:12px}
+.lg h5{font-size:20px;margin-bottom:6px;font-weight:700}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 0;border-top:1px solid var(--line);font-size:15px}
+.row:first-of-type{border-top:0}
+.row b{display:block;font-weight:600}
+.row small{color:var(--muted);font-size:13px}
+.pill{display:inline-block;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill.g{background:var(--ok-bg);color:var(--ok)}.pill.a{background:var(--warn-bg);color:var(--warn)}.pill.r{background:var(--bad-bg);color:var(--bad)}
+.pains{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:44px}
+.pain{border-top:2px solid var(--navy);padding-top:18px}
+.pain h3{font-size:21px;font-weight:700;margin-bottom:6px}
+.pain p{color:var(--muted);font-size:16px}
+
+/* platform tabs */
+.platform{background:var(--white);border-block:1px solid var(--line)}
+.tabs-bar{display:flex;flex-wrap:wrap;gap:8px;margin-top:40px}
+.tabs-bar button{height:46px;padding:0 22px;border-radius:23px;border:1px solid var(--border);background:var(--white);font:600 15px var(--ui);color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.tabs-bar button:hover{border-color:var(--navy);color:var(--navy)}
+.tabs-bar button[aria-selected="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.panel{display:none;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px;align-items:center;margin-top:44px;background:var(--bg);border:1px solid var(--line);border-radius:28px;padding:48px}
+.panel.on{display:grid}
+.panel h3{font-size:clamp(28px,3.2vw,40px);font-weight:800;line-height:1.08}
+.panel > div:first-child > p{margin-top:14px;color:var(--muted);font-size:18px}
+.panel ul{list-style:none;margin:24px 0 0;padding:0;display:flex;flex-direction:column;gap:12px}
+.panel li{display:flex;gap:12px;align-items:flex-start;font-weight:500}
+.panel li svg{width:22px;height:22px;padding:4px;border-radius:11px;background:var(--green-soft);color:var(--green-d);stroke-width:3;margin-top:2px}
+.vis{position:relative;display:flex;justify-content:center;min-height:580px}
+.vis .chip.c1{top:40px;right:-6px}
+.vis .chip.c2{left:-10px;bottom:70px}
+.wa{position:absolute;right:-6px;bottom:50px;z-index:5;width:250px;background:#dcf8c6;border-radius:14px 14px 4px 14px;padding:10px 13px;font-size:12.5px;line-height:1.4;color:#14301f;box-shadow:0 16px 36px rgba(15,23,42,.16)}
+.wa small{display:block;text-align:right;color:#4b6b57;font-size:11px;margin-top:3px}
+
+/* phone + app ui */
+.ph{width:270px;height:560px;border-radius:44px;background:#0b0f14;padding:9px;border:2px solid #334155;box-shadow:0 30px 60px rgba(15,23,42,.35);flex:none}
+.scr{width:100%;height:100%;border-radius:36px;background:var(--bg);color:var(--navy);overflow:hidden;position:relative;display:flex;flex-direction:column;font-size:11px;line-height:1.35;font-family:var(--ui)}
+.scr .sb{height:30px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-weight:700;font-size:10px}
+.scr .sb em{width:70px;height:16px;border-radius:8px;background:#0b0f14;font-style:normal}
+.scr .pad{padding:6px 14px 0;display:flex;flex-direction:column;gap:10px;flex:1;min-height:0}
+.scr h4{font-size:17px;font-weight:700}
+.scr .sub{color:var(--muted);font-size:10.5px}
+.pc{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.pn{background:var(--navy);color:#fff;border-radius:14px;padding:12px 14px}
+.pn small{color:#cbd5e1;font-size:10px;display:block}
+.pn strong{font-family:var(--display);font-size:22px;display:block;line-height:1.2}
+.pn span{color:#86efac;font-size:10px;font-weight:600}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.two .pc small{color:var(--muted);font-size:10px;display:block}
+.two .pc strong{font-size:14px;display:block}
+.bars{display:flex;align-items:flex-end;justify-content:space-between;height:62px;padding:0 4px}
+.bars i{width:14%;border-radius:4px;background:var(--border);display:block}
+.bars i.t{background:var(--navy)}
+.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li b{font-weight:700;display:block;font-size:11px}
+.li span{color:var(--muted);font-size:10px}
+.scr .pill{font-size:9.5px;padding:2px 8px;border-radius:9px}
+.tabsb{height:50px;flex:none;border-top:1px solid var(--line);background:var(--white);display:flex;align-items:center;justify-content:space-around;color:var(--muted);font-size:9px;font-weight:600}
+.tabsb div{display:flex;flex-direction:column;align-items:center;gap:2px}
+.tabsb div.on{color:var(--navy)}
+.tabsb svg{width:17px;height:17px}
+.pbtn{height:36px;border-radius:18px;background:var(--navy);color:#fff;font-weight:600;font-size:12px;display:flex;align-items:center;justify-content:center}
+.chips{display:flex;gap:6px}
+.chips span{padding:4px 10px;border-radius:12px;background:var(--line);font-weight:600;font-size:10px}
+.chips span.on{background:var(--navy);color:#fff}
+
+/* browser + desktop ui */
+.browser{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--white);box-shadow:0 30px 70px rgba(15,23,42,.22)}
+.bchrome{height:34px;background:#e8edf3;display:flex;align-items:center;gap:7px;padding:0 14px}
+.bchrome i{width:10px;height:10px;border-radius:5px;background:var(--border);display:block}
+.bchrome span{margin-left:12px;height:20px;border-radius:10px;background:var(--white);color:var(--muted);font-size:11px;padding:0 14px;display:flex;align-items:center;flex:1;max-width:320px}
+.fitwrap{overflow:hidden;position:relative;background:var(--bg)}
+.fitinner{width:900px;transform-origin:top left;display:flex;color:var(--navy);font-size:12px;line-height:1.35;font-family:var(--ui)}
+.dsb{width:170px;flex:none;background:var(--white);border-right:1px solid var(--line);padding:16px 10px;display:flex;flex-direction:column;gap:2px}
+.dsb .lgo{display:flex;align-items:center;gap:7px;font-family:var(--display);font-weight:800;font-size:15px;padding:0 6px 14px}
+.dsb .n{height:32px;border-radius:8px;padding:0 10px;display:flex;align-items:center;gap:8px;font-weight:600;color:var(--muted)}
+.dsb .n.on{background:#eef2f7;color:var(--navy);font-weight:700}
+.dmain{flex:1;min-width:0}
+.dtop{height:52px;background:var(--white);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.dtop h4{font-size:16px}
+.dtop .b{height:30px;border-radius:15px;padding:0 14px;background:var(--navy);color:#fff;font-weight:600;display:flex;align-items:center}
+.dc{padding:16px 20px 20px;display:flex;flex-direction:column;gap:12px}
+.dk{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.dk div{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.dk div.nv{background:var(--navy);border-color:var(--navy);color:#fff}
+.dk small{display:block;color:var(--muted);font-weight:600;font-size:10.5px}
+.dk div.nv small{color:#cbd5e1}
+.dk strong{font-family:var(--display);font-size:19px;display:block}
+.drow{display:grid;grid-template-columns:1.7fr 1fr;gap:10px}
+.dcard{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:12px}
+.dcard h5{margin:0 0 8px;font-size:12.5px}
+.dbars{display:flex;align-items:flex-end;justify-content:space-between;height:110px;padding:0 6px}
+.dbars i{width:9%;border-radius:5px;background:var(--border);display:block}
+.dbars i.t{background:var(--navy)}
+.dtab{width:100%;border-collapse:collapse;font-size:11px}
+.dtab td{padding:7px 0;border-top:1px solid var(--line)}
+.dtab tr:first-child td{border-top:0}
+.dtab td:last-child{text-align:right;font-weight:700}
+.dtab .mu{font-weight:500;color:var(--muted);text-align:left}
+.dtab .pill{font-size:10px;padding:2px 8px}
+
+/* who */
+.who .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-top:48px}
+.wc{background:var(--white);border:1px solid var(--line);border-radius:20px;padding:24px 20px;display:flex;flex-direction:column;gap:10px}
+.wc .ic{width:44px;height:44px;border-radius:12px;background:var(--bg);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--green-d)}
+.wc h3{font-size:18px;font-weight:700}
+.wc p{font-size:14.5px;color:var(--muted);line-height:1.5}
+
+/* big screen */
+.big{background:var(--navy);color:#fff}
+.big .sec-h p{color:#cbd5e1}
+.big .eyebrow{color:var(--leaf)}
+.big .eyebrow::before{background:var(--leaf)}
+.big .wrap.g{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr);gap:56px;align-items:center}
+.big .pts{display:flex;flex-direction:column;gap:22px;margin-top:34px}
+.big .pt h3{font-size:20px;font-weight:700;margin-bottom:4px}
+.big .pt p{color:#cbd5e1;font-size:16px}
+.big .browser{border-color:#334155;box-shadow:0 40px 90px rgba(0,0,0,.5)}
+
+/* steps */
+.steps .list{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:52px;counter-reset:s}
+.st{background:var(--white);border:1px solid var(--line);border-radius:22px;padding:30px;display:flex;flex-direction:column;gap:10px;position:relative}
+.st .k{width:40px;height:40px;border-radius:20px;background:var(--navy);color:#fff;font-family:var(--display);font-weight:800;display:flex;align-items:center;justify-content:center;font-size:18px}
+.st h3{font-size:24px;font-weight:700;margin-top:6px}
+.st p{color:var(--muted);font-size:16px}
+
+/* faq */
+.faq{background:var(--white);border-block:1px solid var(--line)}
+.faq .wrap.g{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:56px;align-items:start}
+details{border-top:1px solid var(--line);padding:0}
+details:last-child{border-bottom:1px solid var(--line)}
+summary{list-style:none;cursor:pointer;padding:22px 0;font-weight:600;font-size:18px;display:flex;justify-content:space-between;align-items:center;gap:16px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";width:32px;height:32px;border-radius:16px;background:var(--bg);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:500;flex:none}
+details[open] summary::after{content:"\2212";background:var(--navy);color:#fff;border-color:var(--navy)}
+details p{padding:0 48px 22px 0;color:var(--muted)}
+
+/* final */
+.final{background:linear-gradient(135deg,var(--navy) 0%,#14532d 130%);color:#fff;text-align:center}
+.final .mark{display:inline-flex;margin-bottom:22px}
+.final h2{font-size:clamp(34px,4.8vw,64px);font-weight:800;line-height:1.03;max-width:14em;margin-inline:auto}
+.final p{margin:20px auto 0;color:#cbd5e1;font-size:19px;max-width:32em}
+.final .cta{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:34px}
+.final .btn-p{background:#fff;color:var(--navy)}
+.final .btn-p:hover{background:var(--green-soft)}
+.final .btn-o{border-color:#475569;color:#fff;background:transparent}
+.final .btn-o:hover{background:rgba(255,255,255,.08)}
+
+footer.site{background:var(--white);padding-block:44px;border-top:1px solid var(--line)}
+footer.site .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:22px;align-items:center}
+footer.site nav{display:flex;flex-wrap:wrap;gap:6px 24px;color:var(--muted);font-weight:500}
+footer.site nav a:hover{color:var(--navy)}
+footer.site small{color:var(--soft);width:100%;font-size:14px}
+
+@media (max-width:1100px){
+  nav.main{display:none}
+  .burger{display:flex}
+  .nav-cta .login{display:none}
+  header.site .drawer.open{display:flex;flex-direction:column;border-top:1px solid var(--line);padding-block:8px 18px}
+  .drawer a{padding:14px 0;font-weight:600;border-bottom:1px solid var(--line)}
+  .who .grid{grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width:980px){
+  .hero .wrap{grid-template-columns:minmax(0,1fr);padding-block:48px 56px;gap:44px}
+  .hs{max-width:640px;margin-inline:auto;width:100%}
+  .panel{grid-template-columns:1fr;padding:32px 24px;gap:36px}
+  .prob .cmp,.big .wrap.g,.faq .wrap.g{grid-template-columns:1fr}
+  .pains,.steps .list{grid-template-columns:1fr}
+  section.band{padding-block:80px}
+}
+@media (max-width:640px){
+  header.site .wrap{height:68px}
+  .brand{font-size:22px}
+  .nav-cta .btn{display:none}
+  .hero .cta .btn,.final .cta .btn{width:100%}
+  .hs{padding-bottom:40px}
+  .hs .ph{transform:scale(.62)}
+  .chip.c2{display:none}
+  .hs .chip.c1{left:4%;top:-24px}
+  .vis{min-height:540px}
+  .vis .chip,.wa{display:none}
+  .who .grid{grid-template-columns:1fr 1fr}
+  .panel{padding:24px 16px;border-radius:22px}
+  .nb{padding-left:56px}
+  .nb::before{left:36px}
+  details p{padding-right:0}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn{transition:none}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="logo" viewBox="0 0 96 96"><rect width="96" height="96" rx="24" fill="#0F172A"/><path d="M48 54V38" stroke="#4ADE80" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M48 46C48 34 40 28 30 30C30 40 38 48 48 46Z" fill="#4ADE80"/><path d="M48 40C48 28 58 22 68 24C68 36 60 42 48 40Z" fill="#22C55E"/><path d="M26 64H70" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M26 75H56" stroke="#fff" stroke-opacity=".6" stroke-width="5" stroke-linecap="round" fill="none"/></symbol>
+<symbol id="logo-w" viewBox="0 0 96 96"><rect width="96" height="96" rx="24" fill="#fff"/><path d="M48 54V38" stroke="#16A34A" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M48 46C48 34 40 28 30 30C30 40 38 48 48 46Z" fill="#16A34A"/><path d="M48 40C48 28 58 22 68 24C68 36 60 42 48 40Z" fill="#15803D"/><path d="M26 64H70" stroke="#0F172A" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M26 75H56" stroke="#0F172A" stroke-opacity=".6" stroke-width="5" stroke-linecap="round" fill="none"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></symbol>
+<symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+<symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h3l2.5 12h10L21 8H7"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5c2.2.7 3.5 2.8 3.5 5.5"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18v.01"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+<symbol id="i-egg" viewBox="0 0 24 24"><path d="M12 3c4 0 7 6 7 10a7 7 0 0 1-14 0c0-4 3-10 7-10z"/></symbol>
+<symbol id="i-fish" viewBox="0 0 24 24"><path d="M2 12c4-6 11-6 16 0-5 6-12 6-16 0zM18 12l4-4v8l-4-4M7 11.5v.01"/></symbol>
+<symbol id="i-pill" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="8" rx="4" transform="rotate(-35 12 12)"/><path d="M9.5 9.5l5 5"/></symbol>
+<symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-9 6-14 15-14 0 9-5 15-14 15M5 19l8-8"/></symbol>
+<symbol id="i-wheat" viewBox="0 0 24 24"><path d="M12 22V8M12 8c-3 0-4-2-4-4 3 0 4 2 4 4zM12 8c3 0 4-2 4-4-3 0-4 2-4 4zM12 14c-3 0-4-2-4-4 3 0 4 2 4 4zM12 14c3 0 4-2 4-4-3 0-4 2-4 4z"/></symbol>
+</svg>
+
+<header class="site" id="top">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="AgriLedger home"><svg width="40" height="40"><use href="#logo"/></svg><span>Agri<b>Ledger</b></span></a>
+    <nav class="main" aria-label="Main">
+      <a href="#problem">Why AgriLedger</a><a href="#platform">Platform</a><a href="#who">Who it is for</a><a href="#how">How it works</a><a href="#faq">FAQ</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="login" href="/login">Log in</a>
+      <a class="btn btn-p" href="/register">Get started</a>
+      <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><svg class="i"><use href="#i-menu"/></svg></button>
+    </div>
+  </div>
+  <div class="wrap drawer" id="drawer"><a href="#problem">Why AgriLedger</a><a href="#platform">Platform</a><a href="#who">Who it is for</a><a href="#how">How it works</a><a href="#faq">FAQ</a><a href="/register">Get started</a></div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">Sales, stock and credit for farm shops</div>
+      <h1>Your farm shop, finally <mark>in order.</mark></h1>
+      <p class="lead">Record every sale, watch every bag on the shelf and see exactly who owes you, from your phone or the computer at the counter. No more guessing at the end of the week.</p>
+      <div class="cta">
+        <a class="btn btn-p" href="/register">Create your shop</a>
+        <a class="btn btn-s" href="#platform">See how it works</a>
+      </div>
+      <div class="checks"><span><svg class="i"><use href="#i-check"/></svg>Free to start</span><span><svg class="i"><use href="#i-check"/></svg>Phone and computer</span><span><svg class="i"><use href="#i-check"/></svg>Priced in naira</span></div>
+    </div>
+
+    <div class="hs" aria-label="AgriLedger on desktop and phone">
+      <div class="chip c1"><div class="d"><svg class="i"><use href="#i-bell"/></svg></div><div><b>Reminder sent</b><span>Alhaji Bello, ₦18,500</span></div></div>
+      <div class="browser">
+        <div class="bchrome"><i></i><i></i><i></i><span>app.agriledger.ng</span></div>
+        <div class="fitwrap"><div class="fitinner">
+          <div class="dsb">
+            <div class="lgo"><svg width="24" height="24"><use href="#logo"/></svg>AgriLedger</div>
+            <div class="n on"><svg class="i"><use href="#i-grid"/></svg>Dashboard</div>
+            <div class="n"><svg class="i"><use href="#i-cart"/></svg>New sale</div>
+            <div class="n"><svg class="i"><use href="#i-clock"/></svg>Sales history</div>
+            <div class="n"><svg class="i"><use href="#i-box"/></svg>Inventory</div>
+            <div class="n"><svg class="i"><use href="#i-users"/></svg>Customers</div>
+            <div class="n"><svg class="i"><use href="#i-chart"/></svg>Reports</div>
+            <div class="n"><svg class="i"><use href="#i-gear"/></svg>Settings</div>
+          </div>
+          <div class="dmain">
+            <div class="dtop"><h4>Dashboard</h4><span class="b">Record sale</span></div>
+            <div class="dc">
+              <div class="dk">
+                <div class="nv"><small>Today's sales</small><strong>₦184,500</strong></div>
+                <div><small>Sales this week</small><strong>₦1,204,500</strong></div>
+                <div><small>Owed to you</small><strong>₦96,200</strong></div>
+                <div><small>Low stock</small><strong>3 items</strong></div>
+              </div>
+              <div class="drow">
+                <div class="dcard"><h5>Sales this week</h5><div class="dbars"><i style="height:38%"></i><i style="height:52%"></i><i style="height:32%"></i><i style="height:70%"></i><i style="height:60%"></i><i style="height:92%"></i><i class="t" style="height:48%"></i></div></div>
+                <div class="dcard"><h5>Low stock</h5>
+                  <table class="dtab"><tr><td>Layers mash, 50kg</td><td><span class="pill r">4 left</span></td></tr><tr><td>Broiler starter</td><td><span class="pill r">2 left</span></td></tr><tr><td>Newcastle vaccine</td><td><span class="pill a">Expires soon</span></td></tr></table>
+                </div>
+              </div>
+              <div class="dcard"><h5>Recent sales</h5>
+                <table class="dtab"><tr><td>Mama Tunde</td><td class="mu">2 bags layers mash, 2 crates chicks</td><td><span class="pill a">Part paid</span></td><td>₦79,000</td></tr><tr><td>Walk-in customer</td><td class="mu">1 bag layers mash</td><td><span class="pill g">Paid</span></td><td>₦21,000</td></tr><tr><td>Alhaji Bello</td><td class="mu">1 crate day-old chicks</td><td><span class="pill a">On credit</span></td><td>₦18,500</td></tr></table>
+              </div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="ph"><div class="scr">
+        <div class="sb"><span>9:41</span><em></em><span>100%</span></div>
+        <div class="pad">
+          <div><h4>Good morning, Deji</h4><div class="sub">Sunday, 1 November</div></div>
+          <div class="pn"><small>Today's sales</small><strong>₦184,500</strong><span>12 sales recorded</span></div>
+          <div class="two"><div class="pc"><small>Owed to you</small><strong>₦96,200</strong></div><div class="pc"><small>Low stock</small><strong style="color:var(--bad)">3 items</strong></div></div>
+          <div class="pc"><div class="bars"><i style="height:38%"></i><i style="height:52%"></i><i style="height:32%"></i><i style="height:70%"></i><i style="height:60%"></i><i style="height:92%"></i><i class="t" style="height:48%"></i></div></div>
+          <div class="pc" style="padding-block:4px">
+            <div class="li"><div><b>Mama Tunde</b><span>2 items</span></div><span class="pill a">Part paid</span></div>
+            <div class="li"><div><b>Walk-in customer</b><span>1 bag layers mash</span></div><span class="pill g">Paid</span></div>
+          </div>
+        </div>
+        <div class="tabsb"><div class="on"><svg class="i"><use href="#i-grid"/></svg>Home</div><div><svg class="i"><use href="#i-cart"/></svg>Sale</div><div><svg class="i"><use href="#i-box"/></svg>Stock</div><div><svg class="i"><use href="#i-users"/></svg>Credit</div></div>
+      </div></div>
+      <div class="chip c2"><div class="d"><svg class="i"><use href="#i-alert"/></svg></div><div><b>Layers mash is low</b><span>4 bags left</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="units" aria-label="Units">
+  <div class="wrap">
+    <p>Sell in the unit your customers ask for</p>
+    <ul><li><b>Bag</b></li><li><b>Crate</b></li><li><b>Kilogram</b></li><li><b>Head</b></li><li><b>Carton</b></li><li><b>Litre</b></li><li><b>Sachet</b></li></ul>
+  </div>
+</section>
+
+<section class="band prob" id="problem">
+  <div class="wrap">
+    <div class="sec-h">
+      <div class="eyebrow">Why AgriLedger</div>
+      <h2>The notebook worked until the shop got busy.</h2>
+      <p>Every farm shop starts with a book and a pen. Then the customers multiply, the stock grows and the book cannot keep up. AgriLedger replaces it with one record that stays correct.</p>
+    </div>
+    <div class="cmp">
+      <div class="nb" aria-label="A handwritten sales notebook">
+        <span class="tag">The notebook</span>
+        <h5>Tues. sales</h5>
+        <p>Layers mash x3 ..... 63,000</p>
+        <p>Chicks 2 crate <span class="q">??</span> ..... <s>35,000</s> 37,000</p>
+        <p>Mama T. took 2 bags, <span class="q">will pay Fri</span></p>
+        <p>Alhaji B. owes <span class="q">how much??</span></p>
+        <p>Starter finished? <span class="q">check shelf</span></p>
+        <p>Total ... <span class="q">?</span></p>
+      </div>
+      <div class="lg" aria-label="The same day in AgriLedger">
+        <span class="tag">AgriLedger</span>
+        <h5>Tuesday, recorded</h5>
+        <div class="row"><div><b>Layers mash, 50kg × 3</b><small>Walk-in customer</small></div><div style="text-align:right"><b>₦63,000</b><span class="pill g">Paid</span></div></div>
+        <div class="row"><div><b>Day-old chicks × 2 crates</b><small>Chidi Poultry Farm</small></div><div style="text-align:right"><b>₦37,000</b><span class="pill g">Paid</span></div></div>
+        <div class="row"><div><b>Layers mash × 2 bags</b><small>Mama Tunde, due Friday</small></div><div style="text-align:right"><b>₦29,000</b><span class="pill a">Owes</span></div></div>
+        <div class="row"><div><b>Broiler starter, 25kg</b><small>Stock alert</small></div><div style="text-align:right"><span class="pill r">2 bags left</span></div></div>
+        <div class="row" style="background:var(--bg);margin:6px -12px 0;padding:14px 12px;border-radius:12px;border-top:0"><b>Total for the day</b><b style="font-family:var(--display);font-size:20px">₦184,500</b></div>
+      </div>
+    </div>
+    <div class="pains">
+      <div class="pain"><h3>Sales go missing</h3><p>An entry that was never written is money you cannot see. Every sale saved in AgriLedger adds to the day's total automatically.</p></div>
+      <div class="pain"><h3>Stock ends by surprise</h3><p>Each sale reduces the count, and items running low show up on your dashboard before a customer finds the shelf empty.</p></div>
+      <div class="pain"><h3>Credit gets awkward</h3><p>Every balance has a name, an amount and a due date, so reminding a customer is a polite message and not an argument.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band platform" id="platform">
+  <div class="wrap">
+    <div class="sec-h">
+      <div class="eyebrow">The platform</div>
+      <h2>Four things you do every day, done in seconds.</h2>
+      <p>Pick a job to see how it looks in the app.</p>
+    </div>
+    <div class="tabs-bar" role="tablist" aria-label="Platform areas">
+      <button role="tab" id="t1" aria-selected="true" aria-controls="p1"><svg class="i"><use href="#i-cart"/></svg>Sell</button>
+      <button role="tab" id="t2" aria-selected="false" aria-controls="p2"><svg class="i"><use href="#i-box"/></svg>Stock</button>
+      <button role="tab" id="t3" aria-selected="false" aria-controls="p3"><svg class="i"><use href="#i-users"/></svg>Credit</button>
+      <button role="tab" id="t4" aria-selected="false" aria-controls="p4"><svg class="i"><use href="#i-chart"/></svg>Reports</button>
+    </div>
+
+    <div class="panel on" role="tabpanel" id="p1" aria-labelledby="t1">
+      <div>
+        <h3>Record a sale before the customer finishes talking.</h3>
+        <p>Choose the products, set the quantity in bags, crates or kilograms, add the customer and save. Sales history keeps every record searchable.</p>
+        <ul><li><svg class="i"><use href="#i-check"/></svg>Quantities in the unit you sell by</li><li><svg class="i"><use href="#i-check"/></svg>Paid, part paid or on credit in one step</li><li><svg class="i"><use href="#i-check"/></svg>Stock reduces automatically after every sale</li></ul>
+      </div>
+      <div class="vis">
+        <div class="ph"><div class="scr">
+          <div class="sb"><span>9:41</span><em></em><span>100%</span></div>
+          <div class="pad">
+            <h4>New sale</h4>
+            <div class="chips"><span class="on">Bag</span><span>Crate</span><span>Kg</span><span>Head</span></div>
+            <div class="pc">
+              <div class="li"><div><b>Layers mash, 50kg</b><span>₦21,000 per bag</span></div><b>2 bags</b></div>
+              <div class="li"><div><b>Day-old chicks</b><span>₦18,500 per crate</span></div><b>2 crates</b></div>
+            </div>
+            <div class="pc"><span style="color:var(--muted)">Customer</span><b style="display:block;font-size:12px">Mama Tunde</b></div>
+            <div class="pc" style="display:flex;justify-content:space-between;align-items:center"><span style="color:var(--muted)">Total</span><strong style="font-family:var(--display);font-size:18px">₦79,000</strong></div>
+            <div class="two"><div class="pc" style="text-align:center"><b>Paid ₦50,000</b></div><div class="pc" style="text-align:center;background:var(--warn-bg);color:var(--warn)"><b>Owes ₦29,000</b></div></div>
+            <div class="pbtn">Save sale</div>
+          </div>
+        </div></div>
+        <div class="chip c1"><div class="d"><svg class="i"><use href="#i-check"/></svg></div><div><b>Sale saved</b><span>₦79,000 for Mama Tunde</span></div></div>
+      </div>
+    </div>
+
+    <div class="panel" role="tabpanel" id="p2" aria-labelledby="t2">
+      <div>
+        <h3>Know what is on the shelf without counting it.</h3>
+        <p>See stock levels at a glance, add new deliveries with a restock form and keep a history of every change.</p>
+        <ul><li><svg class="i"><use href="#i-check"/></svg>Low stock and expiry warnings</li><li><svg class="i"><use href="#i-check"/></svg>Restock with supplier and cost price</li><li><svg class="i"><use href="#i-check"/></svg>Full stock history for every product</li></ul>
+      </div>
+      <div class="vis">
+        <div class="ph"><div class="scr">
+          <div class="sb"><span>9:41</span><em></em><span>100%</span></div>
+          <div class="pad">
+            <h4>Stock</h4>
+            <div class="chips"><span class="on">All</span><span>Low</span><span>Feed</span><span>Chicks</span></div>
+            <div class="pc" style="padding-block:4px">
+              <div class="li"><div><b>Layers mash, 50kg</b><span>₦21,000</span></div><span class="pill r">4 left</span></div>
+              <div class="li"><div><b>Broiler starter, 25kg</b><span>₦19,500</span></div><span class="pill r">2 left</span></div>
+              <div class="li"><div><b>Growers mash, 50kg</b><span>₦20,500</span></div><span class="pill g">38 in stock</span></div>
+              <div class="li"><div><b>Day-old chicks</b><span>₦18,500 per crate</span></div><span class="pill g">12 crates</span></div>
+              <div class="li"><div><b>Newcastle vaccine</b><span>Batch 24B</span></div><span class="pill a">Expires soon</span></div>
+            </div>
+            <div class="pbtn">Restock</div>
+          </div>
+          <div class="tabsb"><div><svg class="i"><use href="#i-grid"/></svg>Home</div><div><svg class="i"><use href="#i-cart"/></svg>Sale</div><div class="on"><svg class="i"><use href="#i-box"/></svg>Stock</div><div><svg class="i"><use href="#i-users"/></svg>Credit</div></div>
+        </div></div>
+        <div class="chip c2"><div class="d"><svg class="i"><use href="#i-alert"/></svg></div><div><b>2 items need restocking</b><span>Order before the weekend</span></div></div>
+      </div>
+    </div>
+
+    <div class="panel" role="tabpanel" id="p3" aria-labelledby="t3">
+      <div>
+        <h3>Get paid without the awkward conversation.</h3>
+        <p>Every customer has a running balance with dates. When someone is overdue, send a clear reminder with the exact amount in one tap.</p>
+        <ul><li><svg class="i"><use href="#i-check"/></svg>Total owed to you, always up to date</li><li><svg class="i"><use href="#i-check"/></svg>Overdue customers highlighted</li><li><svg class="i"><use href="#i-check"/></svg>Ready-written reminder messages</li></ul>
+      </div>
+      <div class="vis">
+        <div class="ph"><div class="scr">
+          <div class="sb"><span>9:41</span><em></em><span>100%</span></div>
+          <div class="pad">
+            <h4>Customers and credit</h4>
+            <div class="pn"><small>Total owed to you</small><strong>₦96,200</strong><span style="color:#fcd34d">5 customers</span></div>
+            <div class="pc" style="padding-block:4px">
+              <div class="li"><div><b>Alhaji Bello</b><span style="color:var(--bad);font-weight:700">Overdue by 9 days</span></div><b>₦18,500</b></div>
+              <div class="li"><div><b>Mama Tunde</b><span>Due Friday</span></div><b>₦29,000</b></div>
+              <div class="li"><div><b>Chidi Poultry Farm</b><span>Due Friday</span></div><b>₦32,700</b></div>
+              <div class="li"><div><b>Madam Ngozi</b><span>Due next week</span></div><b>₦16,000</b></div>
+            </div>
+            <div class="pbtn">Send reminder</div>
+          </div>
+          <div class="tabsb"><div><svg class="i"><use href="#i-grid"/></svg>Home</div><div><svg class="i"><use href="#i-cart"/></svg>Sale</div><div><svg class="i"><use href="#i-box"/></svg>Stock</div><div class="on"><svg class="i"><use href="#i-users"/></svg>Credit</div></div>
+        </div></div>
+        <div class="wa">Good day Alhaji Bello, this is a friendly reminder of ₦18,500 outstanding at Green Valley Feeds. Thank you.<small>Example reminder message</small></div>
+      </div>
+    </div>
+
+    <div class="panel" role="tabpanel" id="p4" aria-labelledby="t4">
+      <div>
+        <h3>See how the shop is really doing.</h3>
+        <p>Weekly and monthly totals, your best sellers and the money still outside, in a report you can read in under a minute.</p>
+        <ul><li><svg class="i"><use href="#i-check"/></svg>Sales by day, week and month</li><li><svg class="i"><use href="#i-check"/></svg>Top products by value sold</li><li><svg class="i"><use href="#i-check"/></svg>Money owed, split by customer</li></ul>
+      </div>
+      <div class="vis">
+        <div class="ph"><div class="scr">
+          <div class="sb"><span>9:41</span><em></em><span>100%</span></div>
+          <div class="pad">
+            <h4>Reports</h4>
+            <div class="chips"><span>Today</span><span class="on">Week</span><span>Month</span></div>
+            <div class="pn"><small>Sales this week</small><strong>₦1,204,500</strong><span>+8% vs last week</span></div>
+            <div class="pc"><div class="bars"><i style="height:38%"></i><i style="height:52%"></i><i style="height:32%"></i><i style="height:70%"></i><i style="height:60%"></i><i style="height:92%"></i><i class="t" style="height:48%"></i></div></div>
+            <div class="pc" style="padding-block:4px">
+              <div class="li"><div><b>Layers mash, 50kg</b><span>41 bags</span></div><b>₦861,000</b></div>
+              <div class="li"><div><b>Day-old chicks</b><span>14 crates</span></div><b>₦259,000</b></div>
+              <div class="li"><div><b>Broiler starter</b><span>4 bags</span></div><b>₦78,000</b></div>
+            </div>
+          </div>
+          <div class="tabsb"><div><svg class="i"><use href="#i-grid"/></svg>Home</div><div><svg class="i"><use href="#i-cart"/></svg>Sale</div><div><svg class="i"><use href="#i-box"/></svg>Stock</div><div class="on"><svg class="i"><use href="#i-chart"/></svg>Reports</div></div>
+        </div></div>
+        <div class="chip c1"><div class="d"><svg class="i"><use href="#i-chart"/></svg></div><div><b>Best seller this week</b><span>Layers mash, 50kg</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band who" id="who">
+  <div class="wrap">
+    <div class="sec-h">
+      <div class="eyebrow">Who it is for</div>
+      <h2>Made for the shops that feed Nigeria's farms.</h2>
+      <p>If you sell inputs to farmers and weigh, count or bag them, AgriLedger fits the way you already trade.</p>
+    </div>
+    <div class="grid">
+      <div class="wc"><div class="ic"><svg class="i"><use href="#i-wheat"/></svg></div><h3>Poultry feed</h3><p>Layers, broilers and starters sold by the bag or by the kilogram.</p></div>
+      <div class="wc"><div class="ic"><svg class="i"><use href="#i-egg"/></svg></div><h3>Day-old chicks</h3><p>Count by the crate and head, with credit for farms that pay after harvest.</p></div>
+      <div class="wc"><div class="ic"><svg class="i"><use href="#i-fish"/></svg></div><h3>Fish feed</h3><p>Track pellet sizes and bag weights for pond farmers.</p></div>
+      <div class="wc"><div class="ic"><svg class="i"><use href="#i-pill"/></svg></div><h3>Vet drugs</h3><p>Follow batches and see expiry dates before they become a loss.</p></div>
+      <div class="wc"><div class="ic"><svg class="i"><use href="#i-leaf"/></svg></div><h3>Fertiliser and agro-chemicals</h3><p>Manage seasonal stock and repeat customers with running balances.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band big">
+  <div class="wrap g">
+    <div>
+      <div class="sec-h">
+        <div class="eyebrow">On the big screen</div>
+        <h2>A proper workspace for the counter.</h2>
+        <p>On a computer, AgriLedger opens up into a full dashboard with tables, charts and a menu that is always in view.</p>
+      </div>
+      <div class="pts">
+        <div class="pt"><h3>Tables you can scan</h3><p>Sales history, inventory and customers in clear rows with status badges.</p></div>
+        <div class="pt"><h3>Everything one click away</h3><p>A fixed menu keeps selling, stock and credit a click apart.</p></div>
+        <div class="pt"><h3>The same records as your phone</h3><p>Sell on the computer, check the numbers from the farm.</p></div>
+      </div>
+    </div>
+    <div class="browser">
+      <div class="bchrome"><i></i><i></i><i></i><span>app.agriledger.ng/inventory</span></div>
+      <div class="fitwrap"><div class="fitinner">
+        <div class="dsb">
+          <div class="lgo"><svg width="24" height="24"><use href="#logo"/></svg>AgriLedger</div>
+          <div class="n"><svg class="i"><use href="#i-grid"/></svg>Dashboard</div>
+          <div class="n"><svg class="i"><use href="#i-cart"/></svg>New sale</div>
+          <div class="n"><svg class="i"><use href="#i-clock"/></svg>Sales history</div>
+          <div class="n on"><svg class="i"><use href="#i-box"/></svg>Inventory</div>
+          <div class="n"><svg class="i"><use href="#i-users"/></svg>Customers</div>
+          <div class="n"><svg class="i"><use href="#i-chart"/></svg>Reports</div>
+          <div class="n"><svg class="i"><use href="#i-gear"/></svg>Settings</div>
+        </div>
+        <div class="dmain">
+          <div class="dtop"><h4>Inventory</h4><span class="b">Add product</span></div>
+          <div class="dc">
+            <div class="dk">
+              <div><small>Products</small><strong>48</strong></div>
+              <div><small>Stock value</small><strong>₦3,480,000</strong></div>
+              <div><small>Low stock</small><strong>3 items</strong></div>
+              <div><small>Expiring soon</small><strong>1 batch</strong></div>
+            </div>
+            <div class="dcard" style="padding:4px 14px">
+              <table class="dtab">
+                <tr><td style="font-weight:700;color:var(--muted)">Product</td><td class="mu">Unit</td><td class="mu">Price</td><td style="text-align:right;color:var(--muted)">Stock</td></tr>
+                <tr><td><b>Layers mash, 50kg</b></td><td class="mu">Bag</td><td class="mu">₦21,000</td><td><span class="pill r">4 left</span></td></tr>
+                <tr><td><b>Broiler starter, 25kg</b></td><td class="mu">Bag</td><td class="mu">₦19,500</td><td><span class="pill r">2 left</span></td></tr>
+                <tr><td><b>Growers mash, 50kg</b></td><td class="mu">Bag</td><td class="mu">₦20,500</td><td><span class="pill g">38 in stock</span></td></tr>
+                <tr><td><b>Day-old chicks</b></td><td class="mu">Crate</td><td class="mu">₦18,500</td><td><span class="pill g">12 in stock</span></td></tr>
+                <tr><td><b>Fish feed, 15kg</b></td><td class="mu">Bag</td><td class="mu">₦24,000</td><td><span class="pill g">21 in stock</span></td></tr>
+                <tr><td><b>Newcastle vaccine</b></td><td class="mu">Vial</td><td class="mu">₦3,200</td><td><span class="pill a">Expires soon</span></td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<section class="band steps" id="how">
+  <div class="wrap">
+    <div class="sec-h">
+      <div class="eyebrow">How it works</div>
+      <h2>From sign-up to your first reminder in one afternoon.</h2>
+    </div>
+    <div class="list">
+      <div class="st"><div class="k">1</div><h3>Set up your shop</h3><p>Create an account with your phone number, name your shop and add your products with their units and prices.</p></div>
+      <div class="st"><div class="k">2</div><h3>Record every sale</h3><p>Tap the products, pick the customer and mark the sale paid, part paid or on credit. Your stock updates by itself.</p></div>
+      <div class="st"><div class="k">3</div><h3>Collect what you are owed</h3><p>Open Customers and credit, see who is overdue and send a polite reminder with the exact amount.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band faq" id="faq">
+  <div class="wrap g">
+    <div class="sec-h">
+      <div class="eyebrow">Questions</div>
+      <h2>Things shop owners ask first.</h2>
+      <p>Not here? Ask us once you create your account.</p>
+    </div>
+    <div>
+      <details open><summary>Can I sell in bags, crates and kilograms?</summary><p>Yes. Each product has its own unit, and you choose bag, crate, kilogram or head when you record the sale.</p></details>
+      <details><summary>What if a customer pays only part of the amount?</summary><p>Enter what was paid and AgriLedger records the rest as credit against that customer, with a due date you set.</p></details>
+      <details><summary>How do reminders work?</summary><p>Open a customer who owes you and tap Send reminder. The message is written for you with the name and amount, and you can edit it before sending.</p></details>
+      <details><summary>Does it work on a phone and a computer?</summary><p>Yes. The phone app is for quick sales and checks. The computer view adds full tables and charts for the counter.</p></details>
+      <details><summary>Can my staff use it too?</summary><p>You can manage your shop profile and team from Settings, so you stay in control of who can record sales.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="band final" id="join">
+  <div class="wrap">
+    <div class="mark"><svg width="64" height="64"><use href="#logo-w"/></svg></div>
+    <h2>Put your shop on the record.</h2>
+    <p>Create your AgriLedger account and save your first sale before the day ends.</p>
+    <div class="cta">
+      <a class="btn btn-p" href="/register">Create your shop</a>
+      <a class="btn btn-o" href="#platform">Explore the platform</a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="site" id="contact">
+  <div class="wrap">
+    <a class="brand" href="#top" style="font-size:22px"><svg width="34" height="34"><use href="#logo"/></svg><span>Agri<b>Ledger</b></span></a>
+    <nav aria-label="Footer"><a href="#problem">Why AgriLedger</a><a href="#platform">Platform</a><a href="#who">Who it is for</a><a href="#how">How it works</a><a href="#faq">FAQ</a></nav>
+    <small>© 2026 AgriLedger. Sales, stock and credit for Nigerian farm and feed shops.</small>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var b=document.getElementById('burger'),d=document.getElementById('drawer');
+  b.addEventListener('click',function(){var o=d.classList.toggle('open');b.setAttribute('aria-expanded',o?'true':'false')});
+  d.addEventListener('click',function(e){if(e.target.tagName==='A'){d.classList.remove('open');b.setAttribute('aria-expanded','false')}});
+
+  var tabs=[].slice.call(document.querySelectorAll('.tabs-bar [role=tab]'));
+  function pick(t){tabs.forEach(function(x){var on=x===t;x.setAttribute('aria-selected',on?'true':'false');document.getElementById(x.getAttribute('aria-controls')).classList.toggle('on',on)})}
+  tabs.forEach(function(t,i){
+    t.addEventListener('click',function(){pick(t)});
+    t.addEventListener('keydown',function(e){
+      if(e.key==='ArrowRight'||e.key==='ArrowLeft'){var n=tabs[(i+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length];n.focus();pick(n)}
+    });
+  });
+
+  var wraps=[].slice.call(document.querySelectorAll('.fitwrap'));
+  function fit(){wraps.forEach(function(w){var i=w.firstElementChild;var s=Math.min(1,w.clientWidth/900);i.style.transform='scale('+s+')';w.style.height=(i.offsetHeight*s)+'px'})}
+  fit();window.addEventListener('resize',fit);
+  if(window.ResizeObserver){wraps.forEach(function(w){new ResizeObserver(fit).observe(w)})}
+  if(document.fonts&&document.fonts.ready){document.fonts.ready.then(fit)}
+})();
+</script>
+
+</body></html>
