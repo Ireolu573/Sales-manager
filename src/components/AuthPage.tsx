@@ -53,6 +53,22 @@ export default function AuthPage({ company }: Props) {
     setLoading(false)
   }
 
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      setError('Enter your email address first.')
+      return
+    }
+    setLoading(true)
+    setError('')
+    setMessage('')
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: getRedirectUrl(),
+    })
+    if (error) setError(error.message)
+    else setMessage('Password reset instructions have been sent to your email.')
+    setLoading(false)
+  }
+
   const handleGoogle = async () => {
     setGoogleLoading(true)
     setError('')
@@ -70,12 +86,23 @@ export default function AuthPage({ company }: Props) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-background to-muted/30">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen grid bg-[#F8FAFC] lg:grid-cols-2">
+      <aside className="relative hidden flex-col justify-between overflow-hidden bg-[#0F172A] px-12 py-10 text-white lg:flex">
+        <div className="flex items-center gap-3"><AgriLedgerLogo size={42} /><span className="text-xl font-bold tracking-tight">AgriLedger</span></div>
+        <div className="relative z-10 max-w-lg pb-12">
+          <h2 className="text-4xl font-bold leading-tight tracking-tight">Know your stock. Know who owes you. Know your profit.</h2>
+          <p className="mt-5 max-w-md text-sm leading-6 text-slate-300">Record sales, track inventory and manage customer credit from your phone or computer.</p>
+          <ul className="mt-8 space-y-3 text-sm text-slate-200"><li>✓ Sell in bags, crates, kilograms or heads</li><li>✓ Keep customer credit under control</li><li>✓ Get low stock alerts before you run out</li></ul>
+        </div>
+        <p className="text-xs text-slate-400">© 2026 AgriLedger</p>
+        <div className="pointer-events-none absolute -bottom-32 -right-20 h-96 w-96 rounded-full border border-white/10" />
+      </aside>
+      <main className="flex min-h-screen items-center justify-center px-4 py-10 sm:px-8">
+      <div className="w-full max-w-md">
         <div className="text-center mb-8 slide-up">
           <div className="flex justify-center mb-3"><AgriLedgerLogo size={64} /></div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">{company.company_name}</h1>
-          <p className="text-muted-foreground text-sm mt-1">AgriLedger</p>
+          <p className="text-muted-foreground text-sm mt-1">{mode === 'login' ? 'Log in to manage your stock, sales and customer credit.' : 'Start managing your farm inventory and sales today.'}</p>
         </div>
 
         <Card className="slide-up border-border shadow-xl">
@@ -125,7 +152,7 @@ export default function AuthPage({ company }: Props) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password-input">Password</Label>
+                <div className="flex items-center justify-between"><Label htmlFor="password-input">Password</Label>{mode === 'login' && <button type="button" onClick={handleForgotPassword} className="text-xs font-medium text-emerald-700 hover:underline">Forgot password?</button>}</div>
                 <Input id="password-input" type="password" value={password}
                   onChange={e => setPassword(e.target.value)} required
                   placeholder="••••••••" className="border-border" />
@@ -150,6 +177,7 @@ export default function AuthPage({ company }: Props) {
           </CardContent>
         </Card>
       </div>
+      </main>
     </div>
   )
 }
