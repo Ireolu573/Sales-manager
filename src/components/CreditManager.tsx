@@ -4,7 +4,7 @@ import { getCreditSalesForTenant } from '@/lib/tenant-queries'
 import type { Sale } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { CreditCard, CheckCircle2, AlertCircle } from 'lucide-react'
+import { CreditCard, CheckCircle2, AlertCircle, MessageCircle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { SkeletonRowList } from '@/components/ui/loading-skeletons'
 import { Input } from '@/components/ui/input'
@@ -59,6 +59,18 @@ export default function CreditManager({ isAdmin, userId, tenantId }: Props) {
     } finally { setSavingPayment(null) }
   }
 
+  const sendReminder = (customer: string, balance: number) => {
+    const phone = window.prompt(`Enter ${customer}'s WhatsApp number, including country code:`)
+    if (!phone) return
+    const normalizedPhone = phone.replace(/[^0-9]/g, '')
+    if (normalizedPhone.length < 10) {
+      toast({ title: 'Enter a valid phone number.', variant: 'destructive' })
+      return
+    }
+    const message = `Hello ${customer}, this is a payment reminder from AgriLedger. Your outstanding balance is ₦${balance.toLocaleString('en-NG')}. Kindly make payment. Thank you.`
+    window.open(`https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer')
+  }
+
   const balanceFor = (sale: Sale) => Math.max(0, Number(sale.total_amount) - (payments[sale.id] || 0))
   const totalOutstanding = credits.reduce((sum, s) => sum + balanceFor(s), 0)
 
@@ -109,7 +121,7 @@ export default function CreditManager({ isAdmin, userId, tenantId }: Props) {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-semibold text-foreground">{customer}</h3>
-                    <span className="text-sm font-bold text-warning">₦{customerTotal.toLocaleString()}</span>
+                    <div className="flex items-center gap-2"><span className="text-sm font-bold text-warning">₦{customerTotal.toLocaleString()}</span><Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => sendReminder(customer, customerTotal)}><MessageCircle className="h-3.5 w-3.5" /> Remind</Button></div>
                   </div>
                   <div className="space-y-2">
                     {customerCredits.map(credit => (
