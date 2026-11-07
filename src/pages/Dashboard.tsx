@@ -24,6 +24,7 @@ const SalesTable = lazy(() => import('@/components/SalesTable'))
 const StockForm = lazy(() => import('@/components/StockForm'))
 const CreditManager = lazy(() => import('@/components/CreditManager'))
 const Analytics = lazy(() => import('@/components/Analytics'))
+const InventoryOverview = lazy(() => import('@/components/InventoryOverview'))
 
 const NAV_TABS = [
   { id: 'dashboard' as Tab, label: 'Dashboard', icon: BarChart3, perm: null },
@@ -246,7 +247,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
+    <div className="agriledger-app h-screen bg-background flex flex-col overflow-hidden">
       {/* Desktop navigation — mobile uses the bottom navigation below. */}
       <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 flex-col border-r border-border bg-card">
         <div className="flex h-20 items-center gap-3 border-b border-border px-6">
