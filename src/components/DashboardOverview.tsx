@@ -51,7 +51,16 @@ export default function DashboardOverview({ userId, tenantId, isAdmin, onSwitchT
       const owingCustomers = new Set((creditSales || [])
         .filter(sale => Number(sale.total_amount) - (paidBySale[sale.id] || 0) > 0)
         .map(sale => sale.customer_name).filter(Boolean))
-      const topOwing = (creditSales || []).map(sale => ({\n        customer: sale.customer_name || 'Walk-in customer',\n        balance: Math.max(0, Number(sale.total_amount) - (paidBySale[sale.id] || 0)),\n      })).filter(item => item.balance > 0).reduce((acc, item) => {\n        const existing = acc.find(entry => entry.customer === item.customer)\n        if (existing) existing.balance += item.balance\n        else acc.push({ ...item })\n        return acc\n      }, [] as { customer: string; balance: number }[]).sort((a, b) => b.balance - a.balance).slice(0, 4)\n      return { outstanding, customerCount: owingCustomers.size, topOwing }
+      const topOwing = (creditSales || []).map(sale => ({
+        customer: sale.customer_name || 'Walk-in customer',
+        balance: Math.max(0, Number(sale.total_amount) - (paidBySale[sale.id] || 0)),
+      })).filter(item => item.balance > 0).reduce((acc, item) => {
+        const existing = acc.find(entry => entry.customer === item.customer)
+        if (existing) existing.balance += item.balance
+        else acc.push({ ...item })
+        return acc
+      }, [] as { customer: string; balance: number }[]).sort((a, b) => b.balance - a.balance).slice(0, 4)
+      return { outstanding, customerCount: owingCustomers.size, topOwing }
     },
     enabled: !!tenantId,
     staleTime: 30_000,
