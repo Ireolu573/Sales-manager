@@ -51,7 +51,7 @@ export default function DashboardOverview({ userId, tenantId, isAdmin, onSwitchT
       const owingCustomers = new Set((creditSales || [])
         .filter(sale => Number(sale.total_amount) - (paidBySale[sale.id] || 0) > 0)
         .map(sale => sale.customer_name).filter(Boolean))
-      return { outstanding, customerCount: owingCustomers.size }
+      const topOwing = (creditSales || []).map(sale => ({\n        customer: sale.customer_name || 'Walk-in customer',\n        balance: Math.max(0, Number(sale.total_amount) - (paidBySale[sale.id] || 0)),\n      })).filter(item => item.balance > 0).reduce((acc, item) => {\n        const existing = acc.find(entry => entry.customer === item.customer)\n        if (existing) existing.balance += item.balance\n        else acc.push({ ...item })\n        return acc\n      }, [] as { customer: string; balance: number }[]).sort((a, b) => b.balance - a.balance).slice(0, 4)\n      return { outstanding, customerCount: owingCustomers.size, topOwing }
     },
     enabled: !!tenantId,
     staleTime: 30_000,
@@ -156,6 +156,35 @@ export default function DashboardOverview({ userId, tenantId, isAdmin, onSwitchT
                 </div>
               ))}
             </div>}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <Card>
+          <CardContent className="p-5">
+            <div className="mb-4"><h2 className="font-semibold">Customers who owe you</h2><p className="mt-1 text-xs text-muted-foreground">Largest outstanding balances</p></div>
+            {!creditData?.topOwing?.length ? <p className="py-5 text-sm text-muted-foreground">No outstanding customer balances.</p> : (
+              <div className="divide-y divide-border">
+                {creditData.topOwing.map((customer: { customer: string; balance: number }) => (
+                  <div key={customer.customer} className="flex items-center justify-between gap-3 py-3">
+                    <span className="truncate text-sm font-medium">{customer.customer}</span>
+                    <span className="shrink-0 text-sm font-semibold text-amber-700">₦{customer.balance.toLocaleString('en-NG')}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <Button variant="ghost" size="sm" onClick={() => onSwitchTab('credit')} className="mt-2 px-0">View customers <ArrowUpRight className="ml-1 h-3 w-3" /></Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <div className="mb-4"><h2 className="font-semibold">Decision support</h2><p className="mt-1 text-xs text-muted-foreground">Items that need attention</p></div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">Low or out of stock</span><span className="text-sm font-semibold">{lowStockCount}</span></div>
+              <div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">Customers with balances</span><span className="text-sm font-semibold">{creditData?.customerCount || 0}</span></div>
+              <div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">Sales recorded today</span><span className="text-sm font-semibold">{todaySales.length}</span></div>
+            </div>
           </CardContent>
         </Card>
       </div>
