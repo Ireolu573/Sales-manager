@@ -24,7 +24,7 @@ function getRedirectUrl() {
 }
 
 export default function AuthPage({ company }: Props) {
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [mode, setMode] = useState<'login' | 'signup'>(() => window.location.pathname === '/register' ? 'signup' : 'login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
