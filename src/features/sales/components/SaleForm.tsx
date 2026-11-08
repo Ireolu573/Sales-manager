@@ -263,24 +263,25 @@ export function SaleForm({ userId, tenantId }: Props) {
         <CardContent className="p-4 md:p-7">
           <form onSubmit={handleSubmit} className="space-y-6 md:space-y-7">
             <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg md:text-xl font-bold flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5 text-amber-600" /> Record sale
+              <div>
+                <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900 md:text-xl">
+                  <ShoppingCart className="h-5 w-5 text-emerald-700" /> Transaction details
                 </h2>
+                <p className="mt-1 text-sm text-slate-500">Choose one product or add multiple items to this transaction.</p>
               </div>
 
               <div className="flex w-full items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1 text-xs font-semibold sm:w-64">
                 <button
                   type="button"
                   onClick={() => setMode('single')}
-                  className={`flex-1 px-3 py-2 rounded-lg transition-all ${mode === 'single' ? 'bg-background text-foreground shadow-sm ring-1 ring-border' : 'text-muted-foreground'}`}
+                  className={`flex-1 rounded-lg px-3 py-2.5 transition-all ${mode === 'single' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'}`}
                 >
                   <Zap className="h-3.5 w-3.5 inline mr-1" /> Single
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode('bulk')}
-                  className={`flex-1 px-3 py-2 rounded-lg transition-all ${mode === 'bulk' ? 'bg-background text-foreground shadow-sm ring-1 ring-border' : 'text-muted-foreground'}`}
+                  className={`flex-1 rounded-lg px-3 py-2.5 transition-all ${mode === 'bulk' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'}`}
                 >
                   <Package className="h-3.5 w-3.5 inline mr-1" /> Multi
                 </button>
