@@ -275,10 +275,16 @@ body { background: hsl(var(--background)); }
 .agriledger-app main {
   scrollbar-gutter: stable;
 }
-.agriledger-app main > div > .slide-up {
+.agriledger-app main > .slide-up {
   width: 100%;
-  max-width: 1440px;
-  margin-inline: auto;
+  max-width: none;
+  min-width: 0;
+}
+
+/* Keep each workspace aligned to the full desktop content area. */
+.agriledger-app main > .slide-up > * {
+  width: 100%;
+  min-width: 0;
 }
 .agriledger-app [data-slot="card"],
 .agriledger-app .rounded-xl.border,
