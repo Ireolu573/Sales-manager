@@ -285,8 +285,9 @@ export default function Dashboard() {
         <div className="border-t border-border p-4">
           <button
             type="button"
-            onClick={() => setShowMenu(true)}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            onClick={() => isAdmin ? setShowDC(true) : setShowMenu(true)}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Open settings"
           >
             <Settings size={18} />
             <span>Settings</span>
@@ -399,12 +400,14 @@ export default function Dashboard() {
             <button
               key={t.id}
               onClick={() => switchTab(t.id)}
-              className={`flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl transition-all duration-200 min-w-0 flex-1 active:scale-95 ${
-                tab === t.id ? 'text-primary scale-105' : 'text-muted-foreground opacity-60 hover:opacity-80'
+              aria-current={tab === t.id ? 'page' : undefined}
+              aria-label={t.label}
+              className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl px-2 py-2 transition-colors active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                tab === t.id ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <t.icon size={20} strokeWidth={tab === t.id ? 2.25 : 2} />
-              <span className="text-xs font-medium truncate">{t.id === 'dashboard' ? 'Home' : t.id === 'record' ? 'Sales' : t.id === 'credit' ? 'Customers' : t.label}</span>
+              <span className="max-w-full truncate text-[11px] font-semibold">{t.id === 'dashboard' ? 'Home' : t.id === 'record' ? 'Sales' : t.id === 'credit' ? 'Customers' : t.label}</span>
               {tab === t.id && <div className="w-1 h-1 rounded-full bg-primary" />}
             </button>
           ))}
