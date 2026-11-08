@@ -246,7 +246,7 @@ export function SaleForm({ userId, tenantId }: Props) {
   const bulkTotal = lineItems.reduce((acc, i) => acc + (Number(i.quantity) * Number(i.unitPrice) || 0), 0)
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 md:space-y-7">
+    <div className="mx-auto w-full max-w-[1600px] space-y-6 md:space-y-7">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Sales workspace</p>
