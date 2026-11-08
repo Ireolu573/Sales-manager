@@ -34,6 +34,7 @@ export default function DashboardOverview({ userId, tenantId, permissions, onSwi
     refetch: refetchStock,
   } = useStock(tenantId)
 
+
   // Sales dashboard metrics are personal, including for administrators.
   const {
     data: sales = [],
@@ -43,13 +44,28 @@ export default function DashboardOverview({ userId, tenantId, permissions, onSwi
   } = useQuery({
     queryKey: ['dashboard-sales', tenantId, userId],
     queryFn: async () => {
-      const { data, error } = await supabase.from('sales').select('*')
-        .eq('tenant_id', tenantId)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(300)
-      if (error) throw error
-      return (data || []) as Sale[]
+      const rows: Sale[] = []
+      const pageSize = 1000
+      let from = 0
+
+      // The dashboard only needs this week's transactions. Fetch every page
+      // so high-volume weeks never silently lose sales after the first 300 rows.
+      while (true) {
+        const { data, error } = await supabase.from('sales').select('*')
+          .eq('tenant_id', tenantId)
+          .eq('user_id', userId)
+          .gte('created_at', startOfWeek.toISOString())
+          .order('created_at', { ascending: false })
+          .range(from, from + pageSize - 1)
+        if (error) throw error
+
+        const page = (data || []) as Sale[]
+        rows.push(...page)
+        if (page.length < pageSize) break
+        from += pageSize
+      }
+
+      return rows
     },
     enabled: !!tenantId && !!userId,
     staleTime: 30_000,
