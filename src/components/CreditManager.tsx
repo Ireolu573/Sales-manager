@@ -91,7 +91,7 @@ export default function CreditManager({ isAdmin, userId, tenantId }: Props) {
   const paidTotal = credits.reduce((sum, sale) => sum + Math.min(Number(sale.total_amount), payments[sale.id] || 0), 0)
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 pb-8">
+    <div className="mx-auto w-full max-w-none space-y-6 pb-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Relationship management</p>
