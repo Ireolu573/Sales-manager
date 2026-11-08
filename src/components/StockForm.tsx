@@ -97,21 +97,22 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-          <Package className="w-5 h-5 text-primary" />
-        </div>
+    <div className="mx-auto w-full max-w-6xl space-y-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="font-bold text-foreground text-lg">Inventory</h2>
-          <p className="text-sm text-muted-foreground">Track inventory purchases</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Inventory workspace</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">Stock management</h1>
+          <p className="mt-1 text-sm text-slate-500">Record incoming stock, track purchase costs and review recent entries.</p>
+        </div>
+        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600">
+          <Package className="h-3.5 w-3.5 text-emerald-700" /> Inventory records
         </div>
       </div>
 
       {isAdmin && (
-        <Card className="border-border/50 shadow-sm">
-          <CardContent className="p-5">
-            <form onSubmit={handleSubmit} className="space-y-4">
+        <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <CardContent className="p-4 md:p-7">
+            <div className="mb-5 border-b border-slate-200 pb-4"><h2 className="text-lg font-bold text-slate-900">Record incoming stock</h2><p className="mt-1 text-sm text-slate-500">Enter the product, quantity and cost details for this delivery.</p></div><form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label>Product</Label>
                 <Select value={productId} onValueChange={handleProductChange}>
@@ -141,7 +142,7 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Quantity</Label>
                   <Input type="number" min="1" value={quantity} onChange={e => setQuantity(e.target.value)} placeholder="0" required />
@@ -153,7 +154,7 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
               </div>
 
               {totalCost > 0 && (
-                <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 text-center">
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4">
                   <span className="text-sm text-muted-foreground">Total Cost: </span>
                   <span className="text-xl font-bold text-primary">₦{totalCost.toLocaleString()}</span>
                 </div>
@@ -169,7 +170,7 @@ export default function StockForm({ userId, tenantId, isAdmin }: Props) {
                 <Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="e.g. supplier name, batch info" />
               </div>
 
-              <Button type="submit" disabled={loading || !productId || !quantity || !costPrice} className="w-full h-11 gap-2 font-semibold">
+              <Button type="submit" disabled={loading || !productId || !quantity || !costPrice} className="h-12 w-full gap-2 rounded-xl bg-emerald-700 font-semibold text-white hover:bg-emerald-800">
                 <PlusCircle className="w-4 h-4" />
                 {loading ? 'Recording...' : 'Add Stock'}
               </Button>
