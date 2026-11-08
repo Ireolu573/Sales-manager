@@ -191,6 +191,7 @@ export default function SalesTable({ userId, tenantId, isAdmin }: Props) {
           <Input value={search} onChange={e => setSearch(e.target.value)}
             placeholder={isAdmin ? 'Search item, customer, or staff…' : 'Search item or customer…'}
             className="h-11 rounded-xl border-slate-200 bg-slate-50 pl-10 focus-visible:bg-white" />
+        </div>
       </div>
 
       {/* Payment pills + date filter button */}
@@ -201,7 +202,7 @@ export default function SalesTable({ userId, tenantId, isAdmin }: Props) {
             return (
               <button key={opt} onClick={() => setFilter(opt)}
                 className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
-                  filter === opt ? 'bg-primary text-primary-foreground border-primary shadow-sm' : 'bg-background text-muted-foreground border-border hover:border-primary/40'
+                  filter === opt ? 'border-emerald-700 bg-emerald-700 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-800'
                 }`}>
                 {OptIcon && <OptIcon className="w-3.5 h-3.5" />}{opt}
               </button>
