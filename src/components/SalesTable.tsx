@@ -150,43 +150,47 @@ export default function SalesTable({ userId, tenantId, isAdmin }: Props) {
   const grouped = useMemo(() => groupByDate(filtered), [filtered])
 
   return (
-    <div className="space-y-4">
-
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-          <FileText className="w-5 h-5 text-primary" />
-        </div>
+    <div className="mx-auto w-full max-w-6xl space-y-6 pb-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="font-bold text-foreground text-lg">Sales History</h2>
-          <p className="text-sm text-muted-foreground">{sales.length} records total</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Transaction records</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">Sales history</h1>
+          <p className="mt-1 text-sm text-slate-500">Review, search and manage recorded business transactions.</p>
+        </div>
+        <div className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600">
+          <FileText className="h-3.5 w-3.5 text-emerald-700" /> {sales.length.toLocaleString()} records loaded
         </div>
       </div>
 
-      {!loading && sales.length > 0 && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-primary/5 border border-primary/15 rounded-xl p-3">
-            <div className="flex items-center gap-1.5 mb-1">
-              <TrendingUp className="w-3.5 h-3.5 text-primary" />
-              <span className="text-xs text-muted-foreground font-medium">Today</span>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <CardContent className="flex items-center justify-between p-4 md:p-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Today's sales</p>
+              <p className="mt-2 text-2xl font-bold tabular-nums text-slate-900">₦{todayRevenue.toLocaleString('en-NG')}</p>
+              <p className="mt-1 text-xs text-slate-500">Revenue recorded today</p>
             </div>
-            <div className="font-bold text-foreground text-base">₦{todayRevenue.toLocaleString()}</div>
-          </div>
-          <div className="bg-muted/60 border border-border/50 rounded-xl p-3">
-            <div className="mb-1">
-              <span className="text-xs text-muted-foreground font-medium">
-                {hasDateFilter ? 'Filtered' : filter === 'All' ? 'Showing' : filter} total
-              </span>
+            <div className="rounded-xl bg-emerald-50 p-3 text-emerald-700"><TrendingUp className="h-5 w-5" /></div>
+          </CardContent>
+        </Card>
+        <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <CardContent className="flex items-center justify-between p-4 md:p-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{hasDateFilter ? 'Filtered revenue' : filter === 'All' ? 'Total shown' : filter + ' revenue'}</p>
+              <p className="mt-2 text-2xl font-bold tabular-nums text-slate-900">₦{totalRevenue.toLocaleString('en-NG')}</p>
+              <p className="mt-1 text-xs text-slate-500">{filtered.length.toLocaleString()} matching transactions</p>
             </div>
-            <div className="font-bold text-foreground text-base">₦{totalRevenue.toLocaleString()}</div>
-          </div>
-        </div>
-      )}
+            <div className="rounded-xl bg-slate-100 p-3 text-slate-700"><FileText className="h-5 w-5" /></div>
+          </CardContent>
+        </Card>
+      </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input value={search} onChange={e => setSearch(e.target.value)}
-          placeholder={isAdmin ? 'Search item, customer, or staff…' : 'Search item or customer…'}
-          className="pl-10" />
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center md:p-4">
+        <div className="relative min-w-0 flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Input value={search} onChange={e => setSearch(e.target.value)}
+            placeholder={isAdmin ? 'Search item, customer, or staff…' : 'Search item or customer…'}
+            className="h-11 rounded-xl border-slate-200 bg-slate-50 pl-10 focus-visible:bg-white" />
       </div>
 
       {/* Payment pills + date filter button */}
@@ -215,7 +219,7 @@ export default function SalesTable({ userId, tenantId, isAdmin }: Props) {
 
       {/* Date/time filter panel */}
       {showDateFilter && (
-        <div className="bg-muted/40 border border-border/60 rounded-xl p-4 space-y-3">
+        <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Filter by Date & Time</span>
             {hasDateFilter && (
@@ -283,7 +287,7 @@ export default function SalesTable({ userId, tenantId, isAdmin }: Props) {
                   return (
                     <Card key={sale.id} className={`border-border/50 shadow-sm overflow-hidden transition-all ${isCredit && !isPaid ? 'border-warning/30 bg-warning/[0.03]' : ''}`}>
                       <button className="w-full text-left" onClick={() => setExpandedId(isExpanded ? null : sale.id)}>
-                        <CardContent className="p-3.5">
+                        <CardContent className="p-4 md:p-5">
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-start gap-3 min-w-0">
                               <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
