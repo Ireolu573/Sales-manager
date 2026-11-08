@@ -18,6 +18,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import KeyboardShortcutsHelp from '@/components/KeyboardShortcutsHelp'
 import { SkeletonPage } from '@/components/ui/loading-skeletons'
 import DashboardOverview from '@/components/DashboardOverview'
+import SettingsWorkspace from '@/components/settings/SettingsWorkspace'
 
 const SaleForm = lazy(() => import('@/components/SaleForm'))
 const SalesTable = lazy(() => import('@/components/SalesTable'))
@@ -33,6 +34,7 @@ const NAV_TABS = [
   { id: 'stock' as Tab, label: 'Inventory', icon: Package, perm: 'can_view_stock' as const },
   { id: 'credit' as Tab, label: 'Customers', icon: CreditCard, perm: 'can_manage_credit' as const },
   { id: 'analytics' as Tab, label: 'Reports', icon: BarChart3, perm: 'can_view_analytics' as const },
+  { id: 'settings' as Tab, label: 'Settings', icon: Settings, perm: null },
 ]
 
 const VALID_TABS: Tab[] = NAV_TABS.map(tab => tab.id)
@@ -220,7 +222,7 @@ export default function Dashboard() {
     }
   }, [])
 
-  const visibleTabs = NAV_TABS.filter(t => !t.perm || permissions[t.perm as keyof Permissions])
+  const visibleTabs = NAV_TABS.filter(t => (t.id !== 'settings' || isAdmin) && (!t.perm || permissions[t.perm as keyof Permissions]))
   const mobileTabs = visibleTabs.filter(t => ['dashboard', 'record', 'stock', 'credit'].includes(t.id))
   const handleCompanyUpdated = (c: typeof company) => {
     setCompany(c)
@@ -285,7 +287,7 @@ export default function Dashboard() {
         <div className="border-t border-border p-4">
           <button
             type="button"
-            onClick={() => isAdmin ? setShowDC(true) : setShowMenu(true)}
+            onClick={() => isAdmin ? switchTab('settings') : setShowMenu(true)}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Open settings"
           >
@@ -365,6 +367,18 @@ export default function Dashboard() {
           <Suspense fallback={<SkeletonPage />}>
             {tab === 'dashboard' && tenantId && (
               <DashboardOverview userId={user.id} tenantId={tenantId} permissions={permissions} onSwitchTab={switchTab} />
+            )}
+            {tab === 'settings' && isAdmin && company && tenantId && (
+              <SettingsWorkspace
+                userId={user.id}
+                tenantId={tenantId}
+                company={company}
+                onCompanyUpdated={handleCompanyUpdated}
+                isDark={isDark}
+                onToggleTheme={toggleTheme}
+                onOpenAccount={() => setShowAccount(true)}
+                onOpenInventory={() => switchTab('stock')}
+              />
             )}
             {tab === 'record' && permissions.can_record_sales && tenantId && (
               <SaleForm userId={user.id} tenantId={tenantId} />
@@ -495,7 +509,7 @@ export default function Dashboard() {
             <Button
               variant="ghost"
               className="justify-start gap-3 h-11 text-foreground"
-              onClick={() => { setShowMenu(false); setShowDC(true) }}
+              onClick={() => { setShowMenu(false); switchTab('settings') }}
             >
               <Settings size={16} />
               Settings
