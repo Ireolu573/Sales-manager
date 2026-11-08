@@ -150,7 +150,7 @@ export default function SalesTable({ userId, tenantId, isAdmin }: Props) {
   const grouped = useMemo(() => groupByDate(filtered), [filtered])
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 pb-8">
+    <div className="mx-auto w-full max-w-[1600px] space-y-6 pb-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Transaction records</p>
