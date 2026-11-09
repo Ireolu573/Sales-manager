@@ -258,7 +258,7 @@ export function SaleForm({ userId, tenantId }: Props) {
   const bulkTotal = lineItems.reduce((acc, i) => acc + (Number(i.quantity) * Number(i.unitPrice) || 0), 0)
 
   return (
-    <div className="space-y-4 max-w-md mx-auto md:max-w-4xl md:space-y-6">
+    <div className="w-full min-w-0 space-y-4 md:space-y-6">
       <TodaySummaryCard tenantId={tenantId} userId={userId} isAdmin={isAdmin} />
 
       <Card className="shadow-sm border border-border/80 bg-card/95 backdrop-blur-sm rounded-2xl">
