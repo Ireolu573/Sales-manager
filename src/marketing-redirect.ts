@@ -1,19 +1,23 @@
 import { supabase } from '@/integrations/supabase/client'
 
-// The root URL is the app entry point. Resolve the saved Supabase session
-// before showing the public marketing page, then send the visitor to the
-// correct destination.
-async function redirectFromRoot() {
+// Keep the supplied marketing website public at "/". Only visitors with an
+// active Supabase session should be sent straight into the application.
+async function redirectSignedInVisitors() {
   try {
     const { data, error } = await supabase.auth.getSession()
 
     if (error) throw error
 
-    window.location.replace(data.session?.user ? '/app' : '/login')
+    if (data.session?.user) {
+      window.location.replace('/app')
+      return
+    }
   } catch (error) {
+    // If session restoration fails, keep the public website accessible.
     console.error('Unable to restore authentication session:', error)
-    window.location.replace('/login')
   }
+
+  document.documentElement.style.visibility = 'visible'
 }
 
-void redirectFromRoot()
+void redirectSignedInVisitors()
