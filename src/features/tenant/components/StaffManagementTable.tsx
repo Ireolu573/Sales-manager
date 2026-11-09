@@ -119,11 +119,11 @@ export function StaffManagementTable({
   return (
     <div className="space-y-6">
       {/* Invite Code Box */}
-      <Card className="border-amber-500/20 bg-amber-500/5">
+      <Card className="border-primary/20 bg-primary/5">
         <CardContent className="p-4 sm:p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Key className="h-5 w-5 text-amber-600" />
+              <Key className="h-5 w-5 text-primary" />
               <h3 className="font-semibold text-base">Business Invite Code</h3>
             </div>
             <Button
@@ -147,7 +147,7 @@ export function StaffManagementTable({
             <Button
               variant="default"
               onClick={copyInviteCode}
-              className="bg-amber-600 hover:bg-amber-700 text-white gap-1.5"
+              className="bg-primary hover:bg-primary/90 text-white gap-1.5"
             >
               {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               {copied ? 'Copied' : 'Copy'}
@@ -160,7 +160,7 @@ export function StaffManagementTable({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <Users className="h-5 w-5 text-amber-600" />
+            <Users className="h-5 w-5 text-primary" />
             Staff Members ({staff.length})
           </CardTitle>
         </CardHeader>
@@ -181,18 +181,18 @@ export function StaffManagementTable({
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2.5 min-w-0">
                         {member.is_admin ? (
-                          <Shield className="h-4 w-4 text-amber-600 shrink-0" />
+                          <Shield className="h-4 w-4 text-primary shrink-0" />
                         ) : (
                           <User className="h-4 w-4 text-muted-foreground shrink-0" />
                         )}
                         <span className="font-medium text-sm truncate">{member.email}</span>
                         {isCurrent && (
-                          <Badge variant="outline" className="text-xs bg-amber-50 dark:bg-amber-950/40 text-amber-600">
+                          <Badge variant="outline" className="text-xs bg-amber-50 dark:bg-amber-950/40 text-primary">
                             You
                           </Badge>
                         )}
                         {member.is_admin && (
-                          <Badge className="text-xs bg-amber-600 hover:bg-amber-700 text-white">
+                          <Badge className="text-xs bg-primary hover:bg-primary/90 text-white">
                             Admin
                           </Badge>
                         )}
@@ -222,7 +222,7 @@ export function StaffManagementTable({
                                 key={key}
                                 className={`flex items-center gap-2 p-2 rounded border text-xs cursor-pointer transition-colors ${
                                   isChecked
-                                    ? 'bg-amber-500/10 border-amber-500/30 font-medium'
+                                    ? 'bg-primary/10 border-primary/30 font-medium'
                                     : 'bg-muted/30 border-transparent hover:border-border'
                                 } ${isLoadingMember ? 'opacity-50 cursor-wait' : ''}`}
                               >
