@@ -90,6 +90,53 @@ export type Database = {
           },
         ]
       }
+      customers: {
+        Row: {
+          id: string
+          tenant_id: string
+          name: string
+          phone: string | null
+          address: string | null
+          credit_limit: number | null
+          allow_credit: boolean
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          tenant_id: string
+          name: string
+          phone?: string | null
+          address?: string | null
+          credit_limit?: number | null
+          allow_credit?: boolean
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          tenant_id?: string
+          name?: string
+          phone?: string | null
+          address?: string | null
+          credit_limit?: number | null
+          allow_credit?: boolean
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_payments: {
         Row: {
           amount: number
@@ -181,9 +228,11 @@ export type Database = {
       }
       products: {
         Row: {
+          category: string
           created_at: string | null
           id: string
           is_active: boolean | null
+          low_stock_threshold: number
           name: string
           tenant_id: string | null
           unit_label: string | null
@@ -191,9 +240,11 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          category?: string
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          low_stock_threshold?: number
           name: string
           tenant_id?: string | null
           unit_label?: string | null
@@ -201,9 +252,11 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          category?: string
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          low_stock_threshold?: number
           name?: string
           tenant_id?: string | null
           unit_label?: string | null
@@ -265,6 +318,7 @@ export type Database = {
           cogs_amount: number
           created_at: string | null
           customer_name: string | null
+          customer_id: string | null
           id: string
           inventory_override: boolean
           item_name: string
@@ -290,6 +344,7 @@ export type Database = {
           cogs_amount?: number
           created_at?: string | null
           customer_name?: string | null
+          customer_id?: string | null
           id?: string
           inventory_override?: boolean
           item_name: string
@@ -315,6 +370,7 @@ export type Database = {
           cogs_amount?: number
           created_at?: string | null
           customer_name?: string | null
+          customer_id?: string | null
           id?: string
           inventory_override?: boolean
           item_name?: string
