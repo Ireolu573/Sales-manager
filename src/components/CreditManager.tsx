@@ -195,7 +195,7 @@ export default function CreditManager({ isAdmin, userId, tenantId }: Props) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-5 pb-8">
+    <div className="w-full min-w-0 space-y-5 pb-8">
       <header className="flex flex-col gap-1">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">AgriLedger workspace</p>
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Customers &amp; credit</h1>
