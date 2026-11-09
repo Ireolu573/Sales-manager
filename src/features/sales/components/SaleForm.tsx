@@ -246,31 +246,42 @@ export function SaleForm({ userId, tenantId }: Props) {
   const bulkTotal = lineItems.reduce((acc, i) => acc + (Number(i.quantity) * Number(i.unitPrice) || 0), 0)
 
   return (
-    <div className="space-y-4 max-w-md mx-auto md:max-w-4xl md:space-y-6">
+    <div className="mx-auto w-full max-w-[1600px] space-y-6 md:space-y-7">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Sales workspace</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">Record a sale</h1>
+          <p className="mt-1 text-sm text-slate-500">Select products, confirm quantities and complete payment details.</p>
+        </div>
+        <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">
+          <span className="h-2 w-2 rounded-full bg-emerald-600" /> Live inventory check
+        </div>
+      </div>
       <TodaySummaryCard tenantId={tenantId} userId={userId} isAdmin={isAdmin} />
 
-      <Card className="shadow-sm border border-border/80 bg-card/95 backdrop-blur-sm rounded-2xl">
-        <CardContent className="p-4 md:p-6">
-          <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-            <div className="flex flex-col gap-3 border-b pb-4">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg md:text-xl font-bold flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5 text-amber-600" /> Record Sales
+      <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <CardContent className="p-4 md:p-7">
+          <form onSubmit={handleSubmit} className="space-y-6 md:space-y-7">
+            <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900 md:text-xl">
+                  <ShoppingCart className="h-5 w-5 text-emerald-700" /> Transaction details
                 </h2>
+                <p className="mt-1 text-sm text-slate-500">Choose one product or add multiple items to this transaction.</p>
               </div>
 
-              <div className="flex items-center gap-2 bg-muted p-1 rounded-xl text-xs font-semibold w-full">
+              <div className="flex w-full items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1 text-xs font-semibold sm:w-64">
                 <button
                   type="button"
                   onClick={() => setMode('single')}
-                  className={`flex-1 px-3 py-2 rounded-lg transition-all ${mode === 'single' ? 'bg-background text-foreground shadow-sm ring-1 ring-border' : 'text-muted-foreground'}`}
+                  className={`flex-1 rounded-lg px-3 py-2.5 transition-all ${mode === 'single' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'}`}
                 >
                   <Zap className="h-3.5 w-3.5 inline mr-1" /> Single
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode('bulk')}
-                  className={`flex-1 px-3 py-2 rounded-lg transition-all ${mode === 'bulk' ? 'bg-background text-foreground shadow-sm ring-1 ring-border' : 'text-muted-foreground'}`}
+                  className={`flex-1 rounded-lg px-3 py-2.5 transition-all ${mode === 'bulk' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800'}`}
                 >
                   <Package className="h-3.5 w-3.5 inline mr-1" /> Multi
                 </button>
@@ -278,7 +289,7 @@ export function SaleForm({ userId, tenantId }: Props) {
             </div>
 
             {mode === 'single' ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Product</Label>
                   <Select value={productId} onValueChange={handleProductSelect}>
@@ -395,7 +406,7 @@ export function SaleForm({ userId, tenantId }: Props) {
             )}
 
             {/* Payment & Metadata */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+            <div className="grid grid-cols-1 gap-5 border-t border-slate-200 pt-6 md:grid-cols-2 md:gap-6">
               <div className="space-y-2.5">
                 <Label className="text-sm font-semibold tracking-tight">Payment Method</Label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -478,7 +489,7 @@ export function SaleForm({ userId, tenantId }: Props) {
             </div>
 
             {/* Tactile Counter Register Bar */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-border/80 pt-4 bg-muted/20 -mx-6 -mb-6 p-4 rounded-b-2xl">
+            <div className=" -mx-4 -mb-4 flex flex-col gap-4 border-t border-slate-200 bg-slate-50 p-4 pt-5 sm:flex-row sm:items-center sm:justify-between md:-mx-7 md:-mb-7 md:p-7">
               <div>
                 <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold block">Total Amount</span>
                 <span className="text-2xl sm:text-3xl font-extrabold text-primary font-tabular tracking-tight">
@@ -486,7 +497,7 @@ export function SaleForm({ userId, tenantId }: Props) {
                 </span>
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6 h-12 rounded-xl text-base shadow-md transition-transform active:scale-98">
+              <Button type="submit" disabled={loading} className="h-12 w-full rounded-xl bg-emerald-700 px-7 text-base font-bold text-white shadow-sm transition-colors hover:bg-emerald-800 active:scale-[0.99] sm:w-auto">
                 <PlusCircle className="h-5 w-5 mr-2" />
                 {loading ? 'Recording...' : 'Record Transaction'}
               </Button>

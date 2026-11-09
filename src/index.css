@@ -238,3 +238,161 @@
   --muted-foreground: 20 8% 55%;
   --foreground: 36 20% 92%;
 }
+
+
+/* AgriLedger Figma visual system */
+:root:not(.dark) {
+  --background: 210 40% 98%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --primary: 222 47% 11%;
+  --primary-foreground: 0 0% 100%;
+  --brand-accent: 142 76% 36%;
+  --muted: 210 32% 96%;
+  --muted-foreground: 215 16% 40%;
+  --border: 214 32% 83%;
+  --input: 214 32% 83%;
+  --ring: 142 76% 36%;
+  --success: 145 76% 26%;
+  --warning: 29 83% 29%;
+  --destructive: 0 63% 33%;
+  --radius: 0.875rem;
+}
+body { background: hsl(var(--background)); }
+.agriledger-app {
+  min-height: 100dvh;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+.agriledger-app aside {
+  background-color: hsl(var(--card));
+}
+.agriledger-app header {
+  border-color: #CBD5E1;
+  box-shadow: none;
+}
+.agriledger-app main {
+  scrollbar-gutter: stable;
+}
+.agriledger-app main > .slide-up {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+}
+
+/* Keep each workspace aligned to the full desktop content area. */
+.agriledger-app main > .slide-up > * {
+  width: 100%;
+  min-width: 0;
+}
+.agriledger-app [data-slot="card"],
+.agriledger-app .rounded-xl.border,
+.agriledger-app .rounded-2xl.border {
+  border-color: #E2E8F0;
+}
+.agriledger-app [data-slot="card"] {
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.035);
+}
+.agriledger-app input:not([type="checkbox"]):not([type="radio"]),
+.agriledger-app textarea,
+.agriledger-app [role="combobox"] {
+  min-height: 44px;
+  border-radius: 10px;
+  border-color: #CBD5E1;
+  background: hsl(var(--card));
+}
+.agriledger-app button {
+  -webkit-tap-highlight-color: transparent;
+}
+.agriledger-app .bg-primary {
+  background-color: #0F172A;
+}
+.agriledger-app .text-primary {
+  color: #16A34A;
+}
+.agriledger-app .bg-primary\/10 {
+  background-color: #DCFCE7;
+}
+.agriledger-app .text-success {
+  color: #166534;
+}
+.agriledger-app .text-warning {
+  color: #92400E;
+}
+.agriledger-app .text-destructive {
+  color: #991B1B;
+}
+.agriledger-app .border-border {
+  border-color: #CBD5E1;
+}
+.agriledger-app nav button[aria-current="page"] {
+  background: #F0FDF4;
+  color: #166534;
+}
+.agriledger-app .fixed.bottom-0 {
+  padding-bottom: env(safe-area-inset-bottom);
+  background: hsl(var(--card) / 0.98);
+  backdrop-filter: blur(16px);
+}
+.agriledger-app .fixed.bottom-0 button {
+  min-height: 54px;
+}
+@media (min-width: 1024px) {
+  .agriledger-app main {
+    padding-top: 28px;
+    padding-bottom: 40px;
+  }
+  .agriledger-app aside nav button {
+    min-height: 46px;
+  }
+}
+@media (max-width: 1023px) {
+  .agriledger-app {
+    min-height: 100dvh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+  .agriledger-app header {
+    flex: 0 0 auto;
+    padding-top: env(safe-area-inset-top);
+  }
+  .agriledger-app main {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    padding: 16px 14px calc(92px + env(safe-area-inset-bottom));
+  }
+  .agriledger-app main > div > .slide-up {
+    padding-bottom: 8px;
+  }
+  .agriledger-app .fixed.bottom-0 {
+    padding-bottom: max(5px, env(safe-area-inset-bottom));
+  }
+  .agriledger-app .fixed.bottom-0 button {
+    min-height: 58px;
+    padding-inline: 6px;
+  }
+  .agriledger-app [data-slot="card"] {
+    border-radius: 14px;
+  }
+  .agriledger-app form {
+    min-width: 0;
+  }
+  .agriledger-app table {
+    min-width: 620px;
+  }
+}
+@media (max-width: 420px) {
+  .agriledger-app main {
+    padding-inline: 11px;
+  }
+  .agriledger-app .fixed.bottom-0 button span {
+    font-size: 10px;
+  }
+  .agriledger-app h1 {
+    font-size: 24px;
+  }
+}

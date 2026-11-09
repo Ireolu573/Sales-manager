@@ -88,7 +88,7 @@ export function ProductManagementTable({ tenantId, products, onProductsChanged }
     <Card className="border shadow-sm">
       <CardContent className="pt-6 space-y-6">
         <div className="flex items-center gap-2 font-semibold text-lg border-b pb-2">
-          <Package className="h-5 w-5 text-amber-600" />
+          <Package className="h-5 w-5 text-primary" />
           <span>Product Catalog & Unit Pricing</span>
         </div>
 
@@ -177,7 +177,7 @@ export function ProductManagementTable({ tenantId, products, onProductsChanged }
             <Button
               onClick={addProduct}
               disabled={addingProduct}
-              className="bg-amber-600 hover:bg-amber-700 text-white w-full sm:w-auto"
+              className="bg-primary hover:bg-primary/90 text-white w-full sm:w-auto"
             >
               {addingProduct ? 'Adding...' : 'Save Product to Catalog'}
             </Button>

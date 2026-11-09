@@ -22,6 +22,8 @@ export default defineConfig(({ mode }) => ({
         name: 'AgriLedger',
         short_name: 'AgriLedger',
         description: 'Farm shop sales, stock and customer credit in one place',
+        start_url: '/app',
+        scope: '/',
         theme_color: '#0F172A',
         icons: [
           {
@@ -54,6 +56,10 @@ export default defineConfig(({ mode }) => ({
   build: {
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
+      input: {
+        marketing: path.resolve(__dirname, 'index.html'),
+        app: path.resolve(__dirname, 'app.html'),
+      },
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
