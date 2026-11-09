@@ -10,11 +10,32 @@ import { KeyRound, Mail, Eye, EyeOff, Link, Unlink, AlertTriangle } from 'lucide
 
 interface Props {
   email: string
+  isAdmin?: boolean
   onClose: () => void
 }
 
-export default function AccountModal({ email, onClose }: Props) {
+export default function AccountModal({ email, isAdmin = false, onClose }: Props) {
   const { toast } = useToast()
+
+  const [fullName, setFullName] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [savingProfile, setSavingProfile] = useState(false)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setFullName(data.user?.user_metadata?.full_name || data.user?.user_metadata?.name || '')
+      setPhoneNumber(data.user?.user_metadata?.phone_number || data.user?.user_metadata?.phone || '')
+    })
+  }, [])
+
+  const handleProfileSave = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSavingProfile(true)
+    const { error } = await supabase.auth.updateUser({ data: { full_name: fullName.trim(), phone_number: phoneNumber.trim() } })
+    setSavingProfile(false)
+    if (error) toast({ title: 'Could not save profile', description: error.message, variant: 'destructive' })
+    else toast({ title: 'Profile updated' })
+  }
 
   // Password change state
   const [newPassword, setNewPassword] = useState('')
@@ -136,10 +157,25 @@ export default function AccountModal({ email, onClose }: Props) {
 
   return (
     <Dialog open onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>My Account</DialogTitle>
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto p-0">
+        <DialogHeader className="border-b border-border bg-muted/20 px-6 py-5 text-left">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Account</p>
+          <DialogTitle className="text-2xl">My Account</DialogTitle>
+          <p className="text-sm font-normal text-muted-foreground">Manage your personal details and sign-in methods.</p>
         </DialogHeader>
+        <div className="space-y-6 px-6 pb-6">
+
+        {/* Profile details */}
+        <form onSubmit={handleProfileSave} className="space-y-4 rounded-2xl border border-border p-4 sm:p-5">
+          <div className="flex items-center gap-3"><span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary">{(fullName || email).slice(0,1).toUpperCase()}</span><div><h3 className="font-semibold">Profile</h3><p className="text-xs text-muted-foreground">Your personal information</p></div></div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5"><Label className="text-xs">Full name</Label><Input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Your full name" autoComplete="name"/></div>
+            <div className="space-y-1.5"><Label className="text-xs">Phone number</Label><Input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder="e.g. 0801 234 5678" autoComplete="tel"/></div>
+            <div className="space-y-1.5"><Label className="text-xs">Email</Label><Input value={email} readOnly className="bg-muted/50"/><p className="text-[11px] text-muted-foreground">Change your email in sign-in details below.</p></div>
+            <div className="space-y-1.5"><Label className="text-xs">Role</Label><Input value={isAdmin ? 'Owner' : 'Staff'} readOnly className="bg-muted/50"/></div>
+          </div>
+          <div className="flex justify-end"><Button type="submit" disabled={savingProfile} className="gap-2">{savingProfile ? 'Saving...' : 'Save changes'}</Button></div>
+        </form>
 
         {/* Current account info */}
         <div className="bg-muted/50 rounded-xl px-4 py-3 space-y-1">
@@ -308,6 +344,7 @@ export default function AccountModal({ email, onClose }: Props) {
           )}
         </div>
 
+        </div>
       </DialogContent>
     </Dialog>
   )
