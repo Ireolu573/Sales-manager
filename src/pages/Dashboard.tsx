@@ -461,6 +461,7 @@ export default function Dashboard() {
       {showAccount && (
         <AccountModal
           email={user.email || ''}
+          isAdmin={isAdmin}
           onClose={() => setShowAccount(false)}
         />
       )}
